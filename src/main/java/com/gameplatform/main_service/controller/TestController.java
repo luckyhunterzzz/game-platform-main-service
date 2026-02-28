@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,6 +27,7 @@ public class TestController {
     /**
      * Public diagnostic endpoint returning ResponseEntity.
      */
+    @GetMapping("/public/test")
     public ResponseEntity<Map<String, Object>> publicTest() {
         log.info("public diagnostic test");
 
@@ -41,6 +43,7 @@ public class TestController {
     /**
      * Protected diagnostic endpoint for administrators.
      */
+    @GetMapping("/admin/test")
     public ResponseEntity<Map<String, Object>> adminTest(Authentication auth) {
         if(auth == null || !auth.isAuthenticated()) {
             log.warn("Access denied: Authentication context is missing");
