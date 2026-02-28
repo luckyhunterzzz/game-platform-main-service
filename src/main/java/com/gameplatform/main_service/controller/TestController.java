@@ -1,0 +1,69 @@
+package com.gameplatform.main_service.controller;
+
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * Diagnostic controller using Lombok for logging and ResponseEntity for HTTP control.
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/v1")
+public class TestController {
+    private static final String MDC_REQUEST_ID = "requestId";
+
+    /**
+     * Public diagnostic endpoint returning ResponseEntity.
+     */
+    public ResponseEntity<Map<String, Object>> publicTest() {
+        log.info("public diagnostic test");
+
+        Map<String, Object> body = Map.of(
+                "service", "main-service",
+                "status", MDC.get(MDC_REQUEST_ID),
+                "timestamp", OffsetDateTime.now()
+        );
+
+        return ResponseEntity.ok(body);
+    }
+
+    /**
+     * Protected diagnostic endpoint for administrators.
+     */
+    public ResponseEntity<Map<String, Object>> adminTest(Authentication auth) {
+        if(auth == null || !auth.isAuthenticated()) {
+            log.warn("Access denied: Authentication context is missing");
+            throw new AccessDeniedException("Access denied: Authentication context is missing");
+        }
+
+        log.info("admin diagnostic test");
+
+        List<String> authorities = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        Map<String, Object> body = Map.of(
+                "userId", auth.getName(),
+                "roles", authorities,
+                "requestId", MDC.get(MDC_REQUEST_ID),
+                "authCheck", Map.of(
+                        "isAdmin", authorities.contains("ROLE_admin"),
+                        "isSuperadmin", authorities.contains("ROLE_superadmin")
+                ),
+                "timestamp", OffsetDateTime.now()
+        );
+
+        return ResponseEntity.ok(body);
+    }
+}
