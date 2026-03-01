@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: main-page-service
+    name: main-service
 
 management:
   endpoints:

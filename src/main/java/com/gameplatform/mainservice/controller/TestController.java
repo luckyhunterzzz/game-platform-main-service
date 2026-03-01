@@ -1,7 +1,8 @@
-package com.gameplatform.main_service.controller;
+package com.gameplatform.mainservice.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -11,8 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -31,12 +31,10 @@ public class TestController {
     public ResponseEntity<Map<String, Object>> publicTest() {
         log.info("public diagnostic test");
 
-        Map<String, Object> body = Map.of(
-                "service", "main-service",
-                "status", MDC.get(MDC_REQUEST_ID),
-                "timestamp", OffsetDateTime.now()
-        );
-
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", "UP");
+        body.put("service", "main-service");
+        body.put("requestId", MDC.get("requestId") != null ? MDC.get("requestId") : "not-traced");
         return ResponseEntity.ok(body);
     }
 
@@ -45,7 +43,7 @@ public class TestController {
      */
     @GetMapping("/admin/test")
     public ResponseEntity<Map<String, Object>> adminTest(Authentication auth) {
-        if(auth == null || !auth.isAuthenticated()) {
+        if (auth == null || !auth.isAuthenticated()) {
             log.warn("Access denied: Authentication context is missing");
             throw new AccessDeniedException("Access denied: Authentication context is missing");
         }
@@ -56,16 +54,20 @@ public class TestController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        Map<String, Object> body = Map.of(
-                "userId", auth.getName(),
-                "roles", authorities,
-                "requestId", MDC.get(MDC_REQUEST_ID),
-                "authCheck", Map.of(
-                        "isAdmin", authorities.contains("ROLE_admin"),
-                        "isSuperadmin", authorities.contains("ROLE_superadmin")
-                ),
-                "timestamp", OffsetDateTime.now()
-        );
+        if (authorities.isEmpty()) {
+            log.warn("Access denied: User has no authorities");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("userId", auth.getName());
+        body.put("roles", authorities);
+        body.put("requestId", Optional.ofNullable(MDC.get(MDC_REQUEST_ID)).orElse("not-traced"));
+        body.put("authCheck", Map.of(
+                "isAdmin", authorities.contains("ROLE_admin"),
+                "isSuperadmin", authorities.contains("ROLE_superadmin")
+        ));
+        body.put("timestamp", OffsetDateTime.now());
 
         return ResponseEntity.ok(body);
     }

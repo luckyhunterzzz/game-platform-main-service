@@ -1,4 +1,4 @@
-package com.gameplatform.main_service;
+package com.gameplatform.mainservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

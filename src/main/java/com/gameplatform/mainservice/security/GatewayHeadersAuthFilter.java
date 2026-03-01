@@ -1,4 +1,4 @@
-package com.gameplatform.main_service.security;
+package com.gameplatform.mainservice.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,7 +38,7 @@ public class GatewayHeadersAuthFilter extends OncePerRequestFilter {
             List<GrantedAuthority> authorities = Arrays.stream(rolesHeader.split(","))
                     .map(String::trim)
                     .filter(r -> !r.isBlank())
-                    .map(SimpleGrantedAuthority::new)
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.trim()))
                     .collect(Collectors.toList());
 
             var auth = new UsernamePasswordAuthenticationToken(userId, "N/A", authorities);
