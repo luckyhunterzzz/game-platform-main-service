@@ -1,4 +1,4 @@
-package com.gameplatform.main_service;
+package com.gameplatform.mainservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
