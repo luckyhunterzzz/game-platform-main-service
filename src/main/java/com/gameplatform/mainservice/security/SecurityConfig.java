@@ -30,7 +30,12 @@ public class SecurityConfig {
                 .addFilterBefore(new MdcCorrelationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new GatewayHeadersAuthFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/public/**", "/actuator/health").permitAll()
+                        .requestMatchers("/api/v1/public/**",
+                                "/actuator/health",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("admin", "superadmin")
                         .anyRequest().denyAll()
                 );
