@@ -1,4 +1,4 @@
-package com.gameplatform.mainservice.publication.domain;
+package com.gameplatform.mainservice.publication.domain.entity;
 
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
@@ -47,7 +47,7 @@ public class Publication {
     private OffsetDateTime publishedAt;
 
     @Column(name = "is_pinned", nullable = false)
-    private boolean isPinned;
+    private boolean pinned;
 
     @Column(name = "pinned_at")
     private OffsetDateTime pinnedAt;
