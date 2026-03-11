@@ -1,6 +1,6 @@
 package com.gameplatform.mainservice.security;
 
-import com.gameplatform.mainservice.exception.InvalidAuthenticationException;
+import com.gameplatform.mainservice.exception.exceptions.InvalidAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;

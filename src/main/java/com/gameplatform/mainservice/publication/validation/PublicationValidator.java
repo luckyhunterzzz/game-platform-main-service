@@ -1,6 +1,6 @@
 package com.gameplatform.mainservice.publication.validation;
 
-import com.gameplatform.mainservice.exception.BusinessValidationException;
+import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.publication.dto.request.CreatePublicationRequest;
 import org.springframework.stereotype.Component;
 
