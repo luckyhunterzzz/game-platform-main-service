@@ -1,4 +1,4 @@
-package com.gameplatform.mainservice.exception;
+package com.gameplatform.mainservice.exception.exceptions;
 
 public class InvalidAuthenticationException extends RuntimeException {
 
