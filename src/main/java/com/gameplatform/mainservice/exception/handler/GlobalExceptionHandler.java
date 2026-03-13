@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.exception.handler;
 
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.exception.exceptions.InvalidAuthenticationException;
+import com.gameplatform.mainservice.exception.exceptions.MediaStorageException;
 import com.gameplatform.mainservice.exception.model.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -74,6 +75,24 @@ public class GlobalExceptionHandler {
     ) {
         log.error("Unexpected error occurred at {}", request.getRequestURI(), ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected internal server error", request);
+    }
+
+    @ExceptionHandler(MediaStorageException.class)
+    public ResponseEntity<ErrorResponse> handleMediaStorageException(
+            MediaStorageException ex,
+            HttpServletRequest request
+    ) {
+        log.error("Media storage error: {} at {}", ex.getMessage(), request.getRequestURI(), ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Invalid request data: {} at {}", ex.getMessage(), request.getRequestURI());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(
