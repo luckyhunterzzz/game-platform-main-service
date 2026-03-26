@@ -1,0 +1,39 @@
+package com.gameplatform.mainservice.hero.facade;
+
+import com.gameplatform.mainservice.hero.dto.request.ElementCreateRequest;
+import com.gameplatform.mainservice.hero.dto.request.ElementUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.response.ElementResponse;
+import com.gameplatform.mainservice.hero.mapper.ElementResponseConverter;
+import com.gameplatform.mainservice.hero.service.ElementService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+public class ElementFacade {
+
+    private final ElementService elementService;
+    private final ElementResponseConverter converter;
+
+    public List<ElementResponse> getAll() {
+        return converter.toResponseList(elementService.getAll());
+    }
+
+    public ElementResponse getById(Long id) {
+        return converter.toResponse(elementService.getById(id));
+    }
+
+    public ElementResponse create(ElementCreateRequest request) {
+        return converter.toResponse(elementService.create(request));
+    }
+
+    public ElementResponse update(Long id, ElementUpdateRequest request) {
+        return converter.toResponse(elementService.update(id, request));
+    }
+
+    public void delete(Long id) {
+        elementService.delete(id);
+    }
+}
