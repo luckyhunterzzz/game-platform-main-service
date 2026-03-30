@@ -1,4 +1,4 @@
-package com.gameplatform.mainservice.hero.mapper;
+package com.gameplatform.mainservice.hero.converter;
 
 import com.gameplatform.mainservice.hero.domain.entity.AlphaTalent;
 import com.gameplatform.mainservice.hero.dto.response.AlphaTalentResponse;

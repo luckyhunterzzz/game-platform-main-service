@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.facade;
 import com.gameplatform.mainservice.hero.dto.request.AlphaTalentCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.AlphaTalentResponse;
-import com.gameplatform.mainservice.hero.mapper.AlphaTalentResponseConverter;
+import com.gameplatform.mainservice.hero.converter.AlphaTalentResponseConverter;
 import com.gameplatform.mainservice.hero.service.AlphaTalentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.facade;
 import com.gameplatform.mainservice.hero.dto.request.FamilyCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.FamilyUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.FamilyResponse;
-import com.gameplatform.mainservice.hero.mapper.FamilyResponseConverter;
+import com.gameplatform.mainservice.hero.converter.FamilyResponseConverter;
 import com.gameplatform.mainservice.hero.service.FamilyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
