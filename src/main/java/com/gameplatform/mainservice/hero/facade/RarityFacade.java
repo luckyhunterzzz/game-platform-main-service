@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.facade;
 import com.gameplatform.mainservice.hero.dto.request.RarityCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.RarityUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.RarityResponse;
-import com.gameplatform.mainservice.hero.mapper.RarityResponseConverter;
+import com.gameplatform.mainservice.hero.converter.RarityResponseConverter;
 import com.gameplatform.mainservice.hero.service.RarityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

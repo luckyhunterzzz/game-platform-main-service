@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.facade;
 import com.gameplatform.mainservice.hero.dto.request.ManaSpeedCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.ManaSpeedResponse;
-import com.gameplatform.mainservice.hero.mapper.ManaSpeedResponseConverter;
+import com.gameplatform.mainservice.hero.converter.ManaSpeedResponseConverter;
 import com.gameplatform.mainservice.hero.service.ManaSpeedService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

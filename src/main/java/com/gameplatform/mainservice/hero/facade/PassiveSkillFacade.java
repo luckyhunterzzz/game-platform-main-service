@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.facade;
 import com.gameplatform.mainservice.hero.dto.request.PassiveSkillCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.PassiveSkillResponse;
-import com.gameplatform.mainservice.hero.mapper.PassiveSkillResponseConverter;
+import com.gameplatform.mainservice.hero.converter.PassiveSkillResponseConverter;
 import com.gameplatform.mainservice.hero.service.PassiveSkillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

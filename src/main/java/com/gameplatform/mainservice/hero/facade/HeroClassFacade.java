@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.facade;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
-import com.gameplatform.mainservice.hero.mapper.HeroClassResponseConverter;
+import com.gameplatform.mainservice.hero.converter.HeroClassResponseConverter;
 import com.gameplatform.mainservice.hero.service.HeroClassService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

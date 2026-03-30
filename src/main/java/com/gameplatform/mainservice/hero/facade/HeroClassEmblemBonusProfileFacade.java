@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.facade;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
-import com.gameplatform.mainservice.hero.mapper.HeroClassEmblemBonusProfileResponseConverter;
+import com.gameplatform.mainservice.hero.converter.HeroClassEmblemBonusProfileResponseConverter;
 import com.gameplatform.mainservice.hero.service.HeroClassEmblemBonusProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
