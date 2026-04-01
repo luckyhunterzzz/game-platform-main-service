@@ -4,11 +4,7 @@ import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.*;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
-import com.gameplatform.mainservice.hero.dto.response.HeroCardResponse;
-import com.gameplatform.mainservice.hero.dto.response.HeroDetailsResponse;
-import com.gameplatform.mainservice.hero.dto.response.HeroPageResponse;
-import com.gameplatform.mainservice.hero.dto.response.HeroSearchResponse;
-import com.gameplatform.mainservice.hero.dto.response.HeroSimpleNameResponse;
+import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.repository.*;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import jakarta.persistence.EntityNotFoundException;
@@ -175,5 +171,98 @@ public class HeroPublicService {
                 costumes,
                 language
         );
+    }
+
+    public HeroVariantsResponse getVariants(String slug, HeroLanguage language) {
+        Hero currentHero = heroRepository.findBySlugAndStatus(slug, HeroStatus.READY).orElseThrow(() -> new EntityNotFoundException("Hero not found with slug: " + slug));
+        Hero baseHero = resolveBaseHero(currentHero);
+
+        HeroDetailsResponse currentHeroDetails = buildHeroDetails(currentHero, language);
+
+        HeroVariantSummaryResponse baseHeroSummary = toVariantSummary(baseHero, language);
+
+        List<HeroVariantSummaryResponse> costumes = heroRepository
+                .findAllByBaseHeroIdAndStatusOrderByIdAsc(baseHero.getId(), HeroStatus.READY)
+                .stream()
+                .map(costume -> toVariantSummary(costume, language))
+                .toList();
+
+        return new HeroVariantsResponse(
+                currentHeroDetails,
+                baseHeroSummary,
+                costumes
+        );
+    }
+
+    private HeroDetailsResponse buildHeroDetails(Hero hero, HeroLanguage language) {
+        List<HeroPassiveSkill> passiveLinks = heroPassiveSkillRepository.findAllByIdHeroId(hero.getId());
+        List<Long> passiveIds = passiveLinks.stream()
+                .map(link -> link.getId().getPassiveSkillId())
+                .toList();
+
+        List<PassiveSkill> passiveSkills = passiveIds.isEmpty()
+                ? List.of()
+                : passiveSkillRepository.findAllByIdIn(passiveIds);
+
+        Long variantsRootId = hero.isCostume() ? hero.getBaseHeroId() : hero.getId();
+
+        List<Hero> costumes = variantsRootId == null
+                ? List.of()
+                : heroRepository.findAllByBaseHeroIdAndStatus(variantsRootId, HeroStatus.READY);
+
+        Element element = elementRepository.findById(hero.getElementId())
+                .orElseThrow(() -> new EntityNotFoundException("Element not found"));
+
+        Rarity rarity = rarityRepository.findById(hero.getRarityId())
+                .orElseThrow(() -> new EntityNotFoundException("Rarity not found"));
+
+        HeroClass heroClass = heroClassRepository.findById(hero.getHeroClassId())
+                .orElseThrow(() -> new EntityNotFoundException("HeroClass not found"));
+
+        ManaSpeed manaSpeed = manaSpeedRepository.findById(hero.getManaSpeedId())
+                .orElseThrow(() -> new EntityNotFoundException("ManaSpeed not found"));
+
+        Family family = hero.getFamilyId() != null
+                ? familyRepository.findById(hero.getFamilyId()).orElse(null)
+                : null;
+
+        AlphaTalent alphaTalent = hero.getAlphaTalentId() != null
+                ? alphaTalentRepository.findById(hero.getAlphaTalentId()).orElse(null)
+                : null;
+
+        return converter.toDetailsResponse(
+                hero,
+                element,
+                rarity,
+                heroClass,
+                family,
+                manaSpeed,
+                alphaTalent,
+                passiveSkills,
+                costumes,
+                language
+        );
+    }
+
+    private HeroVariantSummaryResponse toVariantSummary(Hero hero, HeroLanguage language) {
+        Element element = elementRepository.findById(hero.getElementId())
+                .orElseThrow(() -> new EntityNotFoundException("Element not found: " + hero.getElementId()));
+
+        Rarity rarity = rarityRepository.findById(hero.getRarityId())
+                .orElseThrow(() -> new EntityNotFoundException("Rarity not found: " + hero.getRarityId()));
+
+        return converter.toVariantSummary(hero, element, rarity, language);
+    }
+
+    private Hero resolveBaseHero(Hero hero) {
+        if (!hero.isCostume()) {
+            return hero;
+        }
+
+        Long baseHeroId = hero.getBaseHeroId();
+        if (baseHeroId == null) {
+            throw new EntityNotFoundException("Hero not found with baseHeroId: " + baseHeroId);
+        }
+        return heroRepository.findByIdAndStatus(baseHeroId, HeroStatus.READY).orElseThrow(() -> new EntityNotFoundException("Hero not found with baseHeroId: " + baseHeroId));
     }
 }

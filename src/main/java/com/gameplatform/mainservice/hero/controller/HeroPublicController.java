@@ -1,10 +1,7 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
-import com.gameplatform.mainservice.hero.dto.response.HeroDetailsResponse;
-import com.gameplatform.mainservice.hero.dto.response.HeroPageResponse;
-import com.gameplatform.mainservice.hero.dto.response.HeroSearchResponse;
-import com.gameplatform.mainservice.hero.dto.response.HeroSimpleNameResponse;
+import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.facade.HeroPublicFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +46,13 @@ public class HeroPublicController {
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
         return ResponseEntity.ok(heroPublicFacade.getHeroes(page, size, language));
+    }
+
+    @GetMapping("/{slug}/variants")
+    public ResponseEntity<HeroVariantsResponse> getVariants(
+            @PathVariable String slug,
+            @RequestParam(defaultValue = "RU") HeroLanguage language
+    ) {
+        return ResponseEntity.ok(heroPublicFacade.getVariants(slug, language));
     }
 }

@@ -54,18 +54,20 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             @Param("locale") String locale,
             @Param("limit") int limit
     );
-    // Для детальной карточки
+
     Optional<Hero> findBySlugAndStatusAndIsCostumeFalse(
             String slug,
             HeroStatus status
     );
 
-    // Для получения костюмов базового героя
     List<Hero> findAllByBaseHeroIdAndStatus(
             Long baseHeroId,
             HeroStatus status
     );
 
-    // Опционально: если хочешь искать без учёта isCostume = false
     Optional<Hero> findBySlugAndStatus(String slug, HeroStatus status);
+
+    Optional<Hero> findByIdAndStatus(Long id, HeroStatus status);
+
+    List<Hero> findAllByBaseHeroIdAndStatusOrderByIdAsc(Long baseHeroId, HeroStatus status);
 }

@@ -143,6 +143,25 @@ public class HeroPublicResponseConverter {
         );
     }
 
+    public HeroVariantSummaryResponse toVariantSummary(
+            Hero hero,
+            Element element,
+            Rarity rarity,
+            HeroLanguage language) {
+
+        String locale = language.getJsonKey();
+
+        return new HeroVariantSummaryResponse(
+                hero.getId(),
+                hero.getSlug(),
+                getLocalized(hero.getNameJson(), locale),
+                mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
+                getLocalized(element.getNameJson(), locale),
+                getLocalized(rarity.getNameJson(), locale),
+                rarity.getStars()
+        );
+    }
+
     private String getLocalized(LocalizedTextJson json, String locale) {
         if (json == null) {
             return null;
