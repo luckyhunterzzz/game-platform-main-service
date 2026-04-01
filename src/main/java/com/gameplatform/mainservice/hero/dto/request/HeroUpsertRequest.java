@@ -13,7 +13,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
 
-public record HeroCreateRequest(
+public record HeroUpsertRequest(
         @NotBlank
         @Size(max = 150)
         String slug,

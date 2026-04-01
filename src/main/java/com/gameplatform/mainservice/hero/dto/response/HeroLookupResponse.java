@@ -1,6 +1,6 @@
 package com.gameplatform.mainservice.hero.dto.response;
 
-public record HeroSearchResponse(
+public record HeroLookupResponse(
         Long id,
         String slug,
         String name

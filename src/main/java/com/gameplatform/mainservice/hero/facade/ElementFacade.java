@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.facade;
 
-import com.gameplatform.mainservice.hero.dto.request.ElementCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.ElementUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.ElementUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.ElementResponse;
 import com.gameplatform.mainservice.hero.converter.ElementResponseConverter;
 import com.gameplatform.mainservice.hero.service.ElementService;
@@ -25,11 +24,11 @@ public class ElementFacade {
         return converter.toResponse(elementService.getById(id));
     }
 
-    public ElementResponse create(ElementCreateRequest request) {
+    public ElementResponse create(ElementUpsertRequest request) {
         return converter.toResponse(elementService.create(request));
     }
 
-    public ElementResponse update(Long id, ElementUpdateRequest request) {
+    public ElementResponse update(Long id, ElementUpsertRequest request) {
         return converter.toResponse(elementService.update(id, request));
     }
 

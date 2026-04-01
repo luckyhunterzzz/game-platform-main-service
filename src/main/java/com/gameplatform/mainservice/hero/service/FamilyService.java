@@ -1,8 +1,7 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.Family;
-import com.gameplatform.mainservice.hero.dto.request.FamilyCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.FamilyUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.FamilyRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class FamilyService {
                 .orElseThrow(() -> new EntityNotFoundException("Family not found: " + id));
     }
 
-    public Family create(FamilyCreateRequest request) {
+    public Family create(FamilyUpsertRequest request) {
         Family family = Family.builder()
                 .nameJson(request.nameJson())
                 .descriptionJson(request.descriptionJson())
@@ -34,7 +33,7 @@ public class FamilyService {
         return familyRepository.save(family);
     }
 
-    public Family update(Long id, FamilyUpdateRequest request) {
+    public Family update(Long id, FamilyUpsertRequest request) {
         Family family = getById(id);
         family.setNameJson(request.nameJson());
         family.setDescriptionJson(request.descriptionJson());

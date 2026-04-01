@@ -1,8 +1,7 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.Element;
-import com.gameplatform.mainservice.hero.dto.request.ElementCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.ElementUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.ElementUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.ElementRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,14 +24,14 @@ public class ElementService {
                 .orElseThrow(() -> new EntityNotFoundException("Element not found: " + id));
     }
 
-    public Element create(ElementCreateRequest request) {
+    public Element create(ElementUpsertRequest request) {
         Element element = new Element();
         element.setNameJson(request.nameJson());
 
         return elementRepository.save(element);
     }
 
-    public Element update(Long id, ElementUpdateRequest request) {
+    public Element update(Long id, ElementUpsertRequest request) {
         Element element = getById(id);
 
         element.setNameJson(request.nameJson());

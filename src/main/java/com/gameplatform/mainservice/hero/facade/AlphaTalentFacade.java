@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.facade;
 
-import com.gameplatform.mainservice.hero.dto.request.AlphaTalentCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.AlphaTalentResponse;
 import com.gameplatform.mainservice.hero.converter.AlphaTalentResponseConverter;
 import com.gameplatform.mainservice.hero.service.AlphaTalentService;
@@ -25,11 +24,11 @@ public class AlphaTalentFacade {
         return converter.toResponse(service.getById(id));
     }
 
-    public AlphaTalentResponse create(AlphaTalentCreateRequest request) {
+    public AlphaTalentResponse create(AlphaTalentUpsertRequest request) {
         return converter.toResponse(service.create(request));
     }
 
-    public AlphaTalentResponse update(Long id, AlphaTalentUpdateRequest request) {
+    public AlphaTalentResponse update(Long id, AlphaTalentUpsertRequest request) {
         return converter.toResponse(service.update(id, request));
     }
 

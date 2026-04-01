@@ -1,8 +1,7 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.AlphaTalent;
-import com.gameplatform.mainservice.hero.dto.request.AlphaTalentCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.AlphaTalentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class AlphaTalentService {
                 .orElseThrow(() -> new EntityNotFoundException("AlphaTalent not found: " + id));
     }
 
-    public AlphaTalent create(AlphaTalentCreateRequest request) {
+    public AlphaTalent create(AlphaTalentUpsertRequest request) {
         AlphaTalent entity = AlphaTalent.builder()
                 .nameJson(request.nameJson())
                 .descriptionJson(request.descriptionJson())
@@ -34,7 +33,7 @@ public class AlphaTalentService {
         return repository.save(entity);
     }
 
-    public AlphaTalent update(Long id, AlphaTalentUpdateRequest request) {
+    public AlphaTalent update(Long id, AlphaTalentUpsertRequest request) {
         AlphaTalent entity = getById(id);
 
         entity.setNameJson(request.nameJson());

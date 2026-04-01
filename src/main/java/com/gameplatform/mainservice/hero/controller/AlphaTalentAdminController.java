@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.AlphaTalentCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.AlphaTalentResponse;
 import com.gameplatform.mainservice.hero.facade.AlphaTalentFacade;
 import jakarta.validation.Valid;
@@ -31,7 +30,7 @@ public class AlphaTalentAdminController {
     }
 
     @PostMapping
-    public ResponseEntity<AlphaTalentResponse> create(@RequestBody @Valid AlphaTalentCreateRequest request) {
+    public ResponseEntity<AlphaTalentResponse> create(@RequestBody @Valid AlphaTalentUpsertRequest request) {
         AlphaTalentResponse response = facade.create(request);
 
         URI location = ServletUriComponentsBuilder
@@ -46,7 +45,7 @@ public class AlphaTalentAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<AlphaTalentResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid AlphaTalentUpdateRequest request
+            @RequestBody @Valid AlphaTalentUpsertRequest request
     ) {
         return ResponseEntity.ok(facade.update(id, request));
     }

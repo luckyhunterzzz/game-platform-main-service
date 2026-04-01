@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.HeroCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.HeroUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
 import com.gameplatform.mainservice.hero.facade.HeroFacade;
 import jakarta.validation.Valid;
@@ -31,7 +30,7 @@ public class HeroAdminController {
     }
 
     @PostMapping
-    public ResponseEntity<HeroResponse> create(@RequestBody @Valid HeroCreateRequest request) {
+    public ResponseEntity<HeroResponse> create(@RequestBody @Valid HeroUpsertRequest request) {
         HeroResponse response = heroFacade.create(request);
 
         URI location = ServletUriComponentsBuilder
@@ -46,7 +45,7 @@ public class HeroAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<HeroResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid HeroUpdateRequest request
+            @RequestBody @Valid HeroUpsertRequest request
     ) {
         return ResponseEntity.ok(heroFacade.update(id, request));
     }

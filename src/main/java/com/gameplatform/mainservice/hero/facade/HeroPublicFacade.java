@@ -14,11 +14,11 @@ public class HeroPublicFacade {
 
     private final HeroPublicService heroPublicService;
 
-    public List<HeroSimpleNameResponse> getNames(HeroLanguage language) {
+    public List<HeroLookupResponse> getNames(HeroLanguage language) {
         return heroPublicService.getNames(language);
     }
 
-    public List<HeroSearchResponse> search(String query, int limit, HeroLanguage language) {
+    public List<HeroLookupResponse> search(String query, int limit, HeroLanguage language) {
         return heroPublicService.search(query, limit, language);
     }
 

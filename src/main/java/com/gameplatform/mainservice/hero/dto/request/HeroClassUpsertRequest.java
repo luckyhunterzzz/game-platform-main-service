@@ -4,7 +4,7 @@ import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
-public record HeroClassUpdateRequest(
+public record HeroClassUpsertRequest(
         @NotNull
         @Valid
         LocalizedTextJson nameJson,

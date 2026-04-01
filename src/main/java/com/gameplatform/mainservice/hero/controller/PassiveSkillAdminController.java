@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.PassiveSkillCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.ManaSpeedResponse;
 import com.gameplatform.mainservice.hero.dto.response.PassiveSkillResponse;
 import com.gameplatform.mainservice.hero.facade.PassiveSkillFacade;
@@ -32,7 +31,7 @@ public class PassiveSkillAdminController {
     }
 
     @PostMapping
-    public ResponseEntity<PassiveSkillResponse> create(@RequestBody @Valid PassiveSkillCreateRequest request) {
+    public ResponseEntity<PassiveSkillResponse> create(@RequestBody @Valid PassiveSkillUpsertRequest request) {
         PassiveSkillResponse response = facade.create(request);
 
         URI location = ServletUriComponentsBuilder
@@ -47,7 +46,7 @@ public class PassiveSkillAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<PassiveSkillResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid PassiveSkillUpdateRequest request
+            @RequestBody @Valid PassiveSkillUpsertRequest request
     ) {
         return ResponseEntity.ok(facade.update(id, request));
     }

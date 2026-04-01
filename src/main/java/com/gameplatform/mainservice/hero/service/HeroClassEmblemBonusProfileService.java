@@ -2,8 +2,7 @@ package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.HeroClassEmblemBonusProfile;
 import com.gameplatform.mainservice.hero.domain.enums.EmblemPathType;
-import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,7 @@ public class HeroClassEmblemBonusProfileService {
                 .orElseThrow(() -> new EntityNotFoundException("Profile not found: " + id));
     }
 
-    public HeroClassEmblemBonusProfile create(HeroClassEmblemBonusProfileCreateRequest request) {
+    public HeroClassEmblemBonusProfile create(HeroClassEmblemBonusProfileUpsertRequest request) {
 
         repository.findByHeroClassIdAndPathType(request.heroClassId(), request.pathType())
                 .ifPresent(p -> {
@@ -44,7 +43,7 @@ public class HeroClassEmblemBonusProfileService {
         return repository.save(entity);
     }
 
-    public HeroClassEmblemBonusProfile update(Long id, HeroClassEmblemBonusProfileUpdateRequest request) {
+    public HeroClassEmblemBonusProfile update(Long id, HeroClassEmblemBonusProfileUpsertRequest request) {
         HeroClassEmblemBonusProfile entity = getById(id);
 
         repository.findByHeroClassIdAndPathType(request.heroClassId(), request.pathType())

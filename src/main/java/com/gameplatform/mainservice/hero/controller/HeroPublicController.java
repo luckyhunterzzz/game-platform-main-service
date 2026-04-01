@@ -17,14 +17,14 @@ public class HeroPublicController {
     private final HeroPublicFacade heroPublicFacade;
 
     @GetMapping("/names")
-    public ResponseEntity<List<HeroSimpleNameResponse>> getNames(
+    public ResponseEntity<List<HeroLookupResponse>> getNames(
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
         return ResponseEntity.ok(heroPublicFacade.getNames(language));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<HeroSearchResponse>> search(
+    public ResponseEntity<List<HeroLookupResponse>> search(
             @RequestParam String query,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "RU") HeroLanguage language

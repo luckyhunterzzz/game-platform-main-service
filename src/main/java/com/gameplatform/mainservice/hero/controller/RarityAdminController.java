@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.RarityCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.RarityUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.PassiveSkillResponse;
 import com.gameplatform.mainservice.hero.dto.response.RarityResponse;
 import com.gameplatform.mainservice.hero.facade.RarityFacade;
@@ -32,7 +31,7 @@ public class RarityAdminController {
     }
 
     @PostMapping
-    public ResponseEntity<RarityResponse> create(@RequestBody @Valid RarityCreateRequest request) {
+    public ResponseEntity<RarityResponse> create(@RequestBody @Valid RarityUpsertRequest request) {
         RarityResponse response = facade.create(request);
 
         URI location = ServletUriComponentsBuilder
@@ -47,7 +46,7 @@ public class RarityAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<RarityResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid RarityUpdateRequest request
+            @RequestBody @Valid RarityUpsertRequest request
     ) {
         return ResponseEntity.ok(facade.update(id, request));
     }

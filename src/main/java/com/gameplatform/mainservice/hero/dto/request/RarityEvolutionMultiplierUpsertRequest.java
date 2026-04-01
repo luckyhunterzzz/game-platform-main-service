@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
-public record RarityEvolutionMultiplierCreateRequest(
+public record RarityEvolutionMultiplierUpsertRequest(
 
         @NotNull
         Long rarityId,
@@ -21,4 +21,5 @@ public record RarityEvolutionMultiplierCreateRequest(
 
         @NotNull
         BigDecimal hpMultiplier
-) {}
+) {
+}

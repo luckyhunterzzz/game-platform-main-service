@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.facade;
 
-import com.gameplatform.mainservice.hero.dto.request.FamilyCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.FamilyUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.FamilyResponse;
 import com.gameplatform.mainservice.hero.converter.FamilyResponseConverter;
 import com.gameplatform.mainservice.hero.service.FamilyService;
@@ -25,11 +24,11 @@ public class FamilyFacade {
         return familyResponseConverter.toResponse(familyService.getById(id));
     }
 
-    public FamilyResponse create(FamilyCreateRequest request) {
+    public FamilyResponse create(FamilyUpsertRequest request) {
         return familyResponseConverter.toResponse(familyService.create(request));
     }
 
-    public FamilyResponse update(Long id, FamilyUpdateRequest request) {
+    public FamilyResponse update(Long id, FamilyUpsertRequest request) {
         return familyResponseConverter.toResponse(familyService.update(id, request));
     }
 

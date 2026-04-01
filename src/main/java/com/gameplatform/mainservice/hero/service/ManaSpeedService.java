@@ -1,8 +1,7 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.ManaSpeed;
-import com.gameplatform.mainservice.hero.dto.request.ManaSpeedCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.ManaSpeedRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class ManaSpeedService {
                 .orElseThrow(() -> new EntityNotFoundException("ManaSpeed not found: " + id));
     }
 
-    public ManaSpeed create(ManaSpeedCreateRequest request) {
+    public ManaSpeed create(ManaSpeedUpsertRequest request) {
         ManaSpeed entity = ManaSpeed.builder()
                 .nameJson(request.nameJson())
                 .descriptionJson(request.descriptionJson())
@@ -34,7 +33,7 @@ public class ManaSpeedService {
         return manaSpeedRepository.save(entity);
     }
 
-    public ManaSpeed update(Long id, ManaSpeedUpdateRequest request) {
+    public ManaSpeed update(Long id, ManaSpeedUpsertRequest request) {
         ManaSpeed entity = getById(id);
 
         entity.setNameJson(request.nameJson());

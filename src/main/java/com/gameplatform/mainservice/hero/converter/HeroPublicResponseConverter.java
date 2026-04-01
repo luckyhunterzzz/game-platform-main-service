@@ -1,10 +1,12 @@
 package com.gameplatform.mainservice.hero.converter;
 
 import com.gameplatform.mainservice.hero.domain.entity.*;
-import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.response.*;
+import com.gameplatform.mainservice.hero.repository.projection.HeroCardProjection;
+import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
+import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,9 +19,9 @@ public class HeroPublicResponseConverter {
 
     private final MediaUrlResolver mediaUrlResolver;
 
-    public List<HeroSimpleNameResponse> toSimpleNameList(List<HeroSearchProjection> projections) {
+    public List<HeroLookupResponse> toLookupResponses(List<HeroSearchProjection> projections) {
         return projections.stream()
-                .map(p -> new HeroSimpleNameResponse(
+                .map(p -> new HeroLookupResponse(
                         p.getId(),
                         p.getSlug(),
                         p.getName()
@@ -27,40 +29,19 @@ public class HeroPublicResponseConverter {
                 .toList();
     }
 
-    public List<HeroSearchResponse> toSearchResponses(List<HeroSearchProjection> projections) {
-        return projections.stream()
-                .map(p -> new HeroSearchResponse(
-                        p.getId(),
-                        p.getSlug(),
-                        p.getName()
-                ))
-                .toList();
-    }
-
-    public HeroCardResponse toCardResponse(
-            Hero hero,
-            Element element,
-            Rarity rarity,
-            HeroClass heroClass,
-            Family family,
-            ManaSpeed manaSpeed,
-            AlphaTalent alphaTalent,
-            HeroLanguage language
-    ) {
-        String locale = language.getJsonKey();
-
+    public HeroCardResponse toCardResponse(HeroCardProjection hero) {
         return new HeroCardResponse(
                 hero.getId(),
                 hero.getSlug(),
-                getLocalized(hero.getNameJson(), locale),
+                hero.getName(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
-                getLocalized(element.getNameJson(), locale),
-                getLocalized(rarity.getNameJson(), locale),
-                rarity.getStars(),
-                getLocalized(heroClass.getNameJson(), locale),
-                getLocalized(manaSpeed.getNameJson(), locale),
-                family != null ? getLocalized(family.getNameJson(), locale) : null,
-                alphaTalent != null ? getLocalized(alphaTalent.getNameJson(), locale) : null,
+                hero.getElementName(),
+                hero.getRarityName(),
+                hero.getRarityStars(),
+                hero.getHeroClassName(),
+                hero.getManaSpeedName(),
+                hero.getFamilyName(),
+                hero.getAlphaTalentName(),
                 hero.getBaseAttack(),
                 hero.getBaseArmor(),
                 hero.getBaseHp()
@@ -68,56 +49,48 @@ public class HeroPublicResponseConverter {
     }
 
     public HeroDetailsResponse toDetailsResponse(
-            Hero hero,
-            Element element,
-            Rarity rarity,
-            HeroClass heroClass,
-            Family family,
-            ManaSpeed manaSpeed,
-            AlphaTalent alphaTalent,
+            HeroDetailsProjection hero,
             List<PassiveSkill> passiveSkills,
             List<Hero> costumes,
-            HeroLanguage language
+            String locale
     ) {
-        String locale = language.getJsonKey();
-
         return new HeroDetailsResponse(
                 hero.getId(),
                 hero.getSlug(),
-                getLocalized(hero.getNameJson(), locale),
+                hero.getName(),
 
                 new SimpleReferenceResponse(
-                        element.getId(),
-                        getLocalized(element.getNameJson(), locale)
+                        hero.getElementId(),
+                        hero.getElementName()
                 ),
                 new HeroRarityResponse(
-                        rarity.getId(),
-                        rarity.getStars()
+                        hero.getRarityId(),
+                        hero.getRarityStars()
                 ),
                 new SimpleReferenceResponse(
-                        heroClass.getId(),
-                        getLocalized(heroClass.getNameJson(), locale)
+                        hero.getHeroClassId(),
+                        hero.getHeroClassName()
                 ),
-                family != null
+                hero.getFamilyId() != null
                         ? new SimpleReferenceResponse(
-                        family.getId(),
-                        getLocalized(family.getNameJson(), locale)
+                        hero.getFamilyId(),
+                        hero.getFamilyName()
                 )
                         : null,
                 new SimpleReferenceResponse(
-                        manaSpeed.getId(),
-                        getLocalized(manaSpeed.getNameJson(), locale)
+                        hero.getManaSpeedId(),
+                        hero.getManaSpeedName()
                 ),
-                alphaTalent != null
+                hero.getAlphaTalentId() != null
                         ? new SimpleReferenceResponse(
-                        alphaTalent.getId(),
-                        getLocalized(alphaTalent.getNameJson(), locale)
+                        hero.getAlphaTalentId(),
+                        hero.getAlphaTalentName()
                 )
                         : null,
 
                 new SpecialSkillResponse(
-                        getLocalized(hero.getSpecialSkillNameJson(), locale),
-                        getLocalized(hero.getSpecialSkillDescriptionJson(), locale)
+                        hero.getSpecialSkillName(),
+                        hero.getSpecialSkillDescription()
                 ),
 
                 passiveSkills.stream()
@@ -143,22 +116,15 @@ public class HeroPublicResponseConverter {
         );
     }
 
-    public HeroVariantSummaryResponse toVariantSummary(
-            Hero hero,
-            Element element,
-            Rarity rarity,
-            HeroLanguage language) {
-
-        String locale = language.getJsonKey();
-
+    public HeroVariantSummaryResponse toVariantSummary(HeroVariantSummaryProjection hero) {
         return new HeroVariantSummaryResponse(
                 hero.getId(),
                 hero.getSlug(),
-                getLocalized(hero.getNameJson(), locale),
+                hero.getName(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
-                getLocalized(element.getNameJson(), locale),
-                getLocalized(rarity.getNameJson(), locale),
-                rarity.getStars()
+                hero.getElementName(),
+                hero.getRarityName(),
+                hero.getRarityStars()
         );
     }
 

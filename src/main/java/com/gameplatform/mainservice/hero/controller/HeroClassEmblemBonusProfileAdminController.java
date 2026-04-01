@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
 import com.gameplatform.mainservice.hero.facade.HeroClassEmblemBonusProfileFacade;
@@ -33,7 +32,7 @@ public class HeroClassEmblemBonusProfileAdminController {
 
     @PostMapping
     public ResponseEntity<HeroClassEmblemBonusProfileResponse> create(
-            @RequestBody @Valid HeroClassEmblemBonusProfileCreateRequest request
+            @RequestBody @Valid HeroClassEmblemBonusProfileUpsertRequest request
     ) {
         HeroClassEmblemBonusProfileResponse response = facade.create(request);
 
@@ -49,7 +48,7 @@ public class HeroClassEmblemBonusProfileAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<HeroClassEmblemBonusProfileResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid HeroClassEmblemBonusProfileUpdateRequest request
+            @RequestBody @Valid HeroClassEmblemBonusProfileUpsertRequest request
     ) {
         return ResponseEntity.ok(facade.update(id, request));
     }
