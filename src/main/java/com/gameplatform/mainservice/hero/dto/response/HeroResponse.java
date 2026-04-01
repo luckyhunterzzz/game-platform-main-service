@@ -25,6 +25,7 @@ public record HeroResponse(
         Long alphaTalentId,
         String imageBucket,
         String imageObjectKey,
+        String imageUrl,
         Boolean isCostume,
         Long baseHeroId,
         CostumeBonusJson costumeBonusJson,

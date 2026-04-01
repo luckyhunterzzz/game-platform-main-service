@@ -16,12 +16,27 @@ public class AdminMediaController {
     private final MediaStorageService mediaStorageService;
 
     @PostMapping(
-            value = "/images",
+            value = {"/images", "/images/publications"},
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ImageUploadResponse uploadImage(@RequestPart("file") MultipartFile file) {
+    public ImageUploadResponse uploadPublicationImage(@RequestPart("file") MultipartFile file) {
 
-        StoredImage storedImage = mediaStorageService.uploadImage(file);
+        StoredImage storedImage = mediaStorageService.uploadPublicationImage(file);
+ 
+        return new ImageUploadResponse(
+                storedImage.bucket(),
+                storedImage.objectKey(),
+                storedImage.url()
+        );
+    }
+
+    @PostMapping(
+            value = "/images/heroes",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ImageUploadResponse uploadHeroImage(@RequestPart("file") MultipartFile file) {
+
+        StoredImage storedImage = mediaStorageService.uploadHeroImage(file);
 
         return new ImageUploadResponse(
                 storedImage.bucket(),

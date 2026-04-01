@@ -38,13 +38,13 @@ public class Hero {
     @Column(name = "special_skill_description_json", nullable = false, columnDefinition = "jsonb")
     private LocalizedTextJson specialSkillDescriptionJson;
 
-    @Column(name = "base_attack", nullable = false)
+    @Column(name = "base_attack")
     private Integer baseAttack;
 
-    @Column(name = "base_armor", nullable = false)
+    @Column(name = "base_armor")
     private Integer baseArmor ;
 
-    @Column(name = "base_hp", nullable = false)
+    @Column(name = "base_hp")
     private Integer baseHp;
 
     @Column(name = "element_id", nullable = false)
