@@ -6,12 +6,14 @@ import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.repository.*;
+import com.gameplatform.mainservice.hero.repository.projection.HeroCardProjection;
+import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
+import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -24,12 +26,6 @@ public class HeroPublicService {
     private final HeroRepository heroRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
     private final PassiveSkillRepository passiveSkillRepository;
-    private final ElementRepository elementRepository;
-    private final RarityRepository rarityRepository;
-    private final HeroClassRepository heroClassRepository;
-    private final FamilyRepository familyRepository;
-    private final ManaSpeedRepository manaSpeedRepository;
-    private final AlphaTalentRepository alphaTalentRepository;
 
     private final HeroPublicResponseConverter converter;
 
@@ -37,53 +33,15 @@ public class HeroPublicService {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size, 1), 50);
 
-        PageRequest pageable = PageRequest.of(
-                normalizedPage,
-                normalizedSize,
-                Sort.by(
-                        Sort.Order.asc("nameJson"),
-                        Sort.Order.asc("id")
-                )
-        );
+        PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize);
 
-        Page<Hero> heroPage = heroRepository.findAllByStatusAndIsCostumeFalse(
-                HeroStatus.READY,
+        Page<HeroCardProjection> heroPage = heroRepository.findReadyBaseHeroCards(
+                language.getJsonKey(),
                 pageable
         );
 
         List<HeroCardResponse> items = heroPage.getContent().stream()
-                .map(hero -> {
-                    Element element = elementRepository.findById(hero.getElementId())
-                            .orElseThrow(() -> new EntityNotFoundException("Element not found: " + hero.getElementId()));
-
-                    Rarity rarity = rarityRepository.findById(hero.getRarityId())
-                            .orElseThrow(() -> new EntityNotFoundException("Rarity not found: " + hero.getRarityId()));
-
-                    HeroClass heroClass = heroClassRepository.findById(hero.getHeroClassId())
-                            .orElseThrow(() -> new EntityNotFoundException("HeroClass not found: " + hero.getHeroClassId()));
-
-                    ManaSpeed manaSpeed = manaSpeedRepository.findById(hero.getManaSpeedId())
-                            .orElseThrow(() -> new EntityNotFoundException("ManaSpeed not found: " + hero.getManaSpeedId()));
-
-                    Family family = hero.getFamilyId() != null
-                            ? familyRepository.findById(hero.getFamilyId()).orElse(null)
-                            : null;
-
-                    AlphaTalent alphaTalent = hero.getAlphaTalentId() != null
-                            ? alphaTalentRepository.findById(hero.getAlphaTalentId()).orElse(null)
-                            : null;
-
-                    return converter.toCardResponse(
-                            hero,
-                            element,
-                            rarity,
-                            heroClass,
-                            family,
-                            manaSpeed,
-                            alphaTalent,
-                            language
-                    );
-                })
+                .map(converter::toCardResponse)
                 .toList();
 
         return new HeroPageResponse(
@@ -96,14 +54,14 @@ public class HeroPublicService {
         );
     }
 
-    public List<HeroSimpleNameResponse> getNames(HeroLanguage language) {
+    public List<HeroLookupResponse> getNames(HeroLanguage language) {
         String locale = language.getJsonKey();
-        return converter.toSimpleNameList(
+        return converter.toLookupResponses(
                 heroRepository.findAllReadyBaseHeroNames(locale)
         );
     }
 
-    public List<HeroSearchResponse> search(String query, int limit, HeroLanguage language) {
+    public List<HeroLookupResponse> search(String query, int limit, HeroLanguage language) {
         if (!StringUtils.hasText(query)) {
             return List.of();
         }
@@ -121,148 +79,86 @@ public class HeroPublicService {
                 normalizedLimit
         );
 
-        return converter.toSearchResponses(results);
+        return converter.toLookupResponses(results);
     }
 
     public HeroDetailsResponse getDetails(String slug, HeroLanguage language) {
-        Hero hero = heroRepository.findBySlugAndStatusAndIsCostumeFalse(slug, HeroStatus.READY)
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found with slug: " + slug));
-
-        List<HeroPassiveSkill> passiveLinks = heroPassiveSkillRepository.findAllByIdHeroId(hero.getId());
-        List<Long> passiveIds = passiveLinks.stream()
-                .map(link -> link.getId().getPassiveSkillId())
-                .toList();
-
-        List<PassiveSkill> passiveSkills = passiveIds.isEmpty()
-                ? List.of()
-                : passiveSkillRepository.findAllByIdIn(passiveIds);
-
-        List<Hero> costumes = heroRepository.findAllByBaseHeroIdAndStatus(hero.getId(), HeroStatus.READY);
-
-        Element element = elementRepository.findById(hero.getElementId())
-                .orElseThrow(() -> new EntityNotFoundException("Element not found"));
-
-        Rarity rarity = rarityRepository.findById(hero.getRarityId())
-                .orElseThrow(() -> new EntityNotFoundException("Rarity not found"));
-
-        HeroClass heroClass = heroClassRepository.findById(hero.getHeroClassId())
-                .orElseThrow(() -> new EntityNotFoundException("HeroClass not found"));
-
-        ManaSpeed manaSpeed = manaSpeedRepository.findById(hero.getManaSpeedId())
-                .orElseThrow(() -> new EntityNotFoundException("ManaSpeed not found"));
-
-        Family family = hero.getFamilyId() != null
-                ? familyRepository.findById(hero.getFamilyId()).orElse(null)
-                : null;
-
-        AlphaTalent alphaTalent = hero.getAlphaTalentId() != null
-                ? alphaTalentRepository.findById(hero.getAlphaTalentId()).orElse(null)
-                : null;
-
-        return converter.toDetailsResponse(
-                hero,
-                element,
-                rarity,
-                heroClass,
-                family,
-                manaSpeed,
-                alphaTalent,
-                passiveSkills,
-                costumes,
-                language
-        );
+        HeroDetailsProjection currentHero = findCurrentBaseHero(slug, language);
+        return buildHeroDetails(currentHero, language.getJsonKey());
     }
 
     public HeroVariantsResponse getVariants(String slug, HeroLanguage language) {
-        Hero currentHero = heroRepository.findBySlugAndStatus(slug, HeroStatus.READY).orElseThrow(() -> new EntityNotFoundException("Hero not found with slug: " + slug));
-        Hero baseHero = resolveBaseHero(currentHero);
-
-        HeroDetailsResponse currentHeroDetails = buildHeroDetails(currentHero, language);
-
-        HeroVariantSummaryResponse baseHeroSummary = toVariantSummary(baseHero, language);
-
-        List<HeroVariantSummaryResponse> costumes = heroRepository
-                .findAllByBaseHeroIdAndStatusOrderByIdAsc(baseHero.getId(), HeroStatus.READY)
-                .stream()
-                .map(costume -> toVariantSummary(costume, language))
-                .toList();
+        HeroDetailsProjection currentHero = findCurrentHero(slug, language);
+        HeroVariantSummaryProjection baseHero = findBaseHero(currentHero, language);
+        HeroDetailsResponse currentHeroDetails = buildHeroDetails(currentHero, language.getJsonKey());
 
         return new HeroVariantsResponse(
                 currentHeroDetails,
-                baseHeroSummary,
-                costumes
+                converter.toVariantSummary(baseHero),
+                buildVariantCostumes(baseHero.getId(), language)
         );
     }
 
-    private HeroDetailsResponse buildHeroDetails(Hero hero, HeroLanguage language) {
-        List<HeroPassiveSkill> passiveLinks = heroPassiveSkillRepository.findAllByIdHeroId(hero.getId());
-        List<Long> passiveIds = passiveLinks.stream()
-                .map(link -> link.getId().getPassiveSkillId())
-                .toList();
-
-        List<PassiveSkill> passiveSkills = passiveIds.isEmpty()
-                ? List.of()
-                : passiveSkillRepository.findAllByIdIn(passiveIds);
-
-        Long variantsRootId = hero.isCostume() ? hero.getBaseHeroId() : hero.getId();
-
-        List<Hero> costumes = variantsRootId == null
-                ? List.of()
-                : heroRepository.findAllByBaseHeroIdAndStatus(variantsRootId, HeroStatus.READY);
-
-        Element element = elementRepository.findById(hero.getElementId())
-                .orElseThrow(() -> new EntityNotFoundException("Element not found"));
-
-        Rarity rarity = rarityRepository.findById(hero.getRarityId())
-                .orElseThrow(() -> new EntityNotFoundException("Rarity not found"));
-
-        HeroClass heroClass = heroClassRepository.findById(hero.getHeroClassId())
-                .orElseThrow(() -> new EntityNotFoundException("HeroClass not found"));
-
-        ManaSpeed manaSpeed = manaSpeedRepository.findById(hero.getManaSpeedId())
-                .orElseThrow(() -> new EntityNotFoundException("ManaSpeed not found"));
-
-        Family family = hero.getFamilyId() != null
-                ? familyRepository.findById(hero.getFamilyId()).orElse(null)
-                : null;
-
-        AlphaTalent alphaTalent = hero.getAlphaTalentId() != null
-                ? alphaTalentRepository.findById(hero.getAlphaTalentId()).orElse(null)
-                : null;
+    private HeroDetailsResponse buildHeroDetails(HeroDetailsProjection hero, String locale) {
+        List<PassiveSkill> passiveSkills = findPassiveSkills(hero.getId());
+        List<Hero> costumes = findCostumes(hero);
 
         return converter.toDetailsResponse(
                 hero,
-                element,
-                rarity,
-                heroClass,
-                family,
-                manaSpeed,
-                alphaTalent,
                 passiveSkills,
                 costumes,
-                language
+                locale
         );
     }
 
-    private HeroVariantSummaryResponse toVariantSummary(Hero hero, HeroLanguage language) {
-        Element element = elementRepository.findById(hero.getElementId())
-                .orElseThrow(() -> new EntityNotFoundException("Element not found: " + hero.getElementId()));
-
-        Rarity rarity = rarityRepository.findById(hero.getRarityId())
-                .orElseThrow(() -> new EntityNotFoundException("Rarity not found: " + hero.getRarityId()));
-
-        return converter.toVariantSummary(hero, element, rarity, language);
+    private HeroDetailsProjection findCurrentBaseHero(String slug, HeroLanguage language) {
+        return heroRepository.findReadyBaseHeroDetailsBySlug(slug, language.getJsonKey())
+                .orElseThrow(() -> new EntityNotFoundException("Hero not found with slug: " + slug));
     }
 
-    private Hero resolveBaseHero(Hero hero) {
-        if (!hero.isCostume()) {
-            return hero;
+    private HeroDetailsProjection findCurrentHero(String slug, HeroLanguage language) {
+        return heroRepository.findReadyHeroDetailsBySlug(slug, language.getJsonKey())
+                .orElseThrow(() -> new EntityNotFoundException("Hero not found with slug: " + slug));
+    }
+
+    private HeroVariantSummaryProjection findBaseHero(HeroDetailsProjection hero, HeroLanguage language) {
+        if (!Boolean.TRUE.equals(hero.getIsCostume())) {
+            return heroRepository.findReadyHeroVariantSummaryById(hero.getId(), language.getJsonKey())
+                    .orElseThrow(() -> new EntityNotFoundException("Hero not found with id: " + hero.getId()));
         }
 
         Long baseHeroId = hero.getBaseHeroId();
         if (baseHeroId == null) {
             throw new EntityNotFoundException("Hero not found with baseHeroId: " + baseHeroId);
         }
-        return heroRepository.findByIdAndStatus(baseHeroId, HeroStatus.READY).orElseThrow(() -> new EntityNotFoundException("Hero not found with baseHeroId: " + baseHeroId));
+        return heroRepository.findReadyHeroVariantSummaryById(baseHeroId, language.getJsonKey())
+                .orElseThrow(() -> new EntityNotFoundException("Hero not found with baseHeroId: " + baseHeroId));
+    }
+
+    private List<PassiveSkill> findPassiveSkills(Long heroId) {
+        List<Long> passiveIds = heroPassiveSkillRepository.findAllByIdHeroId(heroId).stream()
+                .map(link -> link.getId().getPassiveSkillId())
+                .toList();
+
+        return passiveIds.isEmpty()
+                ? List.of()
+                : passiveSkillRepository.findAllByIdIn(passiveIds);
+    }
+
+    private List<Hero> findCostumes(HeroDetailsProjection hero) {
+        Long variantsRootId = Boolean.TRUE.equals(hero.getIsCostume())
+                ? hero.getBaseHeroId()
+                : hero.getId();
+
+        return variantsRootId == null
+                ? List.of()
+                : heroRepository.findAllByBaseHeroIdAndStatus(variantsRootId, HeroStatus.READY);
+    }
+
+    private List<HeroVariantSummaryResponse> buildVariantCostumes(Long baseHeroId, HeroLanguage language) {
+        return heroRepository.findReadyHeroVariantSummariesByBaseHeroId(baseHeroId, language.getJsonKey())
+                .stream()
+                .map(converter::toVariantSummary)
+                .toList();
     }
 }

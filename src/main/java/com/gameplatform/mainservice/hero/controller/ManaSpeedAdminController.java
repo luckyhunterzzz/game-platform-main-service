@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.ManaSpeedCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
 import com.gameplatform.mainservice.hero.dto.response.ManaSpeedResponse;
 import com.gameplatform.mainservice.hero.facade.ManaSpeedFacade;
@@ -32,7 +31,7 @@ public class ManaSpeedAdminController {
     }
 
     @PostMapping
-    public ResponseEntity<ManaSpeedResponse> create(@RequestBody @Valid ManaSpeedCreateRequest request) {
+    public ResponseEntity<ManaSpeedResponse> create(@RequestBody @Valid ManaSpeedUpsertRequest request) {
         ManaSpeedResponse response = facade.create(request);
 
         URI location = ServletUriComponentsBuilder
@@ -47,7 +46,7 @@ public class ManaSpeedAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<ManaSpeedResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid ManaSpeedUpdateRequest request
+            @RequestBody @Valid ManaSpeedUpsertRequest request
     ) {
         return ResponseEntity.ok(facade.update(id, request));
     }

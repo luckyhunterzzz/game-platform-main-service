@@ -4,10 +4,12 @@ import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
-public record ManaSpeedUpdateRequest(
+public record RarityUpsertRequest(
         @NotNull
         @Valid
         LocalizedTextJson nameJson,
 
-        LocalizedTextJson descriptionJson
-) {}
+        @NotNull
+        Integer stars
+) {
+}

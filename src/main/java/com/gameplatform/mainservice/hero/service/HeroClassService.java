@@ -1,8 +1,7 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.HeroClass;
-import com.gameplatform.mainservice.hero.dto.request.HeroClassCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.HeroClassUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.HeroClassUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class HeroClassService {
                 .orElseThrow(() -> new EntityNotFoundException("HeroClass not found: " + id));
     }
 
-    public HeroClass create(HeroClassCreateRequest request) {
+    public HeroClass create(HeroClassUpsertRequest request) {
         HeroClass entity = HeroClass.builder()
                 .nameJson(request.nameJson())
                 .baseNameJson(request.baseNameJson())
@@ -37,7 +36,7 @@ public class HeroClassService {
         return repository.save(entity);
     }
 
-    public HeroClass update(Long id, HeroClassUpdateRequest request) {
+    public HeroClass update(Long id, HeroClassUpsertRequest request) {
         HeroClass entity = getById(id);
 
         entity.setNameJson(request.nameJson());

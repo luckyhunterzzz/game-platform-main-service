@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.HeroClassCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.HeroClassUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.HeroClassUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.FamilyResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
 import com.gameplatform.mainservice.hero.facade.HeroClassFacade;
@@ -32,7 +31,7 @@ public class HeroClassAdminController {
     }
 
     @PostMapping
-    public ResponseEntity<HeroClassResponse> create(@RequestBody @Valid HeroClassCreateRequest request) {
+    public ResponseEntity<HeroClassResponse> create(@RequestBody @Valid HeroClassUpsertRequest request) {
         HeroClassResponse response = facade.create(request);
 
         URI location = ServletUriComponentsBuilder
@@ -47,7 +46,7 @@ public class HeroClassAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<HeroClassResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid HeroClassUpdateRequest request
+            @RequestBody @Valid HeroClassUpsertRequest request
     ) {
         return ResponseEntity.ok(facade.update(id, request));
     }

@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.facade;
 
-import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.RarityEvolutionMultiplierResponse;
 import com.gameplatform.mainservice.hero.converter.RarityEvolutionMultiplierResponseConverter;
 import com.gameplatform.mainservice.hero.service.RarityEvolutionMultiplierService;
@@ -25,11 +24,11 @@ public class RarityEvolutionMultiplierFacade {
         return converter.toResponse(service.getById(id));
     }
 
-    public RarityEvolutionMultiplierResponse create(RarityEvolutionMultiplierCreateRequest request) {
+    public RarityEvolutionMultiplierResponse create(RarityEvolutionMultiplierUpsertRequest request) {
         return converter.toResponse(service.create(request));
     }
 
-    public RarityEvolutionMultiplierResponse update(Long id, RarityEvolutionMultiplierUpdateRequest request) {
+    public RarityEvolutionMultiplierResponse update(Long id, RarityEvolutionMultiplierUpsertRequest request) {
         return converter.toResponse(service.update(id, request));
     }
 

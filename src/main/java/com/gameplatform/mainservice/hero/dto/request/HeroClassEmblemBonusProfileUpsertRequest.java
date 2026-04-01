@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.dto.request;
 import com.gameplatform.mainservice.hero.domain.enums.EmblemPathType;
 import jakarta.validation.constraints.NotNull;
 
-public record HeroClassEmblemBonusProfileCreateRequest(
+public record HeroClassEmblemBonusProfileUpsertRequest(
 
         @NotNull
         Long heroClassId,
@@ -19,4 +19,5 @@ public record HeroClassEmblemBonusProfileCreateRequest(
 
         @NotNull
         Integer hpBonus
-) {}
+) {
+}

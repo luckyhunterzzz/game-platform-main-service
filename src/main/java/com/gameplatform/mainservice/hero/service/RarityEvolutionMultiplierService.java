@@ -1,8 +1,7 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.RarityEvolutionMultiplier;
-import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.RarityEvolutionMultiplierRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class RarityEvolutionMultiplierService {
                 .orElseThrow(() -> new EntityNotFoundException("RarityEvolutionMultiplier not found: " + id));
     }
 
-    public RarityEvolutionMultiplier create(RarityEvolutionMultiplierCreateRequest request) {
+    public RarityEvolutionMultiplier create(RarityEvolutionMultiplierUpsertRequest request) {
         RarityEvolutionMultiplier entity = RarityEvolutionMultiplier.builder()
                 .rarityId(request.rarityId())
                 .stageCode(request.stageCode())
@@ -37,7 +36,7 @@ public class RarityEvolutionMultiplierService {
         return repository.save(entity);
     }
 
-    public RarityEvolutionMultiplier update(Long id, RarityEvolutionMultiplierUpdateRequest request) {
+    public RarityEvolutionMultiplier update(Long id, RarityEvolutionMultiplierUpsertRequest request) {
         RarityEvolutionMultiplier entity = getById(id);
 
         entity.setRarityId(request.rarityId());

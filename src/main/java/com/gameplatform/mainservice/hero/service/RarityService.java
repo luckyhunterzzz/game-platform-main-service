@@ -1,8 +1,7 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.Rarity;
-import com.gameplatform.mainservice.hero.dto.request.RarityCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.RarityUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class RarityService {
                 .orElseThrow(() -> new EntityNotFoundException("Rarity not found: " + id));
     }
 
-    public Rarity create(RarityCreateRequest request) {
+    public Rarity create(RarityUpsertRequest request) {
         Rarity rarity = Rarity.builder()
                 .nameJson(request.nameJson())
                 .stars(request.stars())
@@ -34,7 +33,7 @@ public class RarityService {
         return rarityRepository.save(rarity);
     }
 
-    public Rarity update(Long id, RarityUpdateRequest request) {
+    public Rarity update(Long id, RarityUpsertRequest request) {
         Rarity rarity = getById(id);
         rarity.setNameJson(request.nameJson());
         rarity.setStars(request.stars());

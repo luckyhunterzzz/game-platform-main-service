@@ -1,9 +1,8 @@
 package com.gameplatform.mainservice.hero.facade;
 
-import com.gameplatform.mainservice.hero.dto.request.HeroCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.HeroUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
-import com.gameplatform.mainservice.hero.service.HeroService;
+import com.gameplatform.mainservice.hero.service.HeroAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,23 +12,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HeroFacade {
 
-    private final HeroService heroService;
+    private final HeroAdminService heroService;
 
     public List<HeroResponse> getAll() {
-        return heroService.getAll().stream()
-                .map(heroService::buildResponse)
-                .toList();
+        return heroService.getAll();
     }
 
     public HeroResponse getById(Long id) {
-        return heroService.buildResponse(heroService.getById(id));
+        return heroService.getResponseById(id);
     }
 
-    public HeroResponse create(HeroCreateRequest request) {
+    public HeroResponse create(HeroUpsertRequest request) {
         return heroService.buildResponse(heroService.create(request));
     }
 
-    public HeroResponse update(Long id, HeroUpdateRequest request) {
+    public HeroResponse update(Long id, HeroUpsertRequest request) {
         return heroService.buildResponse(heroService.update(id, request));
     }
 

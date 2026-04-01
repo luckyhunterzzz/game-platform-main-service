@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.facade;
 
-import com.gameplatform.mainservice.hero.dto.request.HeroClassCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.HeroClassUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.HeroClassUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
 import com.gameplatform.mainservice.hero.converter.HeroClassResponseConverter;
 import com.gameplatform.mainservice.hero.service.HeroClassService;
@@ -25,11 +24,11 @@ public class HeroClassFacade {
         return converter.toResponse(service.getById(id));
     }
 
-    public HeroClassResponse create(HeroClassCreateRequest request) {
+    public HeroClassResponse create(HeroClassUpsertRequest request) {
         return converter.toResponse(service.create(request));
     }
 
-    public HeroClassResponse update(Long id, HeroClassUpdateRequest request) {
+    public HeroClassResponse update(Long id, HeroClassUpsertRequest request) {
         return converter.toResponse(service.update(id, request));
     }
 

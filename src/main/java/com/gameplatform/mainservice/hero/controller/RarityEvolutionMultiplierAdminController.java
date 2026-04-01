@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.RarityEvolutionMultiplierResponse;
 import com.gameplatform.mainservice.hero.dto.response.RarityResponse;
 import com.gameplatform.mainservice.hero.facade.RarityEvolutionMultiplierFacade;
@@ -33,7 +32,7 @@ public class RarityEvolutionMultiplierAdminController {
 
     @PostMapping
     public ResponseEntity<RarityEvolutionMultiplierResponse> create(
-            @RequestBody @Valid RarityEvolutionMultiplierCreateRequest request
+            @RequestBody @Valid RarityEvolutionMultiplierUpsertRequest request
     ) {
         RarityEvolutionMultiplierResponse response = facade.create(request);
 
@@ -49,7 +48,7 @@ public class RarityEvolutionMultiplierAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<RarityEvolutionMultiplierResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid RarityEvolutionMultiplierUpdateRequest request
+            @RequestBody @Valid RarityEvolutionMultiplierUpsertRequest request
     ) {
         return ResponseEntity.ok(facade.update(id, request));
     }

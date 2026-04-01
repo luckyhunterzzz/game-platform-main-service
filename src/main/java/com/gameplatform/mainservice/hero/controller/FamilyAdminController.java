@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
-import com.gameplatform.mainservice.hero.dto.request.FamilyCreateRequest;
-import com.gameplatform.mainservice.hero.dto.request.FamilyUpdateRequest;
+import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.ElementResponse;
 import com.gameplatform.mainservice.hero.dto.response.FamilyResponse;
 import com.gameplatform.mainservice.hero.facade.FamilyFacade;
@@ -32,7 +31,7 @@ public class FamilyAdminController {
     }
 
     @PostMapping
-    public ResponseEntity<FamilyResponse> create(@RequestBody @Valid FamilyCreateRequest request) {
+    public ResponseEntity<FamilyResponse> create(@RequestBody @Valid FamilyUpsertRequest request) {
         FamilyResponse response = facade.create(request);
 
         URI location = ServletUriComponentsBuilder
@@ -47,7 +46,7 @@ public class FamilyAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<FamilyResponse> update(
             @PathVariable Long id,
-            @RequestBody @Valid FamilyUpdateRequest request
+            @RequestBody @Valid FamilyUpsertRequest request
     ) {
         return ResponseEntity.ok(facade.update(id, request));
     }
