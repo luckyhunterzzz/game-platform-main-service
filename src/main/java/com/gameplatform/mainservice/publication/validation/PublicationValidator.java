@@ -1,16 +1,21 @@
 package com.gameplatform.mainservice.publication.validation;
 
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
+import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.publication.dto.request.CreatePublicationRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
 
 @Component
+@RequiredArgsConstructor
 public class PublicationValidator {
 
+    private final ImageReferenceValidator imageReferenceValidator;
+
     public void validateCreate(CreatePublicationRequest request, OffsetDateTime now) {
-        validateImageFields(request);
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
 
         switch(request.status()) {
             case DRAFT -> validateDraft(request);
@@ -38,15 +43,6 @@ public class PublicationValidator {
     private void validatePublished(CreatePublicationRequest request, OffsetDateTime now) {
         if (request.publishedAt() != null && request.publishedAt().isAfter(now)) {
             throw new BusinessValidationException("Future publishedAt requires SCHEDULED status");
-        }
-    }
-
-    private void validateImageFields(CreatePublicationRequest request) {
-        boolean bucketProvided = request.imageBucket() != null && !request.imageBucket().isBlank();
-        boolean objectProvided = request.imageObjectKey() != null && !request.imageObjectKey().isBlank();
-
-        if (bucketProvided != objectProvided) {
-            throw new BusinessValidationException("imageBucket and imageObjectKey must be provided together or both be null");
         }
     }
 }

@@ -78,9 +78,9 @@ CREATE TABLE heroes
     special_skill_name_json        JSONB                               NOT NULL,
     special_skill_description_json JSONB                               NOT NULL,
 
-    base_attack                    INTEGER                             NOT NULL,
-    base_armor                     INTEGER                             NOT NULL,
-    base_hp                        INTEGER                             NOT NULL,
+    base_attack                    INTEGER,
+    base_armor                     INTEGER,
+    base_hp                        INTEGER,
 
     element_id                     BIGINT REFERENCES elements (id)     NOT NULL,
     rarity_id                      BIGINT REFERENCES rarities (id)     NOT NULL,

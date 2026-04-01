@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkillId;
@@ -9,11 +10,13 @@ import com.gameplatform.mainservice.hero.dto.request.HeroUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
 import com.gameplatform.mainservice.hero.converter.HeroResponseConverter;
 import com.gameplatform.mainservice.hero.repository.*;
+import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -22,6 +25,8 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class HeroService {
+
+    private final Clock clock;
 
     private final HeroRepository heroRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
@@ -35,6 +40,7 @@ public class HeroService {
     private final PassiveSkillRepository passiveSkillRepository;
 
     private final HeroResponseConverter heroResponseConverter;
+    private final ImageReferenceValidator imageReferenceValidator;
 
     public List<Hero> getAll() {
         return heroRepository.findAll();
@@ -49,10 +55,10 @@ public class HeroService {
     public Hero create(HeroCreateRequest request) {
         validateCreateRequest(request);
 
-        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now(clock);
 
         Hero hero = Hero.builder()
-                .slug(request.slug())
+                .slug(normalizeSlug(request.slug()))
                 .nameJson(request.nameJson())
                 .specialSkillNameJson(request.specialSkillNameJson())
                 .specialSkillDescriptionJson(request.specialSkillDescriptionJson())
@@ -90,7 +96,7 @@ public class HeroService {
 
         validateUpdateRequest(id, request);
 
-        hero.setSlug(request.slug());
+        hero.setSlug(normalizeSlug(request.slug()));
         hero.setNameJson(request.nameJson());
         hero.setSpecialSkillNameJson(request.specialSkillNameJson());
         hero.setSpecialSkillDescriptionJson(request.specialSkillDescriptionJson());
@@ -110,7 +116,7 @@ public class HeroService {
         hero.setCostumeBonusJson(request.costumeBonusJson());
         hero.setReleaseDate(request.releaseDate());
         hero.setStatus(request.status());
-        hero.setUpdatedAt(OffsetDateTime.now());
+        hero.setUpdatedAt(OffsetDateTime.now(clock));
         hero.setUpdatedBy(request.updatedBy());
 
         Hero savedHero = heroRepository.save(hero);
@@ -136,9 +142,13 @@ public class HeroService {
     }
 
     private void validateCreateRequest(HeroCreateRequest request) {
-        if (heroRepository.existsBySlug(request.slug())) {
-            throw new IllegalStateException("Hero with slug already exists: " + request.slug());
+        String slug = normalizeSlug(request.slug());
+
+        if (heroRepository.existsBySlug(slug)) {
+            throw new IllegalStateException("Hero with slug already exists: " + slug);
         }
+
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
 
         validateReferences(
                 request.elementId(),
@@ -155,11 +165,15 @@ public class HeroService {
     }
 
     private void validateUpdateRequest(Long heroId, HeroUpdateRequest request) {
-        heroRepository.findBySlug(request.slug())
+        String slug = normalizeSlug(request.slug());
+
+        heroRepository.findBySlug(slug)
                 .filter(existing -> !existing.getId().equals(heroId))
                 .ifPresent(existing -> {
-                    throw new IllegalStateException("Hero with slug already exists: " + request.slug());
+                    throw new IllegalStateException("Hero with slug already exists: " + slug);
                 });
+
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
 
         if (request.baseHeroId() != null && request.baseHeroId().equals(heroId)) {
             throw new IllegalStateException("Hero cannot reference itself as base hero");
@@ -228,15 +242,15 @@ public class HeroService {
 
     private void validateCostumeFields(Boolean isCostume, Long baseHeroId, CostumeBonusJson costumeBonusJson) {
         if (Boolean.TRUE.equals(isCostume) && baseHeroId == null) {
-            throw new IllegalStateException("Costume hero must have baseHeroId");
+            throw new BusinessValidationException("Costume hero must have baseHeroId");
         }
 
         if (Boolean.FALSE.equals(isCostume) && baseHeroId != null) {
-            throw new IllegalStateException("Base hero cannot have baseHeroId");
+            throw new BusinessValidationException("Base hero cannot have baseHeroId");
         }
 
         if (Boolean.FALSE.equals(isCostume) && costumeBonusJson != null) {
-            throw new IllegalStateException("Base hero cannot have costumeBonusJson");
+            throw new BusinessValidationException("Base hero cannot have costumeBonusJson");
         }
     }
 
@@ -256,5 +270,9 @@ public class HeroService {
                 .toList();
 
         heroPassiveSkillRepository.saveAll(links);
+    }
+
+    private String normalizeSlug(String slug) {
+        return slug == null ? null : slug.trim().toLowerCase();
     }
 }

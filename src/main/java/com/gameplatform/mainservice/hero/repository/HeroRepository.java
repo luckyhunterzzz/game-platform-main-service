@@ -3,7 +3,8 @@ package com.gameplatform.mainservice.hero.repository;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
-import com.gameplatform.mainservice.hero.repository.projection.HeroSimpleNameProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     boolean existsBySlug(String slug);
 
+    Page<Hero> findAllByStatusAndIsCostumeFalse(HeroStatus status, Pageable pageable);
+
     @Query(value = """
             SELECT 
                 h.id AS id,
@@ -27,7 +30,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
               AND h.is_costume = false
             ORDER BY LOWER(h.name_json ->> :locale) ASC, h.id ASC
             """, nativeQuery = true)
-    List<HeroSimpleNameProjection> findAllReadyBaseHeroNames(@Param("locale") String locale);
+    List<HeroSearchProjection> findAllReadyBaseHeroNames(@Param("locale") String locale);
 
     @Query(value = """
         SELECT

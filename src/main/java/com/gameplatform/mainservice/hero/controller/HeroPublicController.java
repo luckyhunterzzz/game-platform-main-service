@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.response.HeroDetailsResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroSearchResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroSimpleNameResponse;
 import com.gameplatform.mainservice.hero.facade.HeroPublicFacade;
@@ -39,5 +40,14 @@ public class HeroPublicController {
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language ) {
         return ResponseEntity.ok(heroPublicFacade.getDetails(slug, language));
+    }
+
+    @GetMapping
+    public ResponseEntity<HeroPageResponse> getHeroes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "RU") HeroLanguage language
+    ) {
+        return ResponseEntity.ok(heroPublicFacade.getHeroes(page, size, language));
     }
 }

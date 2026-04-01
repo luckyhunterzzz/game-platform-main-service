@@ -30,15 +30,12 @@ public record HeroCreateRequest(
         @Valid
         LocalizedTextJson specialSkillDescriptionJson,
 
-        @NotNull
         @PositiveOrZero
         Integer baseAttack,
 
-        @NotNull
         @PositiveOrZero
         Integer baseArmor,
 
-        @NotNull
         @PositiveOrZero
         Integer baseHp,
 

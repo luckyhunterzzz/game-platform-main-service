@@ -24,14 +24,23 @@ public class MinioMediaStorageService implements MediaStorageService {
     private final MediaUrlResolver mediaUrlResolver;
 
     @Override
-    public StoredImage uploadImage(MultipartFile file) {
+    public StoredImage uploadPublicationImage(MultipartFile file) {
+        return uploadImage(file, "publications");
+    }
+
+    @Override
+    public StoredImage uploadHeroImage(MultipartFile file) {
+        return uploadImage(file, "heroes");
+    }
+
+    private StoredImage uploadImage(MultipartFile file, String folder) {
 
         imageUploadValidator.validate(file);
 
         String contentType = file.getContentType();
         String extension = resolveExtension(contentType);
 
-        String objectKey = generateObjectKey(extension);
+        String objectKey = generateObjectKey(folder, extension);
 
         try (InputStream inputStream = file.getInputStream()) {
 
@@ -69,7 +78,7 @@ public class MinioMediaStorageService implements MediaStorageService {
         };
     }
 
-    private String generateObjectKey(String extension) {
-        return "publications/" + UUID.randomUUID() + "." + extension;
+    private String generateObjectKey(String folder, String extension) {
+        return folder + "/" + UUID.randomUUID() + "." + extension;
     }
 }

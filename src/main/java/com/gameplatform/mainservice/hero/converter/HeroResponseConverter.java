@@ -3,12 +3,17 @@ package com.gameplatform.mainservice.hero.converter;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
+import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class HeroResponseConverter {
+
+    private final MediaUrlResolver mediaUrlResolver;
 
     public HeroResponse toResponse(Hero entity, List<HeroPassiveSkill> passiveSkills) {
         List<Long> passiveSkillIds = passiveSkills.stream()
@@ -32,6 +37,7 @@ public class HeroResponseConverter {
                 entity.getAlphaTalentId(),
                 entity.getImageBucket(),
                 entity.getImageObjectKey(),
+                mediaUrlResolver.resolveUrl(entity.getImageBucket(), entity.getImageObjectKey()),
                 entity.isCostume(),
                 entity.getBaseHeroId(),
                 entity.getCostumeBonusJson(),
