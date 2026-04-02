@@ -3,6 +3,7 @@ package com.gameplatform.mainservice.publication.service;
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.mapper.PublicationResponseConverter;
@@ -28,6 +29,7 @@ public class PublicationAdminService {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 50;
+    private static final UUID SYSTEM_ACTOR_ID = new UUID(0L, 0L);
     private static final String PINNED_FIELD = "pinned";
     private static final String PINNED_AT_FIELD = "pinnedAt";
     private static final String PUBLISHED_AT_FIELD = "publishedAt";
@@ -60,11 +62,11 @@ public class PublicationAdminService {
     }
 
     @Transactional(readOnly = true)
-    public PublicationResponse getById(UUID id) {
+    public PublicationAdminDetailsResponse getById(UUID id) {
         Publication publication = publicationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Publication not found: " + id));
 
-        return publicationResponseConverter.toResponse(publication);
+        return publicationResponseConverter.toAdminDetailsResponse(publication);
     }
 
     @Transactional
@@ -101,6 +103,26 @@ public class PublicationAdminService {
 
         Publication savedPublication = publicationRepository.save(publication);
         return publicationResponseConverter.toResponse(savedPublication);
+    }
+
+    @Transactional
+    public int publishScheduledPublications() {
+        OffsetDateTime now = OffsetDateTime.now(clock);
+
+        List<Publication> publicationsToPublish = publicationRepository
+                .findAllByStatusAndPublishedAtLessThanEqual(PublicationStatus.SCHEDULED, now);
+
+        for (Publication publication : publicationsToPublish) {
+            publication.setStatus(PublicationStatus.PUBLISHED);
+            publication.setUpdatedAt(now);
+            publication.setUpdatedBy(SYSTEM_ACTOR_ID);
+
+            if (publication.isPinned() && publication.getPinnedAt() == null) {
+                publication.setPinnedAt(now);
+            }
+        }
+
+        return publicationsToPublish.size();
     }
 
     private void applyUpsert(Publication publication,

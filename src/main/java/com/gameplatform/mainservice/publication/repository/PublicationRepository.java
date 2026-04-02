@@ -9,11 +9,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public interface PublicationRepository extends JpaRepository<Publication, UUID> {
 
     Page<Publication> findAllByStatus(PublicationStatus status, Pageable pageable);
+
+    List<Publication> findAllByStatusAndPublishedAtLessThanEqual(
+            PublicationStatus status,
+            OffsetDateTime publishedAt
+    );
 
     @Query("""
     SELECT p

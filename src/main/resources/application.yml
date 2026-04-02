@@ -18,3 +18,7 @@ management:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%X{requestId}] %-5level %logger{36} - %msg%n"
+
+publication:
+  scheduler:
+    publish-cron: "0 0/15 * * * *"

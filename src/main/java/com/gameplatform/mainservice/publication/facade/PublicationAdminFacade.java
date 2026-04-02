@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.publication.facade;
 
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.service.PublicationAdminService;
@@ -16,7 +17,7 @@ public class PublicationAdminFacade {
 
     private final PublicationAdminService publicationAdminService;
 
-    public PublicationResponse getPublicationById(UUID id) {
+    public PublicationAdminDetailsResponse getPublicationById(UUID id) {
         return publicationAdminService.getById(id);
     }
 

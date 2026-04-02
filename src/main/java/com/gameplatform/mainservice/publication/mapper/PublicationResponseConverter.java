@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.publication.mapper;
 
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,21 @@ public class PublicationResponseConverter {
                 entity.getType(),
                 entity.getTitle(),
                 entity.getContent(),
+                mediaUrlResolver.resolveUrl(entity.getImageBucket(), entity.getImageObjectKey()),
+                entity.isPinned(),
+                entity.getPublishedAt()
+        );
+    }
+
+    public PublicationAdminDetailsResponse toAdminDetailsResponse(Publication entity) {
+        return new PublicationAdminDetailsResponse(
+                entity.getId(),
+                entity.getType(),
+                entity.getStatus(),
+                entity.getTitle(),
+                entity.getContent(),
+                entity.getImageBucket(),
+                entity.getImageObjectKey(),
                 mediaUrlResolver.resolveUrl(entity.getImageBucket(), entity.getImageObjectKey()),
                 entity.isPinned(),
                 entity.getPublishedAt()
