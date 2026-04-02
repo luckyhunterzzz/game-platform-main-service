@@ -13,6 +13,8 @@ import java.util.UUID;
 
 public interface PublicationRepository extends JpaRepository<Publication, UUID> {
 
+    Page<Publication> findAllByStatus(PublicationStatus status, Pageable pageable);
+
     @Query("""
     SELECT p
     FROM Publication p
