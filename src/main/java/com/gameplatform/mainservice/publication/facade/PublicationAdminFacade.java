@@ -8,11 +8,17 @@ import com.gameplatform.mainservice.publication.service.PublicationAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class PublicationAdminFacade {
 
     private final PublicationAdminService publicationAdminService;
+
+    public PublicationResponse getPublicationById(UUID id) {
+        return publicationAdminService.getById(id);
+    }
 
     public PublicationFeedResponse getFeedByStatus(PublicationStatus status, int page, Integer size) {
         return publicationAdminService.getFeedByStatus(status, page, size);

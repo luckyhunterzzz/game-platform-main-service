@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/admin/publications")
 @RequiredArgsConstructor
@@ -24,6 +26,11 @@ public class AdminPublicationsController {
             @RequestParam(required = false) Integer size
     ) {
         return publicationAdminFacade.getFeedByStatus(status, page, size);
+    }
+
+    @GetMapping("/{id}")
+    public PublicationResponse getById(@PathVariable UUID id) {
+        return publicationAdminFacade.getPublicationById(id);
     }
 
     @PostMapping
