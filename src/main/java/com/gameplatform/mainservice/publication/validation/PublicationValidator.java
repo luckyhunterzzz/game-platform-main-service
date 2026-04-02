@@ -12,16 +12,23 @@ import java.time.OffsetDateTime;
 @RequiredArgsConstructor
 public class PublicationValidator {
 
+    private static final String ARCHIVED_NOT_SUPPORTED_MESSAGE =
+            "Publication cannot be saved with ARCHIVED status";
+
     private final ImageReferenceValidator imageReferenceValidator;
 
     public void validateUpsert(PublicationUpsertRequest request, OffsetDateTime now) {
         imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
 
-        switch(request.status()) {
+        validateStatusRules(request, now);
+    }
+
+    private void validateStatusRules(PublicationUpsertRequest request, OffsetDateTime now) {
+        switch (request.status()) {
             case DRAFT -> validateDraft(request);
             case SCHEDULED -> validateScheduled(request, now);
             case PUBLISHED -> validatePublished(request, now);
-            case ARCHIVED -> throw new BusinessValidationException("Publication cannot be created with ARCHIVED status");
+            case ARCHIVED -> throw new BusinessValidationException(ARCHIVED_NOT_SUPPORTED_MESSAGE);
         }
     }
 
