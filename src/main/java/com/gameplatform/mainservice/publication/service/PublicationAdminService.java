@@ -2,7 +2,7 @@ package com.gameplatform.mainservice.publication.service;
 
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
-import com.gameplatform.mainservice.publication.dto.request.CreatePublicationRequest;
+import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.mapper.PublicationResponseConverter;
@@ -68,42 +68,59 @@ public class PublicationAdminService {
     }
 
     @Transactional
-    public PublicationResponse create(CreatePublicationRequest request) {
+    public PublicationResponse create(PublicationUpsertRequest request) {
         OffsetDateTime now = OffsetDateTime.now(clock);
-        publicationValidator.validateCreate(request, now);
+        publicationValidator.validateUpsert(request, now);
 
         UUID authorId = currentUserProvider.getUserId();
 
-        Publication publication = buildPublicationEntity(request, now, authorId);
+        Publication publication = Publication.builder()
+                .id(UUID.randomUUID())
+                .createdBy(authorId)
+                .createdAt(now)
+                .build();
+
+        applyUpsert(publication, request, now, authorId);
 
         Publication savedPublication = publicationRepository.save(publication);
 
         return publicationResponseConverter.toResponse(savedPublication);
     }
 
-    private Publication buildPublicationEntity(CreatePublicationRequest request,
-                                               OffsetDateTime now,
-                                               UUID authorId) {
-        return Publication.builder()
-                .id(UUID.randomUUID())
-                .type(request.type())
-                .title(request.title())
-                .content(request.content())
-                .imageBucket(request.imageBucket())
-                .imageObjectKey(request.imageObjectKey())
-                .status(request.status())
-                .publishedAt(resolvePublishedAt(request, now))
-                .pinned(request.pinned())
-                .pinnedAt(resolvePinnedAt(request, now))
-                .createdBy(authorId)
-                .updatedBy(authorId)
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
+    @Transactional
+    public PublicationResponse update(UUID id, PublicationUpsertRequest request) {
+        OffsetDateTime now = OffsetDateTime.now(clock);
+        publicationValidator.validateUpsert(request, now);
 
+        UUID authorId = currentUserProvider.getUserId();
+
+        Publication publication = publicationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Publication not found: " + id));
+
+        applyUpsert(publication, request, now, authorId);
+
+        Publication savedPublication = publicationRepository.save(publication);
+        return publicationResponseConverter.toResponse(savedPublication);
     }
 
-    private OffsetDateTime resolvePublishedAt(CreatePublicationRequest request, OffsetDateTime now) {
+    private void applyUpsert(Publication publication,
+                             PublicationUpsertRequest request,
+                             OffsetDateTime now,
+                             UUID actorId) {
+        publication.setType(request.type());
+        publication.setTitle(request.title());
+        publication.setContent(request.content());
+        publication.setImageBucket(request.imageBucket());
+        publication.setImageObjectKey(request.imageObjectKey());
+        publication.setStatus(request.status());
+        publication.setPublishedAt(resolvePublishedAt(request, now));
+        publication.setPinned(request.pinned());
+        publication.setPinnedAt(resolvePinnedAt(request, now));
+        publication.setUpdatedBy(actorId);
+        publication.setUpdatedAt(now);
+    }
+
+    private OffsetDateTime resolvePublishedAt(PublicationUpsertRequest request, OffsetDateTime now) {
         return switch (request.status()) {
             case DRAFT, ARCHIVED -> null;
             case PUBLISHED -> request.publishedAt() != null ? request.publishedAt() : now;
@@ -111,7 +128,7 @@ public class PublicationAdminService {
         };
     }
 
-    private OffsetDateTime resolvePinnedAt(CreatePublicationRequest request, OffsetDateTime now) {
+    private OffsetDateTime resolvePinnedAt(PublicationUpsertRequest request, OffsetDateTime now) {
         if (!request.pinned()) {
             return null;
         }

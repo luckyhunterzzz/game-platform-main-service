@@ -2,7 +2,7 @@ package com.gameplatform.mainservice.publication.validation;
 
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
-import com.gameplatform.mainservice.publication.dto.request.CreatePublicationRequest;
+import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +14,7 @@ public class PublicationValidator {
 
     private final ImageReferenceValidator imageReferenceValidator;
 
-    public void validateCreate(CreatePublicationRequest request, OffsetDateTime now) {
+    public void validateUpsert(PublicationUpsertRequest request, OffsetDateTime now) {
         imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
 
         switch(request.status()) {
@@ -25,13 +25,13 @@ public class PublicationValidator {
         }
     }
 
-    private void validateDraft(CreatePublicationRequest request) {
+    private void validateDraft(PublicationUpsertRequest request) {
         if (request.publishedAt() != null) {
             throw new BusinessValidationException("publishedAt must be null for DRAFT status");
         }
     }
 
-    private void validateScheduled(CreatePublicationRequest request, OffsetDateTime now) {
+    private void validateScheduled(PublicationUpsertRequest request, OffsetDateTime now) {
         if (request.publishedAt() == null) {
             throw new BusinessValidationException("publishedAt is required for SCHEDULED status");
         }
@@ -40,7 +40,7 @@ public class PublicationValidator {
         }
     }
 
-    private void validatePublished(CreatePublicationRequest request, OffsetDateTime now) {
+    private void validatePublished(PublicationUpsertRequest request, OffsetDateTime now) {
         if (request.publishedAt() != null && request.publishedAt().isAfter(now)) {
             throw new BusinessValidationException("Future publishedAt requires SCHEDULED status");
         }
