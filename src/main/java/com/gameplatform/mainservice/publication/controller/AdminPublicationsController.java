@@ -1,6 +1,8 @@
 package com.gameplatform.mainservice.publication.controller;
 
+import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.dto.request.CreatePublicationRequest;
+import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.facade.PublicationAdminFacade;
 import jakarta.validation.Valid;
@@ -14,6 +16,15 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPublicationsController {
 
     private final PublicationAdminFacade publicationAdminFacade;
+
+    @GetMapping
+    public PublicationFeedResponse getFeedByStatus(
+            @RequestParam(defaultValue = "PUBLISHED") PublicationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size
+    ) {
+        return publicationAdminFacade.getFeedByStatus(status, page, size);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
