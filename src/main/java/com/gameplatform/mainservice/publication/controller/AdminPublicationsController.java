@@ -1,7 +1,7 @@
 package com.gameplatform.mainservice.publication.controller;
 
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
-import com.gameplatform.mainservice.publication.dto.request.CreatePublicationRequest;
+import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.facade.PublicationAdminFacade;
@@ -35,7 +35,12 @@ public class AdminPublicationsController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PublicationResponse create(@RequestBody @Valid CreatePublicationRequest request) {
+    public PublicationResponse create(@RequestBody @Valid PublicationUpsertRequest request) {
         return publicationAdminFacade.createPublication(request);
+    }
+
+    @PutMapping("/{id}")
+    public PublicationResponse update(@PathVariable UUID id, @RequestBody @Valid PublicationUpsertRequest request) {
+        return publicationAdminFacade.updatePublication(id, request);
     }
 }

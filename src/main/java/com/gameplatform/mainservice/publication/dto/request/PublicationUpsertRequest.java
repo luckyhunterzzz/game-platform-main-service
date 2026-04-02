@@ -8,18 +8,18 @@ import jakarta.validation.constraints.Size;
 
 import java.time.OffsetDateTime;
 
-public record CreatePublicationRequest(
-    @NotBlank
-    @Size(max = 500)
-    String title,
-    String content,
-    @NotNull
-    PublicationType type,
-    @NotNull
-    PublicationStatus status,
-    String imageBucket,
-    String imageObjectKey,
-    boolean pinned,
-    OffsetDateTime publishedAt
-){
+public record PublicationUpsertRequest(
+        @NotBlank
+        @Size(max = 500)
+        String title,
+        String content,
+        @NotNull
+        PublicationType type,
+        @NotNull
+        PublicationStatus status,
+        String imageBucket,
+        String imageObjectKey,
+        boolean pinned,
+        OffsetDateTime publishedAt
+) {
 }
