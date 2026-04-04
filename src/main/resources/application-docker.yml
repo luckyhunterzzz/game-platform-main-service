@@ -29,10 +29,10 @@ app:
     endpoint: http://minio:9000
     access-key: ${MINIO_ROOT_USER}
     secret-key: ${MINIO_ROOT_PASSWORD}
-    public-base-url: http://localhost:9000
+    public-base-url: ${APP_MINIO_PUBLIC_BASE_URL}
     bucket: game-content
     secure: false
 
   publications:
-    page-size-default: 10
-    page-size-max: 50
+    page-size-default: ${APP_PUBLICATIONS_DEFAULT_PAGE_SIZE:10}
+    page-size-max: ${APP_PUBLICATIONS_MAX_PAGE_SIZE:50}
