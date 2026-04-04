@@ -14,6 +14,7 @@ public class PublicationValidator {
 
     private static final String ARCHIVED_NOT_SUPPORTED_MESSAGE =
             "Publication cannot be saved with ARCHIVED status";
+    private static final int SCHEDULE_MINUTE_STEP = 15;
 
     private final ImageReferenceValidator imageReferenceValidator;
 
@@ -45,11 +46,20 @@ public class PublicationValidator {
         if (!request.publishedAt().isAfter(now)) {
             throw new BusinessValidationException("publishedAt must be in the future for SCHEDULED status");
         }
+        if (!isQuarterHourSlot(request.publishedAt())) {
+            throw new BusinessValidationException("publishedAt must use 15-minute steps for SCHEDULED status");
+        }
     }
 
     private void validatePublished(PublicationUpsertRequest request, OffsetDateTime now) {
         if (request.publishedAt() != null && request.publishedAt().isAfter(now)) {
             throw new BusinessValidationException("Future publishedAt requires SCHEDULED status");
         }
+    }
+
+    private boolean isQuarterHourSlot(OffsetDateTime publishedAt) {
+        return publishedAt.getMinute() % SCHEDULE_MINUTE_STEP == 0
+                && publishedAt.getSecond() == 0
+                && publishedAt.getNano() == 0;
     }
 }

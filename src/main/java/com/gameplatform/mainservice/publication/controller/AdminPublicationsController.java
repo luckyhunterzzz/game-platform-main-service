@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.publication.controller;
 
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.facade.PublicationAdminFacade;
@@ -29,7 +30,7 @@ public class AdminPublicationsController {
     }
 
     @GetMapping("/{id}")
-    public PublicationResponse getById(@PathVariable UUID id) {
+    public PublicationAdminDetailsResponse getById(@PathVariable UUID id) {
         return publicationAdminFacade.getPublicationById(id);
     }
 
