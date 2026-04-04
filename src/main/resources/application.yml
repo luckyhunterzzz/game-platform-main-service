@@ -21,4 +21,4 @@ logging:
 
 publication:
   scheduler:
-    publish-cron: "0 0/15 * * * *"
+    publish-cron: "0 0,15,30,45 * * * *"
