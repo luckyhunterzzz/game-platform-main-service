@@ -3,8 +3,8 @@ CREATE TABLE publications (
     version INTEGER NOT NULL DEFAULT 0,
 
     type VARCHAR(50) NOT NULL,
-    title VARCHAR(500) NOT NULL,
-    content TEXT,
+    title_json JSONB NOT NULL,
+    content_json JSONB,
 
     image_bucket VARCHAR(255),
     image_object_key VARCHAR(1024),
@@ -33,8 +33,8 @@ COMMENT ON TABLE publications IS 'Storage for news, schedules, and guides';
 COMMENT ON COLUMN publications.id IS 'Unique identifier (UUID)';
 COMMENT ON COLUMN publications.version IS 'Version number for optimistic locking';
 COMMENT ON COLUMN publications.type IS 'Type of content: NEWS, SCHEDULE, GUIDE, etc.';
-COMMENT ON COLUMN publications.title IS 'Main title of the publication';
-COMMENT ON COLUMN publications.content IS 'Main text body of the publication';
+COMMENT ON COLUMN publications.title_json IS 'Localized title of the publication';
+COMMENT ON COLUMN publications.content_json IS 'Localized text body of the publication';
 COMMENT ON COLUMN publications.image_bucket IS 'MinIO bucket name for the attached image';
 COMMENT ON COLUMN publications.image_object_key IS 'Path to the image file in MinIO';
 COMMENT ON COLUMN publications.status IS 'Current state: DRAFT, SCHEDULED, PUBLISHED, or ARCHIVED';

@@ -89,8 +89,8 @@ CREATE TABLE heroes
     mana_speed_id                  BIGINT REFERENCES mana_speeds (id)  NOT NULL,
     alpha_talent_id                BIGINT REFERENCES alpha_talents (id),
 
-    image_bucket                   VARCHAR(100),
-    image_object_key               VARCHAR(500),
+    image_bucket_json              JSONB,
+    image_object_key_json          JSONB,
 
     is_costume                     BOOLEAN                             NOT NULL DEFAULT FALSE,
     base_hero_id                   BIGINT REFERENCES heroes (id),

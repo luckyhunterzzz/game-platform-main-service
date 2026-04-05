@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.publication.service;
 
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
+import com.gameplatform.mainservice.publication.domain.enums.PublicationLanguage;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
@@ -36,7 +37,7 @@ public class PublicationPublicService {
     }
 
 
-    public PublicationFeedResponse getLatestPublicFeed(int page, Integer size) {
+    public PublicationFeedResponse getLatestPublicFeed(int page, Integer size, PublicationLanguage language) {
         OffsetDateTime now = OffsetDateTime.now(clock);
         int pageSize = (size != null) ? size : defaultPageSize;
 
@@ -46,8 +47,9 @@ public class PublicationPublicService {
                 PageRequest.of(page, pageSize)
         );
 
-        List<PublicationResponse> items = publicationResponseConverter.toResponseList(
-                publicationPage.getContent()
+        List<PublicationResponse> items = publicationResponseConverter.toPublicResponseList(
+                publicationPage.getContent(),
+                language
         );
 
         return new PublicationFeedResponse(

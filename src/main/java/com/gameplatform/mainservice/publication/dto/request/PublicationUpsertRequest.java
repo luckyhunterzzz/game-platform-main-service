@@ -1,18 +1,20 @@
 package com.gameplatform.mainservice.publication.dto.request;
 
+import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 import java.time.OffsetDateTime;
 
 public record PublicationUpsertRequest(
-        @NotBlank
-        @Size(max = 500)
-        String title,
-        String content,
+        @Valid
+        @NotNull
+        LocalizedTextJson titleJson,
+        @Valid
+        LocalizedTextJson contentJson,
         @NotNull
         PublicationType type,
         @NotNull

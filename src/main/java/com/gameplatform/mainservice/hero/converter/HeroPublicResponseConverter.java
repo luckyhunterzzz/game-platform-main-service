@@ -133,10 +133,26 @@ public class HeroPublicResponseConverter {
             return null;
         }
 
-        return switch (locale) {
+        String primaryValue = switch (locale) {
             case "ru" -> json.ru();
             case "en" -> json.en();
             default -> json.ru();
         };
+
+        if (primaryValue != null && !primaryValue.isBlank()) {
+            return primaryValue;
+        }
+
+        String fallbackValue = switch (locale) {
+            case "ru" -> json.en();
+            case "en" -> json.ru();
+            default -> json.en();
+        };
+
+        if (fallbackValue != null && !fallbackValue.isBlank()) {
+            return fallbackValue;
+        }
+
+        return null;
     }
 }
