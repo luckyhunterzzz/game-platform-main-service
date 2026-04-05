@@ -65,11 +65,13 @@ public class Hero {
     @Column(name = "alpha_talent_id")
     private Long alphaTalentId;
 
-    @Column(name = "image_bucket")
-    private String imageBucket;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "image_bucket_json", columnDefinition = "jsonb")
+    private LocalizedTextJson imageBucketJson;
 
-    @Column(name = "image_object_key")
-    private String imageObjectKey;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "image_object_key_json", columnDefinition = "jsonb")
+    private LocalizedTextJson imageObjectKeyJson;
 
     @Column(name = "is_costume", nullable = false)
     private boolean isCostume;

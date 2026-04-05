@@ -44,7 +44,10 @@ public class HeroValidator {
     }
 
     private void validateCommon(HeroUpsertRequest request) {
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+        imageReferenceValidator.validate(request.imageBucketJson() != null ? request.imageBucketJson().ru() : null,
+                request.imageObjectKeyJson() != null ? request.imageObjectKeyJson().ru() : null);
+        imageReferenceValidator.validate(request.imageBucketJson() != null ? request.imageBucketJson().en() : null,
+                request.imageObjectKeyJson() != null ? request.imageObjectKeyJson().en() : null);
 
         validateReferences(
                 request.elementId(),

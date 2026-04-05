@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.publication.validation;
 
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
+import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,14 @@ public class PublicationValidator {
 
     public void validateUpsert(PublicationUpsertRequest request, OffsetDateTime now) {
         imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
+        validateLocalizedFields(request);
         validateStatusRules(request, now);
+    }
+
+    private void validateLocalizedFields(PublicationUpsertRequest request) {
+        if (!hasAnyText(request.titleJson())) {
+            throw new BusinessValidationException("titleJson must contain at least one localized value");
+        }
     }
 
     private void validateStatusRules(PublicationUpsertRequest request, OffsetDateTime now) {
@@ -61,5 +68,17 @@ public class PublicationValidator {
         return publishedAt.getMinute() % SCHEDULE_MINUTE_STEP == 0
                 && publishedAt.getSecond() == 0
                 && publishedAt.getNano() == 0;
+    }
+
+    private boolean hasAnyText(LocalizedTextJson json) {
+        if (json == null) {
+            return false;
+        }
+
+        return hasText(json.ru()) || hasText(json.en());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
