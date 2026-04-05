@@ -59,11 +59,11 @@ public record HeroUpsertRequest(
 
         Long alphaTalentId,
 
-        @Size(max = 100)
-        String imageBucket,
+        @Valid
+        LocalizedTextJson imageBucketJson,
 
-        @Size(max = 500)
-        String imageObjectKey,
+        @Valid
+        LocalizedTextJson imageObjectKeyJson,
 
         @NotNull
         Boolean isCostume,

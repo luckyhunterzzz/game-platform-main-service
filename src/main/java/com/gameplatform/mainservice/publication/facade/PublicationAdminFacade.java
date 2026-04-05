@@ -2,9 +2,8 @@ package com.gameplatform.mainservice.publication.facade;
 
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
-import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
-import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.service.PublicationAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,15 +20,15 @@ public class PublicationAdminFacade {
         return publicationAdminService.getById(id);
     }
 
-    public PublicationFeedResponse getFeedByStatus(PublicationStatus status, int page, Integer size) {
+    public PublicationAdminFeedResponse getFeedByStatus(PublicationStatus status, int page, Integer size) {
         return publicationAdminService.getFeedByStatus(status, page, size);
     }
 
-    public PublicationResponse createPublication(PublicationUpsertRequest publicationUpsertRequest) {
+    public PublicationAdminDetailsResponse createPublication(PublicationUpsertRequest publicationUpsertRequest) {
         return publicationAdminService.create(publicationUpsertRequest);
     }
 
-    public PublicationResponse updatePublication(UUID id, PublicationUpsertRequest publicationUpsertRequest) {
+    public PublicationAdminDetailsResponse updatePublication(UUID id, PublicationUpsertRequest publicationUpsertRequest) {
         return publicationAdminService.update(id, publicationUpsertRequest);
     }
 }

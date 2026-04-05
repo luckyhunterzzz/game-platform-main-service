@@ -1,9 +1,12 @@
 package com.gameplatform.mainservice.publication.domain.entity;
 
+import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -27,11 +30,13 @@ public class Publication {
     @Column(name = "type", nullable = false, length = 50)
     private PublicationType type;
 
-    @Column(name = "title", nullable = false, length = 500)
-    private String title;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "title_json", nullable = false, columnDefinition = "jsonb")
+    private LocalizedTextJson titleJson;
 
-    @Column(name = "content")
-    private String content;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content_json", columnDefinition = "jsonb")
+    private LocalizedTextJson contentJson;
 
     @Column(name = "image_bucket")
     private String imageBucket;

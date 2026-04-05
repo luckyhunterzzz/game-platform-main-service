@@ -7,14 +7,12 @@ import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public record PublicationAdminDetailsResponse(
+public record PublicationAdminSummaryResponse(
         UUID id,
         PublicationType type,
         PublicationStatus status,
         LocalizedTextJson titleJson,
         LocalizedTextJson contentJson,
-        String imageBucket,
-        String imageObjectKey,
         String imageUrl,
         boolean pinned,
         OffsetDateTime publishedAt

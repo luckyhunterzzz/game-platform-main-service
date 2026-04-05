@@ -121,8 +121,8 @@ public class HeroAdminService {
         hero.setFamilyId(request.familyId());
         hero.setManaSpeedId(request.manaSpeedId());
         hero.setAlphaTalentId(request.alphaTalentId());
-        hero.setImageBucket(request.imageBucket());
-        hero.setImageObjectKey(request.imageObjectKey());
+        hero.setImageBucketJson(request.imageBucketJson());
+        hero.setImageObjectKeyJson(request.imageObjectKeyJson());
         hero.setCostume(request.isCostume());
         hero.setBaseHeroId(request.baseHeroId());
         hero.setCostumeBonusJson(request.costumeBonusJson());

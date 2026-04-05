@@ -3,9 +3,9 @@ package com.gameplatform.mainservice.publication.service;
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
-import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
-import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminSummaryResponse;
 import com.gameplatform.mainservice.publication.mapper.PublicationResponseConverter;
 import com.gameplatform.mainservice.publication.repository.PublicationRepository;
 import com.gameplatform.mainservice.publication.validation.PublicationValidator;
@@ -43,15 +43,16 @@ public class PublicationAdminService {
     private final Clock clock;
 
     @Transactional(readOnly = true)
-    public PublicationFeedResponse getFeedByStatus(PublicationStatus status, int page, Integer size) {
+    public PublicationAdminFeedResponse getFeedByStatus(PublicationStatus status, int page, Integer size) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size != null ? size : DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
 
         PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize, resolveSort(status));
         Page<Publication> publicationPage = publicationRepository.findAllByStatus(status, pageable);
-        List<PublicationResponse> items = publicationResponseConverter.toResponseList(publicationPage.getContent());
+        List<PublicationAdminSummaryResponse> items =
+                publicationResponseConverter.toAdminSummaryResponseList(publicationPage.getContent());
 
-        return new PublicationFeedResponse(
+        return new PublicationAdminFeedResponse(
                 items,
                 publicationPage.getNumber(),
                 publicationPage.getSize(),
@@ -70,7 +71,7 @@ public class PublicationAdminService {
     }
 
     @Transactional
-    public PublicationResponse create(PublicationUpsertRequest request) {
+    public PublicationAdminDetailsResponse create(PublicationUpsertRequest request) {
         OffsetDateTime now = OffsetDateTime.now(clock);
         publicationValidator.validateUpsert(request, now);
 
@@ -86,11 +87,11 @@ public class PublicationAdminService {
 
         Publication savedPublication = publicationRepository.save(publication);
 
-        return publicationResponseConverter.toResponse(savedPublication);
+        return publicationResponseConverter.toAdminDetailsResponse(savedPublication);
     }
 
     @Transactional
-    public PublicationResponse update(UUID id, PublicationUpsertRequest request) {
+    public PublicationAdminDetailsResponse update(UUID id, PublicationUpsertRequest request) {
         OffsetDateTime now = OffsetDateTime.now(clock);
         publicationValidator.validateUpsert(request, now);
 
@@ -102,7 +103,7 @@ public class PublicationAdminService {
         applyUpsert(publication, request, now, authorId);
 
         Publication savedPublication = publicationRepository.save(publication);
-        return publicationResponseConverter.toResponse(savedPublication);
+        return publicationResponseConverter.toAdminDetailsResponse(savedPublication);
     }
 
     @Transactional
@@ -130,8 +131,8 @@ public class PublicationAdminService {
                              OffsetDateTime now,
                              UUID actorId) {
         publication.setType(request.type());
-        publication.setTitle(request.title());
-        publication.setContent(request.content());
+        publication.setTitleJson(request.titleJson());
+        publication.setContentJson(request.contentJson());
         publication.setImageBucket(request.imageBucket());
         publication.setImageObjectKey(request.imageObjectKey());
         publication.setStatus(request.status());
