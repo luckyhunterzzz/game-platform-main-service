@@ -25,6 +25,7 @@ public record HeroResponse(
         Long alphaTalentId,
         LocalizedTextJson imageBucketJson,
         LocalizedTextJson imageObjectKeyJson,
+        LocalizedTextJson imageUrlJson,
         Boolean isCostume,
         Long baseHeroId,
         CostumeBonusJson costumeBonusJson,
@@ -33,6 +34,7 @@ public record HeroResponse(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         String updatedBy,
+        String updatedByEmail,
         List<Long> passiveSkillIds
 ) {
 }

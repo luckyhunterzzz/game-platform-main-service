@@ -82,6 +82,9 @@ public record HeroUpsertRequest(
         @Size(max = 100)
         String updatedBy,
 
+        @Size(max = 255)
+        String updatedByEmail,
+
         List<Long> passiveSkillIds
 ) {
 }
