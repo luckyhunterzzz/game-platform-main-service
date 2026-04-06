@@ -10,10 +10,10 @@ public record HeroDetailsResponse(
 
         SimpleReferenceResponse element,
         HeroRarityResponse rarity,
-        SimpleReferenceResponse heroClass,
-        SimpleReferenceResponse family,
-        SimpleReferenceResponse manaSpeed,
-        SimpleReferenceResponse alphaTalent,
+        HeroClassDetailsResponse heroClass,
+        DescribedReferenceResponse family,
+        DescribedReferenceResponse manaSpeed,
+        DescribedReferenceResponse alphaTalent,
 
         SpecialSkillResponse specialSkill,
         List<HeroPassiveSkillResponse> passiveSkills,
