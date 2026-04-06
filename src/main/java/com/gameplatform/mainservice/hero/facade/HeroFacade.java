@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
 import com.gameplatform.mainservice.hero.service.HeroAdminService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,10 @@ public class HeroFacade {
 
     public List<HeroResponse> getAll() {
         return heroService.getAll();
+    }
+
+    public HeroAdminPageResponse getCatalog(int page, int size, String search) {
+        return heroService.getCatalog(page, size, search);
     }
 
     public HeroResponse getById(Long id) {

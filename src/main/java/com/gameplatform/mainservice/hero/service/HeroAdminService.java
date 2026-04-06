@@ -4,19 +4,25 @@ import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkillId;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
 import com.gameplatform.mainservice.hero.converter.HeroResponseConverter;
 import com.gameplatform.mainservice.hero.repository.*;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -26,6 +32,7 @@ public class HeroAdminService {
     private final Clock clock;
 
     private final HeroRepository heroRepository;
+    private final HeroAdminCatalogRepository heroAdminCatalogRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
 
     private final HeroResponseConverter heroResponseConverter;
@@ -43,6 +50,59 @@ public class HeroAdminService {
 
         List<HeroPassiveSkill> allLinks = heroPassiveSkillRepository.findAllByIdHeroIdIn(heroIds);
         return heroResponseConverter.toResponseList(heroes, allLinks);
+    }
+
+    public HeroAdminPageResponse getCatalog(int page, int size, String search) {
+        int normalizedPage = Math.max(page, 0);
+        int normalizedSize = Math.min(Math.max(size, 1), 50);
+
+        PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize);
+        Page<Long> heroIdPage = heroAdminCatalogRepository.findHeroIds(
+                StringUtils.hasText(search) ? search.trim() : null,
+                pageable
+        );
+
+        List<Long> heroIds = heroIdPage.getContent();
+        if (heroIds.isEmpty()) {
+            return new HeroAdminPageResponse(
+                    List.of(),
+                    heroIdPage.getNumber(),
+                    heroIdPage.getSize(),
+                    heroIdPage.getTotalElements(),
+                    heroIdPage.getTotalPages(),
+                    heroIdPage.hasNext()
+            );
+        }
+
+        List<Hero> heroes = heroRepository.findAllById(heroIds);
+        Map<Long, Hero> heroById = new HashMap<>();
+        for (Hero hero : heroes) {
+            heroById.put(hero.getId(), hero);
+        }
+
+        List<HeroPassiveSkill> allLinks = heroPassiveSkillRepository.findAllByIdHeroIdIn(heroIds);
+        Map<Long, List<HeroPassiveSkill>> linksByHeroId = new HashMap<>();
+        for (HeroPassiveSkill link : allLinks) {
+            linksByHeroId.computeIfAbsent(link.getId().getHeroId(), ignored -> new java.util.ArrayList<>()).add(link);
+        }
+
+        List<HeroResponse> items = heroIds.stream()
+                .map(heroById::get)
+                .filter(java.util.Objects::nonNull)
+                .map(hero -> heroResponseConverter.toResponse(
+                        hero,
+                        linksByHeroId.getOrDefault(hero.getId(), List.of())
+                ))
+                .toList();
+
+        return new HeroAdminPageResponse(
+                items,
+                heroIdPage.getNumber(),
+                heroIdPage.getSize(),
+                heroIdPage.getTotalElements(),
+                heroIdPage.getTotalPages(),
+                heroIdPage.hasNext()
+        );
     }
 
     public Hero getById(Long id) {
