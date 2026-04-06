@@ -32,7 +32,14 @@ public class HeroPublicController {
         return ResponseEntity.ok(heroPublicFacade.search(query, limit, language));
     }
 
-    @GetMapping("/{slug}")
+    @GetMapping("/filters")
+    public ResponseEntity<HeroCatalogFiltersResponse> getFilters(
+            @RequestParam(defaultValue = "RU") HeroLanguage language
+    ) {
+        return ResponseEntity.ok(heroPublicFacade.getFilters(language));
+    }
+
+    @GetMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}")
     public ResponseEntity<HeroDetailsResponse> getDetails(
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language ) {
@@ -66,7 +73,7 @@ public class HeroPublicController {
         ));
     }
 
-    @GetMapping("/{slug}/variants")
+    @GetMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}/variants")
     public ResponseEntity<HeroVariantsResponse> getVariants(
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language

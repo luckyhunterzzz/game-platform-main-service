@@ -22,6 +22,10 @@ public class HeroPublicFacade {
         return heroPublicService.search(query, limit, language);
     }
 
+    public HeroCatalogFiltersResponse getFilters(HeroLanguage language) {
+        return heroPublicService.getFilters(language);
+    }
+
     public HeroDetailsResponse getDetails(String slug, HeroLanguage language) {
         return heroPublicService.getDetails(slug, language);
     }
