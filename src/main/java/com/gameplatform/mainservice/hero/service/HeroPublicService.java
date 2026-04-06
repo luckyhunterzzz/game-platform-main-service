@@ -6,7 +6,7 @@ import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.repository.*;
-import com.gameplatform.mainservice.hero.repository.projection.HeroCardProjection;
+import com.gameplatform.mainservice.hero.repository.projection.HeroCardRow;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
@@ -24,6 +24,7 @@ import java.util.List;
 public class HeroPublicService {
 
     private final HeroRepository heroRepository;
+    private final HeroCatalogRepository heroCatalogRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
     private final PassiveSkillRepository passiveSkillRepository;
     private final HeroClassRepository heroClassRepository;
@@ -33,14 +34,32 @@ public class HeroPublicService {
 
     private final HeroPublicResponseConverter converter;
 
-    public HeroPageResponse getHeroes(int page, int size, HeroLanguage language) {
+    public HeroPageResponse getHeroes(
+            int page,
+            int size,
+            HeroLanguage language,
+            String search,
+            List<Long> elementIds,
+            List<Long> rarityIds,
+            List<Long> heroClassIds,
+            List<Long> familyIds,
+            List<Long> manaSpeedIds,
+            List<Long> alphaTalentIds
+    ) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size, 1), 50);
 
         PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize);
 
-        Page<HeroCardProjection> heroPage = heroRepository.findReadyBaseHeroCards(
+        Page<HeroCardRow> heroPage = heroCatalogRepository.findReadyBaseHeroCards(
                 language.getJsonKey(),
+                StringUtils.hasText(search) ? search.trim() : null,
+                normalizeIds(elementIds),
+                normalizeIds(rarityIds),
+                normalizeIds(heroClassIds),
+                normalizeIds(familyIds),
+                normalizeIds(manaSpeedIds),
+                normalizeIds(alphaTalentIds),
                 pageable
         );
 
@@ -63,6 +82,17 @@ public class HeroPublicService {
         return converter.toLookupResponses(
                 heroRepository.findAllReadyBaseHeroNames(locale)
         );
+    }
+
+    private List<Long> normalizeIds(List<Long> ids) {
+        if (ids == null) {
+            return List.of();
+        }
+
+        return ids.stream()
+                .filter(id -> id != null && id > 0)
+                .distinct()
+                .toList();
     }
 
     public List<HeroLookupResponse> search(String query, int limit, HeroLanguage language) {
