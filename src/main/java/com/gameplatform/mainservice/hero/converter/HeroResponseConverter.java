@@ -2,7 +2,9 @@ package com.gameplatform.mainservice.hero.converter;
 
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
+import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
+import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +13,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class HeroResponseConverter {
+
+    private final MediaUrlResolver mediaUrlResolver;
 
     public HeroResponse toResponse(Hero entity, List<HeroPassiveSkill> passiveSkills) {
         List<Long> passiveSkillIds = passiveSkills.stream()
@@ -34,6 +38,7 @@ public class HeroResponseConverter {
                 entity.getAlphaTalentId(),
                 entity.getImageBucketJson(),
                 entity.getImageObjectKeyJson(),
+                resolveImageUrls(entity.getImageBucketJson(), entity.getImageObjectKeyJson()),
                 entity.isCostume(),
                 entity.getBaseHeroId(),
                 entity.getCostumeBonusJson(),
@@ -42,6 +47,7 @@ public class HeroResponseConverter {
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
                 entity.getUpdatedBy(),
+                entity.getUpdatedByEmail(),
                 passiveSkillIds
         );
     }
@@ -56,5 +62,20 @@ public class HeroResponseConverter {
                     return toResponse(hero, heroLinks);
                 })
                 .toList();
+    }
+
+    private LocalizedTextJson resolveImageUrls(LocalizedTextJson imageBucketJson, LocalizedTextJson imageObjectKeyJson) {
+        if (imageBucketJson == null || imageObjectKeyJson == null) {
+            return null;
+        }
+
+        String ru = mediaUrlResolver.resolveUrl(imageBucketJson.ru(), imageObjectKeyJson.ru());
+        String en = mediaUrlResolver.resolveUrl(imageBucketJson.en(), imageObjectKeyJson.en());
+
+        if (ru == null && en == null) {
+            return null;
+        }
+
+        return new LocalizedTextJson(ru, en);
     }
 }
