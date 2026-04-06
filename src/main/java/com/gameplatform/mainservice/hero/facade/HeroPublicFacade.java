@@ -22,12 +22,38 @@ public class HeroPublicFacade {
         return heroPublicService.search(query, limit, language);
     }
 
+    public HeroCatalogFiltersResponse getFilters(HeroLanguage language) {
+        return heroPublicService.getFilters(language);
+    }
+
     public HeroDetailsResponse getDetails(String slug, HeroLanguage language) {
         return heroPublicService.getDetails(slug, language);
     }
 
-    public HeroPageResponse getHeroes(int page, int size, HeroLanguage language) {
-        return heroPublicService.getHeroes(page, size, language);
+    public HeroPageResponse getHeroes(
+            int page,
+            int size,
+            HeroLanguage language,
+            String search,
+            List<Long> elementIds,
+            List<Long> rarityIds,
+            List<Long> heroClassIds,
+            List<Long> familyIds,
+            List<Long> manaSpeedIds,
+            List<Long> alphaTalentIds
+    ) {
+        return heroPublicService.getHeroes(
+                page,
+                size,
+                language,
+                search,
+                elementIds,
+                rarityIds,
+                heroClassIds,
+                familyIds,
+                manaSpeedIds,
+                alphaTalentIds
+        );
     }
 
     public HeroVariantsResponse getVariants(String slug, HeroLanguage language) {
