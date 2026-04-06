@@ -26,6 +26,10 @@ public class HeroPublicService {
     private final HeroRepository heroRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
     private final PassiveSkillRepository passiveSkillRepository;
+    private final HeroClassRepository heroClassRepository;
+    private final FamilyRepository familyRepository;
+    private final ManaSpeedRepository manaSpeedRepository;
+    private final AlphaTalentRepository alphaTalentRepository;
 
     private final HeroPublicResponseConverter converter;
 
@@ -100,11 +104,27 @@ public class HeroPublicService {
     }
 
     private HeroDetailsResponse buildHeroDetails(HeroDetailsProjection hero, String locale) {
+        HeroClass heroClass = heroClassRepository.findById(hero.getHeroClassId())
+                .orElseThrow(() -> new EntityNotFoundException("Hero class not found with id: " + hero.getHeroClassId()));
+        Family family = hero.getFamilyId() == null
+                ? null
+                : familyRepository.findById(hero.getFamilyId())
+                .orElseThrow(() -> new EntityNotFoundException("Family not found with id: " + hero.getFamilyId()));
+        ManaSpeed manaSpeed = manaSpeedRepository.findById(hero.getManaSpeedId())
+                .orElseThrow(() -> new EntityNotFoundException("Mana speed not found with id: " + hero.getManaSpeedId()));
+        AlphaTalent alphaTalent = hero.getAlphaTalentId() == null
+                ? null
+                : alphaTalentRepository.findById(hero.getAlphaTalentId())
+                .orElseThrow(() -> new EntityNotFoundException("Alpha talent not found with id: " + hero.getAlphaTalentId()));
         List<PassiveSkill> passiveSkills = findPassiveSkills(hero.getId());
         List<Hero> costumes = findCostumes(hero);
 
         return converter.toDetailsResponse(
                 hero,
+                heroClass,
+                family,
+                manaSpeed,
+                alphaTalent,
                 passiveSkills,
                 costumes,
                 locale

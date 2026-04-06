@@ -50,6 +50,10 @@ public class HeroPublicResponseConverter {
 
     public HeroDetailsResponse toDetailsResponse(
             HeroDetailsProjection hero,
+            HeroClass heroClass,
+            Family family,
+            ManaSpeed manaSpeed,
+            AlphaTalent alphaTalent,
             List<PassiveSkill> passiveSkills,
             List<Hero> costumes,
             String locale
@@ -67,24 +71,31 @@ public class HeroPublicResponseConverter {
                         hero.getRarityId(),
                         hero.getRarityStars()
                 ),
-                new SimpleReferenceResponse(
-                        hero.getHeroClassId(),
-                        hero.getHeroClassName()
+                new HeroClassDetailsResponse(
+                        heroClass.getId(),
+                        getLocalized(heroClass.getNameJson(), locale),
+                        getLocalized(heroClass.getBaseNameJson(), locale),
+                        getLocalized(heroClass.getBaseDescriptionJson(), locale),
+                        getLocalized(heroClass.getMasterNameJson(), locale),
+                        getLocalized(heroClass.getMasterDescriptionJson(), locale)
                 ),
-                hero.getFamilyId() != null
-                        ? new SimpleReferenceResponse(
-                        hero.getFamilyId(),
-                        hero.getFamilyName()
+                family != null
+                        ? new DescribedReferenceResponse(
+                        family.getId(),
+                        getLocalized(family.getNameJson(), locale),
+                        getLocalized(family.getDescriptionJson(), locale)
                 )
                         : null,
-                new SimpleReferenceResponse(
-                        hero.getManaSpeedId(),
-                        hero.getManaSpeedName()
+                new DescribedReferenceResponse(
+                        manaSpeed.getId(),
+                        getLocalized(manaSpeed.getNameJson(), locale),
+                        getLocalized(manaSpeed.getDescriptionJson(), locale)
                 ),
-                hero.getAlphaTalentId() != null
-                        ? new SimpleReferenceResponse(
-                        hero.getAlphaTalentId(),
-                        hero.getAlphaTalentName()
+                alphaTalent != null
+                        ? new DescribedReferenceResponse(
+                        alphaTalent.getId(),
+                        getLocalized(alphaTalent.getNameJson(), locale),
+                        getLocalized(alphaTalent.getDescriptionJson(), locale)
                 )
                         : null,
 
