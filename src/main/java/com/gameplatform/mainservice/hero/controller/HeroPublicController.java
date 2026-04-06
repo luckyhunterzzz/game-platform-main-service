@@ -32,7 +32,14 @@ public class HeroPublicController {
         return ResponseEntity.ok(heroPublicFacade.search(query, limit, language));
     }
 
-    @GetMapping("/{slug}")
+    @GetMapping("/filters")
+    public ResponseEntity<HeroCatalogFiltersResponse> getFilters(
+            @RequestParam(defaultValue = "RU") HeroLanguage language
+    ) {
+        return ResponseEntity.ok(heroPublicFacade.getFilters(language));
+    }
+
+    @GetMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}")
     public ResponseEntity<HeroDetailsResponse> getDetails(
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language ) {
@@ -43,12 +50,30 @@ public class HeroPublicController {
     public ResponseEntity<HeroPageResponse> getHeroes(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<Long> elementIds,
+            @RequestParam(required = false) List<Long> rarityIds,
+            @RequestParam(required = false) List<Long> heroClassIds,
+            @RequestParam(required = false) List<Long> familyIds,
+            @RequestParam(required = false) List<Long> manaSpeedIds,
+            @RequestParam(required = false) List<Long> alphaTalentIds,
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
-        return ResponseEntity.ok(heroPublicFacade.getHeroes(page, size, language));
+        return ResponseEntity.ok(heroPublicFacade.getHeroes(
+                page,
+                size,
+                language,
+                search,
+                elementIds,
+                rarityIds,
+                heroClassIds,
+                familyIds,
+                manaSpeedIds,
+                alphaTalentIds
+        ));
     }
 
-    @GetMapping("/{slug}/variants")
+    @GetMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}/variants")
     public ResponseEntity<HeroVariantsResponse> getVariants(
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language

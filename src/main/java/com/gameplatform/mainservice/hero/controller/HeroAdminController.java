@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
 import com.gameplatform.mainservice.hero.facade.HeroFacade;
 import jakarta.validation.Valid;
@@ -22,6 +23,15 @@ public class HeroAdminController {
     @GetMapping
     public ResponseEntity<List<HeroResponse>> getAll() {
         return ResponseEntity.ok(heroFacade.getAll());
+    }
+
+    @GetMapping("/catalog")
+    public ResponseEntity<HeroAdminPageResponse> getCatalog(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search
+    ) {
+        return ResponseEntity.ok(heroFacade.getCatalog(page, size, search));
     }
 
     @GetMapping("/{id}")
