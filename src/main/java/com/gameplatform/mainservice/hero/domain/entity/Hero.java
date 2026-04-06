@@ -98,4 +98,7 @@ public class Hero {
 
     @Column(name = "updated_by", nullable = false)
     private String updatedBy;
+
+    @Column(name = "updated_by_email")
+    private String updatedByEmail;
 }

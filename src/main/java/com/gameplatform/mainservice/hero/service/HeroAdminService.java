@@ -129,6 +129,7 @@ public class HeroAdminService {
         hero.setReleaseDate(request.releaseDate());
         hero.setStatus(request.status());
         hero.setUpdatedBy(request.updatedBy());
+        hero.setUpdatedByEmail(resolveUpdatedByEmail(request));
     }
 
     private void syncPassiveSkills(Long heroId, List<Long> passiveSkillIds) {
@@ -151,5 +152,17 @@ public class HeroAdminService {
 
     private String normalizeSlug(String slug) {
         return slug == null ? null : slug.trim().toLowerCase();
+    }
+
+    private String resolveUpdatedByEmail(HeroUpsertRequest request) {
+        if (request.updatedByEmail() != null && !request.updatedByEmail().isBlank()) {
+            return request.updatedByEmail().trim();
+        }
+
+        if (request.updatedBy() != null && request.updatedBy().contains("@")) {
+            return request.updatedBy().trim();
+        }
+
+        return null;
     }
 }
