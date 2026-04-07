@@ -1,7 +1,9 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
+import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
+import jakarta.validation.Valid;
 import com.gameplatform.mainservice.hero.facade.HeroPublicFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +46,15 @@ public class HeroPublicController {
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language ) {
         return ResponseEntity.ok(heroPublicFacade.getDetails(slug, language));
+    }
+
+    @PostMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}/stats/calculate")
+    public ResponseEntity<HeroStatCalculationResponse> calculateStats(
+            @PathVariable String slug,
+            @RequestParam(defaultValue = "RU") HeroLanguage language,
+            @RequestBody @Valid HeroStatCalculationRequest request
+    ) {
+        return ResponseEntity.ok(heroPublicFacade.calculateStats(slug, language, request));
     }
 
     @GetMapping

@@ -21,8 +21,8 @@ public class FamilyFacade {
         return familyResponseConverter.toResponseList(familyService.getAll());
     }
 
-    public CatalogPageResponse<FamilyResponse> getPage(int page, int size) {
-        return CatalogPageResponse.from(familyService.getPage(page, size).map(familyResponseConverter::toResponse));
+    public CatalogPageResponse<FamilyResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(familyService.getPage(page, size, search).map(familyResponseConverter::toResponse));
     }
 
     public FamilyResponse getById(Long id) {

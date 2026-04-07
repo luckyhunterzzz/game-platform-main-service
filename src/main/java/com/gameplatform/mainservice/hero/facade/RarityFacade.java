@@ -21,8 +21,8 @@ public class RarityFacade {
         return rarityResponseConverter.toResponseList(rarityService.getAll());
     }
 
-    public CatalogPageResponse<RarityResponse> getPage(int page, int size) {
-        return CatalogPageResponse.from(rarityService.getPage(page, size).map(rarityResponseConverter::toResponse));
+    public CatalogPageResponse<RarityResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(rarityService.getPage(page, size, search).map(rarityResponseConverter::toResponse));
     }
 
     public RarityResponse getById(Long id) {

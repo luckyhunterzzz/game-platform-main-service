@@ -21,8 +21,8 @@ public class ManaSpeedFacade {
         return converter.toResponseList(manaSpeedService.getAll());
     }
 
-    public CatalogPageResponse<ManaSpeedResponse> getPage(int page, int size) {
-        return CatalogPageResponse.from(manaSpeedService.getPage(page, size).map(converter::toResponse));
+    public CatalogPageResponse<ManaSpeedResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(manaSpeedService.getPage(page, size, search).map(converter::toResponse));
     }
 
     public ManaSpeedResponse getById(Long id) {

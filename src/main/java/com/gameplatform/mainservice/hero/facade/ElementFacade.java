@@ -21,8 +21,8 @@ public class ElementFacade {
         return converter.toResponseList(elementService.getAll());
     }
 
-    public CatalogPageResponse<ElementResponse> getPage(int page, int size) {
-        return CatalogPageResponse.from(elementService.getPage(page, size).map(converter::toResponse));
+    public CatalogPageResponse<ElementResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(elementService.getPage(page, size, search).map(converter::toResponse));
     }
 
     public ElementResponse getById(Long id) {

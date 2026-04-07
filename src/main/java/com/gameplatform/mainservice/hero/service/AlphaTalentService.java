@@ -6,8 +6,6 @@ import com.gameplatform.mainservice.hero.repository.AlphaTalentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,13 +15,14 @@ import java.util.List;
 public class AlphaTalentService {
 
     private final AlphaTalentRepository repository;
+    private final DictionaryCatalogSupport catalogSupport;
 
     public List<AlphaTalent> getAll() {
-        return repository.findAll();
+        return catalogSupport.sortLocalized(repository.findAll(), AlphaTalent::getNameJson);
     }
 
-    public Page<AlphaTalent> getPage(int page, int size) {
-        return repository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+    public Page<AlphaTalent> getPage(int page, int size, String search) {
+        return catalogSupport.pageLocalized(repository.findAll(), search, page, size, AlphaTalent::getNameJson);
     }
 
     public AlphaTalent getById(Long id) {

@@ -21,8 +21,8 @@ public class HeroClassFacade {
         return converter.toResponseList(service.getAll());
     }
 
-    public CatalogPageResponse<HeroClassResponse> getPage(int page, int size) {
-        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
+    public CatalogPageResponse<HeroClassResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(service.getPage(page, size, search).map(converter::toResponse));
     }
 
     public HeroClassResponse getById(Long id) {
