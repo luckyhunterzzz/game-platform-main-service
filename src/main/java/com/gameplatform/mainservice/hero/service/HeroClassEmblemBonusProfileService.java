@@ -5,6 +5,9 @@ import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfile
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +20,10 @@ public class HeroClassEmblemBonusProfileService {
 
     public List<HeroClassEmblemBonusProfile> getAll() {
         return repository.findAll();
+    }
+
+    public Page<HeroClassEmblemBonusProfile> getPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
     }
 
     public HeroClassEmblemBonusProfile getById(Long id) {

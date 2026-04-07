@@ -1,8 +1,9 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroClassUpsertRequest;
-import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
 import com.gameplatform.mainservice.hero.converter.HeroClassResponseConverter;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
 import com.gameplatform.mainservice.hero.service.HeroClassService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,10 @@ public class HeroClassFacade {
 
     public List<HeroClassResponse> getAll() {
         return converter.toResponseList(service.getAll());
+    }
+
+    public CatalogPageResponse<HeroClassResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
     }
 
     public HeroClassResponse getById(Long id) {

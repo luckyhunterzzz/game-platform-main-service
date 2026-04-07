@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.PassiveSkillResponse;
 import com.gameplatform.mainservice.hero.converter.PassiveSkillResponseConverter;
 import com.gameplatform.mainservice.hero.service.PassiveSkillService;
@@ -18,6 +19,10 @@ public class PassiveSkillFacade {
 
     public List<PassiveSkillResponse> getAll() {
         return converter.toResponseList(service.getAll());
+    }
+
+    public CatalogPageResponse<PassiveSkillResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
     }
 
     public PassiveSkillResponse getById(Long id) {
