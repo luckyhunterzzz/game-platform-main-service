@@ -1,8 +1,8 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.RarityEvolutionMultiplierResponse;
-import com.gameplatform.mainservice.hero.dto.response.RarityResponse;
 import com.gameplatform.mainservice.hero.facade.RarityEvolutionMultiplierFacade;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,14 @@ public class RarityEvolutionMultiplierAdminController {
     @GetMapping
     public ResponseEntity<List<RarityEvolutionMultiplierResponse>> getAll() {
         return ResponseEntity.ok(facade.getAll());
+    }
+
+    @GetMapping("/catalog")
+    public ResponseEntity<CatalogPageResponse<RarityEvolutionMultiplierResponse>> getCatalog(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return ResponseEntity.ok(facade.getPage(page, size));
     }
 
     @GetMapping("/{id}")

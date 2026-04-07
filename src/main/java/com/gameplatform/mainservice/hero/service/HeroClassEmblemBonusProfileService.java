@@ -1,11 +1,13 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.HeroClassEmblemBonusProfile;
-import com.gameplatform.mainservice.hero.domain.enums.EmblemPathType;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +20,10 @@ public class HeroClassEmblemBonusProfileService {
 
     public List<HeroClassEmblemBonusProfile> getAll() {
         return repository.findAll();
+    }
+
+    public Page<HeroClassEmblemBonusProfile> getPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
     }
 
     public HeroClassEmblemBonusProfile getById(Long id) {
@@ -35,9 +41,15 @@ public class HeroClassEmblemBonusProfileService {
         HeroClassEmblemBonusProfile entity = HeroClassEmblemBonusProfile.builder()
                 .heroClassId(request.heroClassId())
                 .pathType(request.pathType())
-                .attackBonus(request.attackBonus())
-                .armorBonus(request.armorBonus())
-                .hpBonus(request.hpBonus())
+                .attackFlatBonus(request.attackFlatBonus())
+                .armorFlatBonus(request.armorFlatBonus())
+                .hpFlatBonus(request.hpFlatBonus())
+                .attackPercentBonus(request.attackPercentBonus())
+                .armorPercentBonus(request.armorPercentBonus())
+                .hpPercentBonus(request.hpPercentBonus())
+                .masterAttackBonus(request.masterAttackBonus())
+                .masterArmorBonus(request.masterArmorBonus())
+                .masterHpBonus(request.masterHpBonus())
                 .build();
 
         return repository.save(entity);
@@ -54,9 +66,15 @@ public class HeroClassEmblemBonusProfileService {
 
         entity.setHeroClassId(request.heroClassId());
         entity.setPathType(request.pathType());
-        entity.setAttackBonus(request.attackBonus());
-        entity.setArmorBonus(request.armorBonus());
-        entity.setHpBonus(request.hpBonus());
+        entity.setAttackFlatBonus(request.attackFlatBonus());
+        entity.setArmorFlatBonus(request.armorFlatBonus());
+        entity.setHpFlatBonus(request.hpFlatBonus());
+        entity.setAttackPercentBonus(request.attackPercentBonus());
+        entity.setArmorPercentBonus(request.armorPercentBonus());
+        entity.setHpPercentBonus(request.hpPercentBonus());
+        entity.setMasterAttackBonus(request.masterAttackBonus());
+        entity.setMasterArmorBonus(request.masterArmorBonus());
+        entity.setMasterHpBonus(request.masterHpBonus());
 
         return repository.save(entity);
     }

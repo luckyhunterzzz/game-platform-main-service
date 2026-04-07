@@ -185,6 +185,7 @@ public class HeroAdminService {
         hero.setImageObjectKeyJson(request.imageObjectKeyJson());
         hero.setCostume(request.isCostume());
         hero.setBaseHeroId(request.baseHeroId());
+        hero.setCostumeIndex(request.costumeIndex());
         hero.setCostumeBonusJson(request.costumeBonusJson());
         hero.setReleaseDate(request.releaseDate());
         hero.setStatus(request.status());

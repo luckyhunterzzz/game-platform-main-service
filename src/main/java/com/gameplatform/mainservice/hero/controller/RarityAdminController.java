@@ -1,7 +1,7 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
-import com.gameplatform.mainservice.hero.dto.response.PassiveSkillResponse;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.RarityResponse;
 import com.gameplatform.mainservice.hero.facade.RarityFacade;
 import jakarta.validation.Valid;
@@ -23,6 +23,14 @@ public class RarityAdminController {
     @GetMapping
     public ResponseEntity<List<RarityResponse>> getAll() {
         return ResponseEntity.ok(facade.getAll());
+    }
+
+    @GetMapping("/catalog")
+    public ResponseEntity<CatalogPageResponse<RarityResponse>> getCatalog(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return ResponseEntity.ok(facade.getPage(page, size));
     }
 
     @GetMapping("/{id}")

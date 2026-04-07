@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.FamilyResponse;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.converter.FamilyResponseConverter;
 import com.gameplatform.mainservice.hero.service.FamilyService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,10 @@ public class FamilyFacade {
 
     public List<FamilyResponse> getAll() {
         return familyResponseConverter.toResponseList(familyService.getAll());
+    }
+
+    public CatalogPageResponse<FamilyResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(familyService.getPage(page, size).map(familyResponseConverter::toResponse));
     }
 
     public FamilyResponse getById(Long id) {

@@ -1,7 +1,7 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
-import com.gameplatform.mainservice.hero.dto.response.ManaSpeedResponse;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.PassiveSkillResponse;
 import com.gameplatform.mainservice.hero.facade.PassiveSkillFacade;
 import jakarta.validation.Valid;
@@ -23,6 +23,14 @@ public class PassiveSkillAdminController {
     @GetMapping
     public ResponseEntity<List<PassiveSkillResponse>> getAll() {
         return ResponseEntity.ok(facade.getAll());
+    }
+
+    @GetMapping("/catalog")
+    public ResponseEntity<CatalogPageResponse<PassiveSkillResponse>> getCatalog(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return ResponseEntity.ok(facade.getPage(page, size));
     }
 
     @GetMapping("/{id}")

@@ -1,8 +1,8 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
-import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
 import com.gameplatform.mainservice.hero.facade.HeroClassEmblemBonusProfileFacade;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,14 @@ public class HeroClassEmblemBonusProfileAdminController {
     @GetMapping
     public ResponseEntity<List<HeroClassEmblemBonusProfileResponse>> getAll() {
         return ResponseEntity.ok(facade.getAll());
+    }
+
+    @GetMapping("/catalog")
+    public ResponseEntity<CatalogPageResponse<HeroClassEmblemBonusProfileResponse>> getCatalog(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return ResponseEntity.ok(facade.getPage(page, size));
     }
 
     @GetMapping("/{id}")

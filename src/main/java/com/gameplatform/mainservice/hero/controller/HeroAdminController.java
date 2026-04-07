@@ -1,7 +1,9 @@
 package com.gameplatform.mainservice.hero.controller;
 
+import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroStatCalculationResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
 import com.gameplatform.mainservice.hero.facade.HeroFacade;
 import jakarta.validation.Valid;
@@ -28,7 +30,7 @@ public class HeroAdminController {
     @GetMapping("/catalog")
     public ResponseEntity<HeroAdminPageResponse> getCatalog(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search
     ) {
         return ResponseEntity.ok(heroFacade.getCatalog(page, size, search));
@@ -37,6 +39,14 @@ public class HeroAdminController {
     @GetMapping("/{id}")
     public ResponseEntity<HeroResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(heroFacade.getById(id));
+    }
+
+    @PostMapping("/{id}/stats/calculate")
+    public ResponseEntity<HeroStatCalculationResponse> calculateStats(
+            @PathVariable Long id,
+            @RequestBody @Valid HeroStatCalculationRequest request
+    ) {
+        return ResponseEntity.ok(heroFacade.calculateStats(id, request));
     }
 
     @PostMapping

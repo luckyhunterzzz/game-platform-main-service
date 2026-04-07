@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
 import com.gameplatform.mainservice.hero.converter.HeroClassEmblemBonusProfileResponseConverter;
 import com.gameplatform.mainservice.hero.service.HeroClassEmblemBonusProfileService;
@@ -18,6 +19,10 @@ public class HeroClassEmblemBonusProfileFacade {
 
     public List<HeroClassEmblemBonusProfileResponse> getAll() {
         return converter.toResponseList(service.getAll());
+    }
+
+    public CatalogPageResponse<HeroClassEmblemBonusProfileResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
     }
 
     public HeroClassEmblemBonusProfileResponse getById(Long id) {

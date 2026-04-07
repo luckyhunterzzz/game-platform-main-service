@@ -26,7 +26,7 @@ public class HeroValidator {
             throw new IllegalStateException("Hero with slug already exists: " + normalizedSlug);
         }
 
-        validateCommon(request);
+        validateCommon(null, request);
     }
 
     public void validateUpdate(Long heroId, HeroUpsertRequest request, String normalizedSlug) {
@@ -40,10 +40,10 @@ public class HeroValidator {
             throw new IllegalStateException("Hero cannot reference itself as base hero");
         }
 
-        validateCommon(request);
+        validateCommon(heroId, request);
     }
 
-    private void validateCommon(HeroUpsertRequest request) {
+    private void validateCommon(Long heroId, HeroUpsertRequest request) {
         imageReferenceValidator.validate(request.imageBucketJson() != null ? request.imageBucketJson().ru() : null,
                 request.imageObjectKeyJson() != null ? request.imageObjectKeyJson().ru() : null);
         imageReferenceValidator.validate(request.imageBucketJson() != null ? request.imageBucketJson().en() : null,
@@ -60,7 +60,7 @@ public class HeroValidator {
                 request.passiveSkillIds()
         );
 
-        validateCostumeFields(request.isCostume(), request.baseHeroId(), request.costumeBonusJson());
+        validateCostumeFields(heroId, request.isCostume(), request.baseHeroId(), request.costumeIndex(), request.costumeBonusJson());
     }
 
     private void validateReferences(
@@ -125,17 +125,52 @@ public class HeroValidator {
         }
     }
 
-    private void validateCostumeFields(Boolean isCostume, Long baseHeroId, CostumeBonusJson costumeBonusJson) {
+    private void validateCostumeFields(
+            Long heroId,
+            Boolean isCostume,
+            Long baseHeroId,
+            Integer costumeIndex,
+            CostumeBonusJson costumeBonusJson
+    ) {
         if (Boolean.TRUE.equals(isCostume) && baseHeroId == null) {
             throw new BusinessValidationException("Costume hero must have baseHeroId");
+        }
+
+        if (Boolean.TRUE.equals(isCostume) && costumeIndex == null) {
+            throw new BusinessValidationException("Costume hero must have costumeIndex");
+        }
+
+        if (Boolean.TRUE.equals(isCostume) && costumeBonusJson == null) {
+            throw new BusinessValidationException("Costume hero must have costumeBonusJson");
         }
 
         if (Boolean.FALSE.equals(isCostume) && baseHeroId != null) {
             throw new BusinessValidationException("Base hero cannot have baseHeroId");
         }
 
+        if (Boolean.FALSE.equals(isCostume) && costumeIndex != null) {
+            throw new BusinessValidationException("Base hero cannot have costumeIndex");
+        }
+
         if (Boolean.FALSE.equals(isCostume) && costumeBonusJson != null) {
             throw new BusinessValidationException("Base hero cannot have costumeBonusJson");
+        }
+
+        if (Boolean.TRUE.equals(isCostume)) {
+            heroRepository.findById(baseHeroId)
+                    .ifPresentOrElse(baseHero -> {
+                        if (baseHero.isCostume()) {
+                            throw new BusinessValidationException("Costume hero must reference a base hero");
+                        }
+                    }, () -> {
+                        throw new EntityNotFoundException("Base hero not found: " + baseHeroId);
+                    });
+
+            heroRepository.findByBaseHeroIdAndCostumeIndex(baseHeroId, costumeIndex)
+                    .filter(existing -> heroId == null || !existing.getId().equals(heroId))
+                    .ifPresent(existing -> {
+                        throw new BusinessValidationException("Costume index already exists for base hero");
+                    });
         }
     }
 }

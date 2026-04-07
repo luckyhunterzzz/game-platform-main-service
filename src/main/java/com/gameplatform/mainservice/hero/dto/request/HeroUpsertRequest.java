@@ -70,6 +70,9 @@ public record HeroUpsertRequest(
 
         Long baseHeroId,
 
+        @Positive
+        Integer costumeIndex,
+
         @Valid
         CostumeBonusJson costumeBonusJson,
 

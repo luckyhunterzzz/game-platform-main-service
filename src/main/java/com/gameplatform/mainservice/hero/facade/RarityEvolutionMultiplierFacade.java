@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.RarityEvolutionMultiplierResponse;
 import com.gameplatform.mainservice.hero.converter.RarityEvolutionMultiplierResponseConverter;
 import com.gameplatform.mainservice.hero.service.RarityEvolutionMultiplierService;
@@ -18,6 +19,10 @@ public class RarityEvolutionMultiplierFacade {
 
     public List<RarityEvolutionMultiplierResponse> getAll() {
         return converter.toResponseList(service.getAll());
+    }
+
+    public CatalogPageResponse<RarityEvolutionMultiplierResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
     }
 
     public RarityEvolutionMultiplierResponse getById(Long id) {

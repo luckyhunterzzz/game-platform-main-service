@@ -28,6 +28,7 @@ public record HeroResponse(
         LocalizedTextJson imageUrlJson,
         Boolean isCostume,
         Long baseHeroId,
+        Integer costumeIndex,
         CostumeBonusJson costumeBonusJson,
         LocalDate releaseDate,
         HeroStatus status,
