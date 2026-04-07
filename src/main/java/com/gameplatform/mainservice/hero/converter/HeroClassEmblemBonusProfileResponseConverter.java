@@ -14,9 +14,15 @@ public class HeroClassEmblemBonusProfileResponseConverter {
                 entity.getId(),
                 entity.getHeroClassId(),
                 entity.getPathType(),
-                entity.getAttackBonus(),
-                entity.getArmorBonus(),
-                entity.getHpBonus()
+                entity.getAttackFlatBonus(),
+                entity.getArmorFlatBonus(),
+                entity.getHpFlatBonus(),
+                entity.getAttackPercentBonus(),
+                entity.getArmorPercentBonus(),
+                entity.getHpPercentBonus(),
+                entity.getMasterAttackBonus(),
+                entity.getMasterArmorBonus(),
+                entity.getMasterHpBonus()
         );
     }
 
