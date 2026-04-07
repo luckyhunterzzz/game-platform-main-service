@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.RarityResponse;
 import com.gameplatform.mainservice.hero.converter.RarityResponseConverter;
 import com.gameplatform.mainservice.hero.service.RarityService;
@@ -18,6 +19,10 @@ public class RarityFacade {
 
     public List<RarityResponse> getAll() {
         return rarityResponseConverter.toResponseList(rarityService.getAll());
+    }
+
+    public CatalogPageResponse<RarityResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(rarityService.getPage(page, size).map(rarityResponseConverter::toResponse));
     }
 
     public RarityResponse getById(Long id) {

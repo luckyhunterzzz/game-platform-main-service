@@ -5,6 +5,9 @@ import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.ManaSpeedRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +20,10 @@ public class ManaSpeedService {
 
     public List<ManaSpeed> getAll() {
         return manaSpeedRepository.findAll();
+    }
+
+    public Page<ManaSpeed> getPage(int page, int size) {
+        return manaSpeedRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
     }
 
     public ManaSpeed getById(Long id) {

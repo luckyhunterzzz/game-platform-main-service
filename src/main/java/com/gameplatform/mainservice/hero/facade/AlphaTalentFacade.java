@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.AlphaTalentResponse;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.converter.AlphaTalentResponseConverter;
 import com.gameplatform.mainservice.hero.service.AlphaTalentService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,10 @@ public class AlphaTalentFacade {
 
     public List<AlphaTalentResponse> getAll() {
         return converter.toResponseList(service.getAll());
+    }
+
+    public CatalogPageResponse<AlphaTalentResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
     }
 
     public AlphaTalentResponse getById(Long id) {

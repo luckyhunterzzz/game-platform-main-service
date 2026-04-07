@@ -41,6 +41,7 @@ public class HeroResponseConverter {
                 resolveImageUrls(entity.getImageBucketJson(), entity.getImageObjectKeyJson()),
                 entity.isCostume(),
                 entity.getBaseHeroId(),
+                entity.getCostumeIndex(),
                 entity.getCostumeBonusJson(),
                 entity.getReleaseDate(),
                 entity.getStatus(),

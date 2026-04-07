@@ -1,7 +1,7 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpsertRequest;
-import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.ManaSpeedResponse;
 import com.gameplatform.mainservice.hero.facade.ManaSpeedFacade;
 import jakarta.validation.Valid;
@@ -23,6 +23,14 @@ public class ManaSpeedAdminController {
     @GetMapping
     public ResponseEntity<List<ManaSpeedResponse>> getAll() {
         return ResponseEntity.ok(facade.getAll());
+    }
+
+    @GetMapping("/catalog")
+    public ResponseEntity<CatalogPageResponse<ManaSpeedResponse>> getCatalog(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return ResponseEntity.ok(facade.getPage(page, size));
     }
 
     @GetMapping("/{id}")

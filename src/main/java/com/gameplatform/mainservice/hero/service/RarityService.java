@@ -5,6 +5,9 @@ import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +20,10 @@ public class RarityService {
 
     public List<Rarity> getAll() {
         return rarityRepository.findAll();
+    }
+
+    public Page<Rarity> getPage(int page, int size) {
+        return rarityRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
     }
 
     public Rarity getById(Long id) {

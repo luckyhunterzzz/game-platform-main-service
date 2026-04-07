@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.ElementUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.ElementResponse;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.converter.ElementResponseConverter;
 import com.gameplatform.mainservice.hero.service.ElementService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,10 @@ public class ElementFacade {
 
     public List<ElementResponse> getAll() {
         return converter.toResponseList(elementService.getAll());
+    }
+
+    public CatalogPageResponse<ElementResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(elementService.getPage(page, size).map(converter::toResponse));
     }
 
     public ElementResponse getById(Long id) {

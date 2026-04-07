@@ -22,6 +22,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     boolean existsBySlug(String slug);
 
+    Optional<Hero> findByBaseHeroIdAndCostumeIndex(Long baseHeroId, Integer costumeIndex);
+
     @Query(value = """
             SELECT
                 EXISTS(SELECT 1 FROM elements e WHERE e.id = :elementId) AS elementExists,

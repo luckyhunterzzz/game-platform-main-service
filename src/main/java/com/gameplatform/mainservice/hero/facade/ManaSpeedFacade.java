@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.ManaSpeedResponse;
 import com.gameplatform.mainservice.hero.converter.ManaSpeedResponseConverter;
 import com.gameplatform.mainservice.hero.service.ManaSpeedService;
@@ -18,6 +19,10 @@ public class ManaSpeedFacade {
 
     public List<ManaSpeedResponse> getAll() {
         return converter.toResponseList(manaSpeedService.getAll());
+    }
+
+    public CatalogPageResponse<ManaSpeedResponse> getPage(int page, int size) {
+        return CatalogPageResponse.from(manaSpeedService.getPage(page, size).map(converter::toResponse));
     }
 
     public ManaSpeedResponse getById(Long id) {

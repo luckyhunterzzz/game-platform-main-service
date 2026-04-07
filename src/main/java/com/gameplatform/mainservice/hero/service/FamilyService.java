@@ -5,6 +5,9 @@ import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.FamilyRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +20,10 @@ public class FamilyService {
 
     public List<Family> getAll() {
         return familyRepository.findAll();
+    }
+
+    public Page<Family> getPage(int page, int size) {
+        return familyRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
     }
 
     public Family getById(Long id) {

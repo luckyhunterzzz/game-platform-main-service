@@ -5,6 +5,9 @@ import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUp
 import com.gameplatform.mainservice.hero.repository.RarityEvolutionMultiplierRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +20,10 @@ public class RarityEvolutionMultiplierService {
 
     public List<RarityEvolutionMultiplier> getAll() {
         return repository.findAll();
+    }
+
+    public Page<RarityEvolutionMultiplier> getPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
     }
 
     public RarityEvolutionMultiplier getById(Long id) {

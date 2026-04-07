@@ -79,6 +79,9 @@ public class Hero {
     @Column(name = "base_hero_id")
     private Long baseHeroId;
 
+    @Column(name = "costume_index")
+    private Integer costumeIndex;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "costume_bonus_json", columnDefinition = "jsonb")
     private CostumeBonusJson costumeBonusJson;
