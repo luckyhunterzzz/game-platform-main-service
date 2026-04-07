@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
+import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.service.HeroPublicService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,14 @@ public class HeroPublicFacade {
 
     public HeroDetailsResponse getDetails(String slug, HeroLanguage language) {
         return heroPublicService.getDetails(slug, language);
+    }
+
+    public HeroStatCalculationResponse calculateStats(
+            String slug,
+            HeroLanguage language,
+            HeroStatCalculationRequest request
+    ) {
+        return heroPublicService.calculateStats(slug, language, request);
     }
 
     public HeroPageResponse getHeroes(

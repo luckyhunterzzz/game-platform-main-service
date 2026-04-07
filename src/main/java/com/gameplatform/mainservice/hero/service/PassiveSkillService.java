@@ -6,8 +6,6 @@ import com.gameplatform.mainservice.hero.repository.PassiveSkillRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,13 +15,14 @@ import java.util.List;
 public class PassiveSkillService {
 
     private final PassiveSkillRepository repository;
+    private final DictionaryCatalogSupport catalogSupport;
 
     public List<PassiveSkill> getAll() {
-        return repository.findAll();
+        return catalogSupport.sortLocalized(repository.findAll(), PassiveSkill::getNameJson);
     }
 
-    public Page<PassiveSkill> getPage(int page, int size) {
-        return repository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+    public Page<PassiveSkill> getPage(int page, int size, String search) {
+        return catalogSupport.pageLocalized(repository.findAll(), search, page, size, PassiveSkill::getNameJson);
     }
 
     public PassiveSkill getById(Long id) {

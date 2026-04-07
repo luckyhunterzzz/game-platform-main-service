@@ -2,28 +2,37 @@ package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.domain.entity.HeroClassEmblemBonusProfile;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
+import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class HeroClassEmblemBonusProfileService {
 
     private final HeroClassEmblemBonusProfileRepository repository;
+    private final HeroClassRepository heroClassRepository;
+    private final DictionaryCatalogSupport catalogSupport;
 
     public List<HeroClassEmblemBonusProfile> getAll() {
-        return repository.findAll();
+        return sortProfiles(repository.findAll());
     }
 
-    public Page<HeroClassEmblemBonusProfile> getPage(int page, int size) {
-        return repository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+    public Page<HeroClassEmblemBonusProfile> getPage(int page, int size, String search) {
+        List<HeroClassEmblemBonusProfile> filtered = sortProfiles(repository.findAll()).stream()
+                .filter(profile -> matchesProfile(profile, search))
+                .toList();
+
+        return catalogSupport.toPage(filtered, page, size);
     }
 
     public HeroClassEmblemBonusProfile getById(Long id) {
@@ -84,5 +93,32 @@ public class HeroClassEmblemBonusProfileService {
             throw new EntityNotFoundException("Profile not found: " + id);
         }
         repository.deleteById(id);
+    }
+
+    private List<HeroClassEmblemBonusProfile> sortProfiles(List<HeroClassEmblemBonusProfile> profiles) {
+        Map<Long, String> heroClassNames = heroClassRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        item -> item.getId(),
+                        item -> catalogSupport.sortableLocalized(item.getNameJson())
+                ));
+
+        return profiles.stream()
+                .sorted(Comparator
+                        .comparing((HeroClassEmblemBonusProfile item) -> heroClassNames.getOrDefault(item.getHeroClassId(), ""))
+                        .thenComparing(item -> item.getPathType().name())
+                        .thenComparing(HeroClassEmblemBonusProfile::getId))
+                .toList();
+    }
+
+    private boolean matchesProfile(HeroClassEmblemBonusProfile profile, String search) {
+        if (search == null || search.isBlank()) {
+            return true;
+        }
+
+        String normalizedSearch = catalogSupport.normalize(search);
+        return heroClassRepository.findById(profile.getHeroClassId())
+                .map(item -> catalogSupport.matchesLocalized(item.getNameJson(), normalizedSearch))
+                .orElse(false)
+                || catalogSupport.normalize(profile.getPathType().name()).contains(normalizedSearch);
     }
 }

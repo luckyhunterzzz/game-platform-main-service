@@ -6,8 +6,6 @@ import com.gameplatform.mainservice.hero.repository.RarityRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,13 +15,14 @@ import java.util.List;
 public class RarityService {
 
     private final RarityRepository rarityRepository;
+    private final DictionaryCatalogSupport catalogSupport;
 
     public List<Rarity> getAll() {
-        return rarityRepository.findAll();
+        return catalogSupport.sortLocalized(rarityRepository.findAll(), Rarity::getNameJson);
     }
 
-    public Page<Rarity> getPage(int page, int size) {
-        return rarityRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+    public Page<Rarity> getPage(int page, int size, String search) {
+        return catalogSupport.pageLocalized(rarityRepository.findAll(), search, page, size, Rarity::getNameJson);
     }
 
     public Rarity getById(Long id) {

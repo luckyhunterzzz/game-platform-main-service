@@ -5,6 +5,7 @@ import com.gameplatform.mainservice.hero.domain.entity.*;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
+import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.repository.*;
 import com.gameplatform.mainservice.hero.repository.projection.HeroCardRow;
@@ -34,6 +35,7 @@ public class HeroPublicService {
     private final FamilyRepository familyRepository;
     private final ManaSpeedRepository manaSpeedRepository;
     private final AlphaTalentRepository alphaTalentRepository;
+    private final HeroStatCalculationService heroStatCalculationService;
 
     private final HeroPublicResponseConverter converter;
 
@@ -176,6 +178,15 @@ public class HeroPublicService {
     public HeroDetailsResponse getDetails(String slug, HeroLanguage language) {
         HeroDetailsProjection currentHero = findCurrentBaseHero(slug, language);
         return buildHeroDetails(currentHero, language.getJsonKey());
+    }
+
+    public HeroStatCalculationResponse calculateStats(
+            String slug,
+            HeroLanguage language,
+            HeroStatCalculationRequest request
+    ) {
+        HeroDetailsProjection currentHero = findCurrentHero(slug, language);
+        return heroStatCalculationService.calculate(currentHero.getId(), request);
     }
 
     public HeroVariantsResponse getVariants(String slug, HeroLanguage language) {

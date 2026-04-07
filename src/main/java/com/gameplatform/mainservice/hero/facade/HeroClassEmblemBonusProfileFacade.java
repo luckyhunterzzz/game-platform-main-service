@@ -21,8 +21,8 @@ public class HeroClassEmblemBonusProfileFacade {
         return converter.toResponseList(service.getAll());
     }
 
-    public CatalogPageResponse<HeroClassEmblemBonusProfileResponse> getPage(int page, int size) {
-        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
+    public CatalogPageResponse<HeroClassEmblemBonusProfileResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(service.getPage(page, size, search).map(converter::toResponse));
     }
 
     public HeroClassEmblemBonusProfileResponse getById(Long id) {
