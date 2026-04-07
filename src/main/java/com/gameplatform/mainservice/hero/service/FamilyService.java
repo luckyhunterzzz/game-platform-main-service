@@ -6,8 +6,6 @@ import com.gameplatform.mainservice.hero.repository.FamilyRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,13 +15,14 @@ import java.util.List;
 public class FamilyService {
 
     private final FamilyRepository familyRepository;
+    private final DictionaryCatalogSupport catalogSupport;
 
     public List<Family> getAll() {
-        return familyRepository.findAll();
+        return catalogSupport.sortLocalized(familyRepository.findAll(), Family::getNameJson);
     }
 
-    public Page<Family> getPage(int page, int size) {
-        return familyRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+    public Page<Family> getPage(int page, int size, String search) {
+        return catalogSupport.pageLocalized(familyRepository.findAll(), search, page, size, Family::getNameJson);
     }
 
     public Family getById(Long id) {

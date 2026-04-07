@@ -21,8 +21,8 @@ public class PassiveSkillFacade {
         return converter.toResponseList(service.getAll());
     }
 
-    public CatalogPageResponse<PassiveSkillResponse> getPage(int page, int size) {
-        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
+    public CatalogPageResponse<PassiveSkillResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(service.getPage(page, size, search).map(converter::toResponse));
     }
 
     public PassiveSkillResponse getById(Long id) {

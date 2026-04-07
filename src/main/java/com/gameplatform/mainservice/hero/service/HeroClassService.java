@@ -6,8 +6,6 @@ import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,13 +15,14 @@ import java.util.List;
 public class HeroClassService {
 
     private final HeroClassRepository repository;
+    private final DictionaryCatalogSupport catalogSupport;
 
     public List<HeroClass> getAll() {
-        return repository.findAll();
+        return catalogSupport.sortLocalized(repository.findAll(), HeroClass::getNameJson);
     }
 
-    public Page<HeroClass> getPage(int page, int size) {
-        return repository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+    public Page<HeroClass> getPage(int page, int size, String search) {
+        return catalogSupport.pageLocalized(repository.findAll(), search, page, size, HeroClass::getNameJson);
     }
 
     public HeroClass getById(Long id) {

@@ -28,9 +28,10 @@ public class PassiveSkillAdminController {
     @GetMapping("/catalog")
     public ResponseEntity<CatalogPageResponse<PassiveSkillResponse>> getCatalog(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) String search
     ) {
-        return ResponseEntity.ok(facade.getPage(page, size));
+        return ResponseEntity.ok(facade.getPage(page, size, search));
     }
 
     @GetMapping("/{id}")

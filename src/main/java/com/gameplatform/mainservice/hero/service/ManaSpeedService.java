@@ -6,8 +6,6 @@ import com.gameplatform.mainservice.hero.repository.ManaSpeedRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,13 +15,14 @@ import java.util.List;
 public class ManaSpeedService {
 
     private final ManaSpeedRepository manaSpeedRepository;
+    private final DictionaryCatalogSupport catalogSupport;
 
     public List<ManaSpeed> getAll() {
-        return manaSpeedRepository.findAll();
+        return catalogSupport.sortLocalized(manaSpeedRepository.findAll(), ManaSpeed::getNameJson);
     }
 
-    public Page<ManaSpeed> getPage(int page, int size) {
-        return manaSpeedRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+    public Page<ManaSpeed> getPage(int page, int size, String search) {
+        return catalogSupport.pageLocalized(manaSpeedRepository.findAll(), search, page, size, ManaSpeed::getNameJson);
     }
 
     public ManaSpeed getById(Long id) {

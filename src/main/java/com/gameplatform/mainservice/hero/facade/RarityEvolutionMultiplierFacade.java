@@ -21,8 +21,8 @@ public class RarityEvolutionMultiplierFacade {
         return converter.toResponseList(service.getAll());
     }
 
-    public CatalogPageResponse<RarityEvolutionMultiplierResponse> getPage(int page, int size) {
-        return CatalogPageResponse.from(service.getPage(page, size).map(converter::toResponse));
+    public CatalogPageResponse<RarityEvolutionMultiplierResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(service.getPage(page, size, search).map(converter::toResponse));
     }
 
     public RarityEvolutionMultiplierResponse getById(Long id) {
