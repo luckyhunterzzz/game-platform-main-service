@@ -12,5 +12,7 @@ public interface HeroPassiveSkillRepository extends JpaRepository<HeroPassiveSki
 
     List<HeroPassiveSkill> findAllByIdHeroIdIn(List<Long> heroIds);
 
+    boolean existsByIdPassiveSkillId(Long passiveSkillId);
+
     void deleteAllByIdHeroId(Long heroId);
 }
