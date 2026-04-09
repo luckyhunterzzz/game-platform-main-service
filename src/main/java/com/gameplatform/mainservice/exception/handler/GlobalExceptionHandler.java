@@ -1,8 +1,10 @@
 package com.gameplatform.mainservice.exception.handler;
 
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
+import com.gameplatform.mainservice.exception.exceptions.DictionaryItemInUseException;
 import com.gameplatform.mainservice.exception.exceptions.InvalidAuthenticationException;
 import com.gameplatform.mainservice.exception.exceptions.MediaStorageException;
+import com.gameplatform.mainservice.exception.model.DictionaryItemInUseErrorResponse;
 import com.gameplatform.mainservice.exception.model.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -28,6 +30,26 @@ public class GlobalExceptionHandler {
     ) {
         log.warn("Business validation error: {} at {}", ex.getMessage(), request.getRequestURI());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(DictionaryItemInUseException.class)
+    public ResponseEntity<DictionaryItemInUseErrorResponse> handleDictionaryItemInUseException(
+            DictionaryItemInUseException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Dictionary item in use: {} at {}", ex.getMessage(), request.getRequestURI());
+
+        DictionaryItemInUseErrorResponse response = new DictionaryItemInUseErrorResponse(
+                OffsetDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                ex.getCode(),
+                ex.getHeroes()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     @ExceptionHandler(InvalidAuthenticationException.class)
