@@ -45,20 +45,30 @@ public class HeroStatCalculationService {
         Hero costumeHero = resolveCostumeHero(hero, request.costumeHeroId());
         HeroClassEmblemBonusProfile emblemProfile = resolveEmblemProfile(hero.getHeroClassId(), request.emblemPathType());
 
-        HeroStatBlockResponse minStats = new HeroStatBlockResponse(
-                ceilDivide(hero.getBaseAttack(), ascension480.getAttackMultiplier()),
-                ceilDivide(hero.getBaseArmor(), ascension480.getArmorMultiplier()),
-                ceilDivide(hero.getBaseHp(), ascension480.getHpMultiplier())
-        );
-
         HeroStatBlockResponse baseStats = new HeroStatBlockResponse(
                 hero.getBaseAttack(),
                 hero.getBaseArmor(),
                 hero.getBaseHp()
         );
 
+        HeroStatBlockResponse costumeBonus = costumeHero == null
+                ? zeroStats()
+                : calculateCostumeBonus(baseStats, costumeHero.getCostumeBonusJson());
+
+        HeroStatBlockResponse effectiveBaseStats = new HeroStatBlockResponse(
+                baseStats.attack() + costumeBonus.attack(),
+                baseStats.armor() + costumeBonus.armor(),
+                baseStats.hp() + costumeBonus.hp()
+        );
+
+        HeroStatBlockResponse minStats = new HeroStatBlockResponse(
+                ceilDivide(effectiveBaseStats.attack(), ascension480.getAttackMultiplier()),
+                ceilDivide(effectiveBaseStats.armor(), ascension480.getArmorMultiplier()),
+                ceilDivide(effectiveBaseStats.hp(), ascension480.getHpMultiplier())
+        );
+
         HeroStatBlockResponse stageStats = switch (request.stageCode()) {
-            case ASCENSION_4_80 -> baseStats;
+            case ASCENSION_4_80 -> effectiveBaseStats;
             case ASCENSION_4_85, ASCENSION_4_90 -> new HeroStatBlockResponse(
                     multiplyFloor(minStats.attack(), selectedStageMultiplier.getAttackMultiplier()),
                     multiplyFloor(minStats.armor(), selectedStageMultiplier.getArmorMultiplier()),
@@ -66,13 +76,9 @@ public class HeroStatCalculationService {
             );
         };
 
-        HeroStatBlockResponse costumeBonus = costumeHero == null
-                ? zeroStats()
-                : calculateCostumeBonus(baseStats, costumeHero.getCostumeBonusJson());
-
         HeroStatBlockResponse emblemBonus = emblemProfile == null
                 ? zeroStats()
-                : calculateEmblemBonus(baseStats, emblemProfile);
+                : calculateEmblemBonus(effectiveBaseStats, emblemProfile);
 
         HeroStatBlockResponse masterEmblemBonus = includeMasterEmblems && emblemProfile != null
                 ? new HeroStatBlockResponse(
@@ -83,9 +89,9 @@ public class HeroStatCalculationService {
                 : zeroStats();
 
         HeroStatBlockResponse finalStats = new HeroStatBlockResponse(
-                stageStats.attack() + costumeBonus.attack() + emblemBonus.attack() + masterEmblemBonus.attack(),
-                stageStats.armor() + costumeBonus.armor() + emblemBonus.armor() + masterEmblemBonus.armor(),
-                stageStats.hp() + costumeBonus.hp() + emblemBonus.hp() + masterEmblemBonus.hp()
+                stageStats.attack() + emblemBonus.attack() + masterEmblemBonus.attack(),
+                stageStats.armor() + emblemBonus.armor() + masterEmblemBonus.armor(),
+                stageStats.hp() + emblemBonus.hp() + masterEmblemBonus.hp()
         );
 
         return new HeroStatCalculationResponse(
