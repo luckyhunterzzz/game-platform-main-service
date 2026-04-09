@@ -24,6 +24,15 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     Optional<Hero> findByBaseHeroIdAndCostumeIndex(Long baseHeroId, Integer costumeIndex);
 
+    @Query("""
+            SELECT h
+            FROM Hero h
+            JOIN HeroPassiveSkill hps ON hps.id.heroId = h.id
+            WHERE hps.id.passiveSkillId = :passiveSkillId
+            ORDER BY h.id ASC
+            """)
+    List<Hero> findAllByPassiveSkillId(@Param("passiveSkillId") Long passiveSkillId);
+
     @Query(value = """
             SELECT
                 EXISTS(SELECT 1 FROM elements e WHERE e.id = :elementId) AS elementExists,

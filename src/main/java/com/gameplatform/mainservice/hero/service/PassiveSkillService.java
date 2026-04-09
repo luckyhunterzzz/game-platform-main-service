@@ -1,6 +1,10 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.exception.exceptions.DictionaryItemInUseException;
 import com.gameplatform.mainservice.hero.domain.entity.PassiveSkill;
+import com.gameplatform.mainservice.hero.dto.response.HeroUsageReferenceResponse;
+import com.gameplatform.mainservice.hero.repository.HeroPassiveSkillRepository;
+import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.PassiveSkillRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -15,6 +19,8 @@ import java.util.List;
 public class PassiveSkillService {
 
     private final PassiveSkillRepository repository;
+    private final HeroPassiveSkillRepository heroPassiveSkillRepository;
+    private final HeroRepository heroRepository;
     private final DictionaryCatalogSupport catalogSupport;
 
     public List<PassiveSkill> getAll() {
@@ -52,6 +58,24 @@ public class PassiveSkillService {
         if (!repository.existsById(id)) {
             throw new EntityNotFoundException("PassiveSkill not found: " + id);
         }
+
+        if (heroPassiveSkillRepository.existsByIdPassiveSkillId(id)) {
+            throw new DictionaryItemInUseException(
+                    "Passive skill is used by one or more heroes and cannot be deleted",
+                    catalogSupport.sortLocalized(
+                                    heroRepository.findAllByPassiveSkillId(id),
+                                    hero -> hero.getNameJson()
+                            ).stream()
+                            .map(hero -> new HeroUsageReferenceResponse(
+                                    hero.getId(),
+                                    hero.getSlug(),
+                                    hero.getNameJson(),
+                                    hero.getStatus().name()
+                            ))
+                            .toList()
+            );
+        }
+
         repository.deleteById(id);
     }
 }
