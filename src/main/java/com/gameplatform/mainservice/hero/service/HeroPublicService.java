@@ -202,6 +202,8 @@ public class HeroPublicService {
     }
 
     private HeroDetailsResponse buildHeroDetails(HeroDetailsProjection hero, String locale) {
+        Hero currentHero = heroRepository.findById(hero.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Hero not found with id: " + hero.getId()));
         HeroClass heroClass = heroClassRepository.findById(hero.getHeroClassId())
                 .orElseThrow(() -> new EntityNotFoundException("Hero class not found with id: " + hero.getHeroClassId()));
         Family family = hero.getFamilyId() == null
@@ -219,6 +221,7 @@ public class HeroPublicService {
 
         return converter.toDetailsResponse(
                 hero,
+                currentHero,
                 heroClass,
                 family,
                 manaSpeed,
