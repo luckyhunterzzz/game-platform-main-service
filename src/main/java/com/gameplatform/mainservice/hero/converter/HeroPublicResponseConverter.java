@@ -50,6 +50,7 @@ public class HeroPublicResponseConverter {
 
     public HeroDetailsResponse toDetailsResponse(
             HeroDetailsProjection hero,
+            Hero currentHero,
             HeroClass heroClass,
             Family family,
             ManaSpeed manaSpeed,
@@ -122,6 +123,10 @@ public class HeroPublicResponseConverter {
                         .toList(),
 
                 hero.getBaseHeroId(),
+                currentHero.getBaseAttack(),
+                currentHero.getBaseArmor(),
+                currentHero.getBaseHp(),
+                currentHero.getCostumeBonusJson(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
                 hero.getReleaseDate()
         );

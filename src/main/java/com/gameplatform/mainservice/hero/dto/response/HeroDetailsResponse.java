@@ -1,5 +1,7 @@
 package com.gameplatform.mainservice.hero.dto.response;
 
+import com.gameplatform.mainservice.hero.dto.json.CostumeBonusJson;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,6 +22,10 @@ public record HeroDetailsResponse(
 
         List<HeroCostumeResponse> costumes,
         Long baseHeroId,
+        Integer baseAttack,
+        Integer baseArmor,
+        Integer baseHp,
+        CostumeBonusJson costumeBonusJson,
 
         String imageUrl,
         LocalDate releaseDate
