@@ -29,7 +29,8 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
     FROM Publication p
     WHERE p.status = :status
     AND p.publishedAt <= :now
-    ORDER BY p.pinned DESC, p.pinnedAt DESC, p.publishedAt DESC
+    ORDER BY CASE WHEN p.pinned = true AND (p.pinnedUntil IS NULL OR p.pinnedUntil > :now) THEN 1 ELSE 0 END DESC,
+             p.pinnedAt DESC, p.publishedAt DESC
     """)
     Page<Publication> findPublishedForPublicFeed(
             @Param("status")PublicationStatus status,
@@ -43,7 +44,8 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
     WHERE p.status = :status
     AND p.type = :type
     AND p.publishedAt <= :now
-    ORDER BY p.pinned DESC, p.pinnedAt DESC, p.publishedAt DESC
+    ORDER BY CASE WHEN p.pinned = true AND (p.pinnedUntil IS NULL OR p.pinnedUntil > :now) THEN 1 ELSE 0 END DESC,
+             p.pinnedAt DESC, p.publishedAt DESC
     """)
     Page<Publication> findPublishedForPublicFeedByType(
             @Param("status") PublicationStatus status,
@@ -51,4 +53,23 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
             @Param("now") OffsetDateTime now,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT p
+    FROM Publication p
+    WHERE p.status = :status
+    AND p.publishedAt <= :now
+    AND (p.type = :newsType OR (p.type = :allianceType AND p.showInNewsFeed = true))
+    ORDER BY CASE WHEN p.pinned = true AND (p.pinnedUntil IS NULL OR p.pinnedUntil > :now) THEN 1 ELSE 0 END DESC,
+             p.pinnedAt DESC, p.publishedAt DESC
+    """)
+    Page<Publication> findPublishedForNewsFeed(
+            @Param("status") PublicationStatus status,
+            @Param("newsType") PublicationType newsType,
+            @Param("allianceType") PublicationType allianceType,
+            @Param("now") OffsetDateTime now,
+            Pageable pageable
+    );
+
+    List<Publication> findAllByPinnedTrueAndPinnedUntilLessThanEqual(OffsetDateTime pinnedUntil);
 }

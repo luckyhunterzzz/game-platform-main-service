@@ -57,6 +57,12 @@ public class Publication {
     @Column(name = "pinned_at")
     private OffsetDateTime pinnedAt;
 
+    @Column(name = "pinned_until")
+    private OffsetDateTime pinnedUntil;
+
+    @Column(name = "show_in_news_feed", nullable = false)
+    private boolean showInNewsFeed;
+
     @Column(name = "created_by")
     private UUID createdBy;
 

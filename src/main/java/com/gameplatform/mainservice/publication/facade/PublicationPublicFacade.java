@@ -19,4 +19,10 @@ public class PublicationPublicFacade {
                                                        PublicationType type) {
         return publicationPublicService.getLatestPublicFeed(page, size, language, type);
     }
+
+    public PublicationFeedResponse getAllianceFeed(int page,
+                                                   Integer size,
+                                                   PublicationLanguage language) {
+        return publicationPublicService.getAllianceFeed(page, size, language);
+    }
 }

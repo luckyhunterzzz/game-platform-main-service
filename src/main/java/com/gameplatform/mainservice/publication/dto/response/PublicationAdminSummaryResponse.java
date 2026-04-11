@@ -15,6 +15,8 @@ public record PublicationAdminSummaryResponse(
         LocalizedTextJson contentJson,
         String imageUrl,
         boolean pinned,
+        OffsetDateTime pinnedUntil,
+        boolean showInNewsFeed,
         OffsetDateTime publishedAt
 ) {
 }

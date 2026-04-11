@@ -4,5 +4,7 @@ public enum PublicationType {
     NEWS,
     SCHEDULE,
     EVENT,
-    GUIDE
+    GUIDE,
+    ALLIANCE,
+    GIFTCODES
 }

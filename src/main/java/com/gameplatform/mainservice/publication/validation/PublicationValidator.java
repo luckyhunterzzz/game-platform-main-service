@@ -32,11 +32,23 @@ public class PublicationValidator {
     }
 
     private void validateStatusRules(PublicationUpsertRequest request, OffsetDateTime now) {
+        validatePinRules(request, now);
+
         switch (request.status()) {
             case DRAFT -> validateDraft(request);
             case SCHEDULED -> validateScheduled(request, now);
             case PUBLISHED -> validatePublished(request, now);
             case ARCHIVED -> throw new BusinessValidationException(ARCHIVED_NOT_SUPPORTED_MESSAGE);
+        }
+    }
+
+    private void validatePinRules(PublicationUpsertRequest request, OffsetDateTime now) {
+        if (request.pinnedUntil() != null && !request.pinned()) {
+            throw new BusinessValidationException("pinnedUntil requires pinned=true");
+        }
+
+        if (request.pinnedUntil() != null && !request.pinnedUntil().isAfter(now)) {
+            throw new BusinessValidationException("pinnedUntil must be in the future");
         }
     }
 
