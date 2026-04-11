@@ -6,5 +6,6 @@ public record HeroCostumeResponse(
         Long id,
         String slug,
         String name,
+        Integer costumeIndex,
         CostumeBonusJson bonus
 ) {}

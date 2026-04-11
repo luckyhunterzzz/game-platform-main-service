@@ -118,6 +118,7 @@ public class HeroPublicResponseConverter {
                                 costume.getId(),
                                 costume.getSlug(),
                                 getLocalized(costume.getNameJson(), locale),
+                                costume.getCostumeIndex(),
                                 costume.getCostumeBonusJson()
                         ))
                         .toList(),
@@ -137,6 +138,7 @@ public class HeroPublicResponseConverter {
                 hero.getId(),
                 hero.getSlug(),
                 hero.getName(),
+                hero.getCostumeIndex(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
                 hero.getElementName(),
                 hero.getRarityName(),

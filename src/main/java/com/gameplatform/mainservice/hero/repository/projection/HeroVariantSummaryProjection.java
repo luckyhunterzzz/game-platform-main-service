@@ -4,6 +4,7 @@ public interface HeroVariantSummaryProjection {
     Long getId();
     String getSlug();
     String getName();
+    Integer getCostumeIndex();
     String getImageBucket();
     String getImageObjectKey();
     String getElementName();

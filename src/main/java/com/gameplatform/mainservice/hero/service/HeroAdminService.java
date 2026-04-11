@@ -3,10 +3,16 @@ package com.gameplatform.mainservice.hero.service;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkillId;
+import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.HeroAdminVariantsResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroNextCostumeIndexResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroSlugAvailabilityResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroVariantSummaryResponse;
 import com.gameplatform.mainservice.hero.converter.HeroResponseConverter;
+import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.repository.*;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import jakarta.persistence.EntityNotFoundException;
@@ -36,6 +42,7 @@ public class HeroAdminService {
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
 
     private final HeroResponseConverter heroResponseConverter;
+    private final HeroPublicResponseConverter heroPublicResponseConverter;
     private final HeroValidator heroValidator;
 
     public List<HeroResponse> getAll() {
@@ -112,6 +119,64 @@ public class HeroAdminService {
 
     public HeroResponse getResponseById(Long id) {
         return buildResponse(getById(id));
+    }
+
+    public HeroAdminVariantsResponse getVariants(Long id, HeroLanguage language) {
+        Hero currentHero = getById(id);
+        String locale = language.getJsonKey();
+        Long baseHeroId = currentHero.isCostume()
+                ? currentHero.getBaseHeroId()
+                : currentHero.getId();
+
+        HeroVariantSummaryResponse currentHeroSummary = heroRepository.findHeroVariantSummaryById(currentHero.getId(), locale)
+                .map(heroPublicResponseConverter::toVariantSummary)
+                .orElseThrow(() -> new EntityNotFoundException("Hero not found: " + currentHero.getId()));
+
+        if (baseHeroId == null) {
+            return new HeroAdminVariantsResponse(currentHeroSummary, currentHeroSummary, List.of());
+        }
+
+        HeroVariantSummaryResponse baseHeroSummary = heroRepository.findHeroVariantSummaryById(baseHeroId, locale)
+                .map(heroPublicResponseConverter::toVariantSummary)
+                .orElseThrow(() -> new EntityNotFoundException("Base hero not found: " + baseHeroId));
+
+        List<HeroVariantSummaryResponse> costumes = heroRepository.findHeroVariantSummariesByBaseHeroId(baseHeroId, locale)
+                .stream()
+                .map(heroPublicResponseConverter::toVariantSummary)
+                .toList();
+
+        return new HeroAdminVariantsResponse(
+                currentHeroSummary,
+                baseHeroSummary,
+                costumes
+        );
+    }
+
+    public HeroSlugAvailabilityResponse getSlugAvailability(String slug, Long excludeId) {
+        String normalizedSlug = normalizeSlug(slug);
+        if (!StringUtils.hasText(normalizedSlug)) {
+            return new HeroSlugAvailabilityResponse(false);
+        }
+
+        boolean available = excludeId == null
+                ? !heroRepository.existsBySlug(normalizedSlug)
+                : !heroRepository.existsBySlugAndIdNot(normalizedSlug, excludeId);
+
+        return new HeroSlugAvailabilityResponse(available);
+    }
+
+    public HeroNextCostumeIndexResponse getNextCostumeIndex(Long baseHeroId) {
+        if (baseHeroId == null) {
+            throw new EntityNotFoundException("Base hero not found: null");
+        }
+
+        if (!heroRepository.existsById(baseHeroId)) {
+            throw new EntityNotFoundException("Base hero not found: " + baseHeroId);
+        }
+
+        Integer maxCostumeIndex = heroRepository.findMaxCostumeIndexByBaseHeroId(baseHeroId);
+        int nextCostumeIndex = (maxCostumeIndex == null ? 0 : maxCostumeIndex) + 1;
+        return new HeroNextCostumeIndexResponse(nextCostumeIndex);
     }
 
     @Transactional

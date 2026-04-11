@@ -1,10 +1,14 @@
 package com.gameplatform.mainservice.hero.controller;
 
+import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.HeroAdminVariantsResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroNextCostumeIndexResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroStatCalculationResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroSlugAvailabilityResponse;
 import com.gameplatform.mainservice.hero.facade.HeroFacade;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +43,29 @@ public class HeroAdminController {
     @GetMapping("/{id}")
     public ResponseEntity<HeroResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(heroFacade.getById(id));
+    }
+
+    @GetMapping("/{id}/variants")
+    public ResponseEntity<HeroAdminVariantsResponse> getVariants(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "RU") HeroLanguage language
+    ) {
+        return ResponseEntity.ok(heroFacade.getVariants(id, language));
+    }
+
+    @GetMapping("/slug-availability")
+    public ResponseEntity<HeroSlugAvailabilityResponse> getSlugAvailability(
+            @RequestParam String slug,
+            @RequestParam(required = false) Long excludeId
+    ) {
+        return ResponseEntity.ok(heroFacade.getSlugAvailability(slug, excludeId));
+    }
+
+    @GetMapping("/next-costume-index")
+    public ResponseEntity<HeroNextCostumeIndexResponse> getNextCostumeIndex(
+            @RequestParam Long baseHeroId
+    ) {
+        return ResponseEntity.ok(heroFacade.getNextCostumeIndex(baseHeroId));
     }
 
     @PostMapping("/{id}/stats/calculate")
