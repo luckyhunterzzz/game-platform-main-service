@@ -24,6 +24,11 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     Optional<Hero> findByBaseHeroIdAndCostumeIndex(Long baseHeroId, Integer costumeIndex);
 
+    boolean existsBySlugAndIdNot(String slug, Long id);
+
+    @Query("SELECT COALESCE(MAX(h.costumeIndex), 0) FROM Hero h WHERE h.baseHeroId = :baseHeroId")
+    Integer findMaxCostumeIndexByBaseHeroId(@Param("baseHeroId") Long baseHeroId);
+
     @Query("""
             SELECT h
             FROM Hero h
@@ -221,6 +226,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.id AS id,
                 h.slug AS slug,
                 COALESCE(h.name_json ->> :locale, h.slug) AS name,
+                h.costume_index AS costumeIndex,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
                 e.name_json ->> :locale AS elementName,
@@ -242,6 +248,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.id AS id,
                 h.slug AS slug,
                 COALESCE(h.name_json ->> :locale, h.slug) AS name,
+                h.costume_index AS costumeIndex,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
                 e.name_json ->> :locale AS elementName,
@@ -252,9 +259,52 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             JOIN rarities r ON r.id = h.rarity_id
             WHERE h.base_hero_id = :baseHeroId
               AND h.status = 'READY'
-            ORDER BY h.id ASC
+            ORDER BY COALESCE(h.costume_index, 2147483647) ASC, h.id ASC
             """, nativeQuery = true)
     List<HeroVariantSummaryProjection> findReadyHeroVariantSummariesByBaseHeroId(
+            @Param("baseHeroId") Long baseHeroId,
+            @Param("locale") String locale
+    );
+
+    @Query(value = """
+            SELECT
+                h.id AS id,
+                h.slug AS slug,
+                COALESCE(h.name_json ->> :locale, h.slug) AS name,
+                h.costume_index AS costumeIndex,
+                COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
+                COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                e.name_json ->> :locale AS elementName,
+                r.name_json ->> :locale AS rarityName,
+                r.stars AS rarityStars
+            FROM heroes h
+            JOIN elements e ON e.id = h.element_id
+            JOIN rarities r ON r.id = h.rarity_id
+            WHERE h.id = :id
+            """, nativeQuery = true)
+    Optional<HeroVariantSummaryProjection> findHeroVariantSummaryById(
+            @Param("id") Long id,
+            @Param("locale") String locale
+    );
+
+    @Query(value = """
+            SELECT
+                h.id AS id,
+                h.slug AS slug,
+                COALESCE(h.name_json ->> :locale, h.slug) AS name,
+                h.costume_index AS costumeIndex,
+                COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
+                COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                e.name_json ->> :locale AS elementName,
+                r.name_json ->> :locale AS rarityName,
+                r.stars AS rarityStars
+            FROM heroes h
+            JOIN elements e ON e.id = h.element_id
+            JOIN rarities r ON r.id = h.rarity_id
+            WHERE h.base_hero_id = :baseHeroId
+            ORDER BY COALESCE(h.costume_index, 2147483647) ASC, h.id ASC
+            """, nativeQuery = true)
+    List<HeroVariantSummaryProjection> findHeroVariantSummariesByBaseHeroId(
             @Param("baseHeroId") Long baseHeroId,
             @Param("locale") String locale
     );
