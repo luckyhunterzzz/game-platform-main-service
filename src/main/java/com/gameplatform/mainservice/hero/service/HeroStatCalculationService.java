@@ -42,7 +42,7 @@ public class HeroStatCalculationService {
         RarityEvolutionMultiplier ascension480 = getMultiplier(hero.getRarityId(), EvolutionStageCode.ASCENSION_4_80);
         RarityEvolutionMultiplier selectedStageMultiplier = getMultiplier(hero.getRarityId(), request.stageCode());
 
-        Hero costumeHero = resolveCostumeHero(hero, request.costumeHeroId());
+        Hero costumeHero = resolveTargetCostumeHero(hero, request.costumeHeroId());
         HeroClassEmblemBonusProfile emblemProfile = resolveEmblemProfile(hero.getHeroClassId(), request.emblemPathType());
 
         HeroStatBlockResponse baseStats = new HeroStatBlockResponse(
@@ -51,15 +51,39 @@ public class HeroStatCalculationService {
                 hero.getBaseHp()
         );
 
-        HeroStatBlockResponse costumeBonus = costumeHero == null
-                ? zeroStats()
-                : calculateCostumeBonus(baseStats, costumeHero.getCostumeBonusJson());
+        HeroStatBlockResponse effectiveBaseStats;
+        HeroStatBlockResponse costumeBonus;
 
-        HeroStatBlockResponse effectiveBaseStats = new HeroStatBlockResponse(
-                baseStats.attack() + costumeBonus.attack(),
-                baseStats.armor() + costumeBonus.armor(),
-                baseStats.hp() + costumeBonus.hp()
-        );
+        if (hero.isCostume()) {
+            CostumeBonusJson currentCostumeBonusJson = hero.getCostumeBonusJson();
+            if (currentCostumeBonusJson == null) {
+                throw new BusinessValidationException("Current costume hero does not have costumeBonusJson");
+            }
+
+            HeroStatBlockResponse restoredBaseStats = removeCostumeBonus(baseStats, currentCostumeBonusJson);
+
+            if (costumeHero == null) {
+                effectiveBaseStats = baseStats;
+                costumeBonus = zeroStats();
+            } else {
+                costumeBonus = calculateCostumeBonus(restoredBaseStats, costumeHero.getCostumeBonusJson());
+                effectiveBaseStats = new HeroStatBlockResponse(
+                        restoredBaseStats.attack() + costumeBonus.attack(),
+                        restoredBaseStats.armor() + costumeBonus.armor(),
+                        restoredBaseStats.hp() + costumeBonus.hp()
+                );
+            }
+        } else {
+            costumeBonus = costumeHero == null
+                    ? zeroStats()
+                    : calculateCostumeBonus(baseStats, costumeHero.getCostumeBonusJson());
+
+            effectiveBaseStats = new HeroStatBlockResponse(
+                    baseStats.attack() + costumeBonus.attack(),
+                    baseStats.armor() + costumeBonus.armor(),
+                    baseStats.hp() + costumeBonus.hp()
+            );
+        }
 
         HeroStatBlockResponse minStats = new HeroStatBlockResponse(
                 ceilDivide(effectiveBaseStats.attack(), ascension480.getAttackMultiplier()),
@@ -123,13 +147,9 @@ public class HeroStatCalculationService {
                 ));
     }
 
-    private Hero resolveCostumeHero(Hero hero, Long costumeHeroId) {
+    private Hero resolveTargetCostumeHero(Hero hero, Long costumeHeroId) {
         if (costumeHeroId == null) {
             return null;
-        }
-
-        if (hero.isCostume()) {
-            throw new BusinessValidationException("Costume selection is available only for base hero calculation");
         }
 
         Hero costumeHero = heroRepository.findById(costumeHeroId)
@@ -139,12 +159,28 @@ public class HeroStatCalculationService {
             throw new BusinessValidationException("Selected hero is not a costume");
         }
 
-        if (!hero.getId().equals(costumeHero.getBaseHeroId())) {
-            throw new BusinessValidationException("Selected costume does not belong to this base hero");
-        }
-
         if (costumeHero.getCostumeBonusJson() == null) {
             throw new BusinessValidationException("Selected costume does not have costumeBonusJson");
+        }
+
+        if (hero.isCostume()) {
+            if (!hero.getBaseHeroId().equals(costumeHero.getBaseHeroId())) {
+                throw new BusinessValidationException("Selected costume does not belong to this hero costume line");
+            }
+
+            if (hero.getCostumeIndex() == null || costumeHero.getCostumeIndex() == null) {
+                throw new BusinessValidationException("Costume index is required for costume recalculation");
+            }
+
+            if (costumeHero.getId().equals(hero.getId())) {
+                throw new BusinessValidationException("Current costume is already selected");
+            }
+
+            if (costumeHero.getCostumeIndex() <= hero.getCostumeIndex()) {
+                throw new BusinessValidationException("Only higher costume index can be selected for costume recalculation");
+            }
+        } else if (!hero.getId().equals(costumeHero.getBaseHeroId())) {
+            throw new BusinessValidationException("Selected costume does not belong to this base hero");
         }
 
         return costumeHero;
@@ -201,6 +237,25 @@ public class HeroStatCalculationService {
         return BigDecimal.valueOf(baseValue)
                 .multiply(BigDecimal.valueOf(percentValue).movePointLeft(2))
                 .setScale(0, RoundingMode.FLOOR)
+                .intValueExact();
+    }
+
+    private HeroStatBlockResponse removeCostumeBonus(HeroStatBlockResponse costumeStats, CostumeBonusJson costumeBonusJson) {
+        return new HeroStatBlockResponse(
+                reversePercentBonus(costumeStats.attack(), costumeBonusJson.attack()),
+                reversePercentBonus(costumeStats.armor(), costumeBonusJson.armor()),
+                reversePercentBonus(costumeStats.hp(), costumeBonusJson.hp())
+        );
+    }
+
+    private int reversePercentBonus(Integer valueWithCostume, Integer percentValue) {
+        if (percentValue == null || percentValue == 0) {
+            return valueWithCostume;
+        }
+
+        BigDecimal multiplier = BigDecimal.ONE.add(BigDecimal.valueOf(percentValue).movePointLeft(2));
+        return BigDecimal.valueOf(valueWithCostume)
+                .divide(multiplier, 0, RoundingMode.CEILING)
                 .intValueExact();
     }
 
