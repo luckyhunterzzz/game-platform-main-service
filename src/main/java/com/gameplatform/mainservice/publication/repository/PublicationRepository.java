@@ -17,6 +17,8 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
 
     Page<Publication> findAllByStatus(PublicationStatus status, Pageable pageable);
 
+    Page<Publication> findAllByStatusAndType(PublicationStatus status, PublicationType type, Pageable pageable);
+
     List<Publication> findAllByStatusAndPublishedAtLessThanEqual(
             PublicationStatus status,
             OffsetDateTime publishedAt

@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.publication.controller;
 
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
+import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
@@ -22,10 +23,11 @@ public class AdminPublicationsController {
     @GetMapping
     public PublicationAdminFeedResponse getFeedByStatus(
             @RequestParam(defaultValue = "PUBLISHED") PublicationStatus status,
+            @RequestParam(required = false) PublicationType type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer size
     ) {
-        return publicationAdminFacade.getFeedByStatus(status, page, size);
+        return publicationAdminFacade.getFeedByStatus(status, type, page, size);
     }
 
     @GetMapping("/{id}")
