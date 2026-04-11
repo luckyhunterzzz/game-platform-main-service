@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.publication.service;
 
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
+import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
@@ -43,12 +44,17 @@ public class PublicationAdminService {
     private final Clock clock;
 
     @Transactional(readOnly = true)
-    public PublicationAdminFeedResponse getFeedByStatus(PublicationStatus status, int page, Integer size) {
+    public PublicationAdminFeedResponse getFeedByStatus(PublicationStatus status,
+                                                        PublicationType type,
+                                                        int page,
+                                                        Integer size) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size != null ? size : DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
 
         PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize, resolveSort(status));
-        Page<Publication> publicationPage = publicationRepository.findAllByStatus(status, pageable);
+        Page<Publication> publicationPage = type == null
+                ? publicationRepository.findAllByStatus(status, pageable)
+                : publicationRepository.findAllByStatusAndType(status, type, pageable);
         List<PublicationAdminSummaryResponse> items =
                 publicationResponseConverter.toAdminSummaryResponseList(publicationPage.getContent());
 
