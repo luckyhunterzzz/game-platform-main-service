@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.publication.facade;
 
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
+import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
@@ -20,8 +21,11 @@ public class PublicationAdminFacade {
         return publicationAdminService.getById(id);
     }
 
-    public PublicationAdminFeedResponse getFeedByStatus(PublicationStatus status, int page, Integer size) {
-        return publicationAdminService.getFeedByStatus(status, page, size);
+    public PublicationAdminFeedResponse getFeedByStatus(PublicationStatus status,
+                                                        PublicationType type,
+                                                        int page,
+                                                        Integer size) {
+        return publicationAdminService.getFeedByStatus(status, type, page, size);
     }
 
     public PublicationAdminDetailsResponse createPublication(PublicationUpsertRequest publicationUpsertRequest) {
