@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.publication.controller;
 
 import com.gameplatform.mainservice.publication.domain.enums.PublicationLanguage;
+import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.facade.PublicationPublicFacade;
 import jakarta.validation.constraints.Max;
@@ -25,8 +26,9 @@ public class PublicPublicationsController {
     public ResponseEntity<PublicationFeedResponse> getLatest(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(required = false) @Min(1) @Max(100) Integer size,
-            @RequestParam(defaultValue = "RU") PublicationLanguage language
+            @RequestParam(defaultValue = "RU") PublicationLanguage language,
+            @RequestParam(required = false) PublicationType type
     ) {
-        return ResponseEntity.ok(publicationPublicFacade.getLatestPublicFeed(page, size, language));
+        return ResponseEntity.ok(publicationPublicFacade.getLatestPublicFeed(page, size, language, type));
     }
 }

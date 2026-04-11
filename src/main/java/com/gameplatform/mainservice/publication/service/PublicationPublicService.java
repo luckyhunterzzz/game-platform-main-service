@@ -3,6 +3,7 @@ package com.gameplatform.mainservice.publication.service;
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationLanguage;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
+import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationResponse;
 import com.gameplatform.mainservice.publication.mapper.PublicationResponseConverter;
@@ -37,15 +38,25 @@ public class PublicationPublicService {
     }
 
 
-    public PublicationFeedResponse getLatestPublicFeed(int page, Integer size, PublicationLanguage language) {
+    public PublicationFeedResponse getLatestPublicFeed(int page,
+                                                       Integer size,
+                                                       PublicationLanguage language,
+                                                       PublicationType type) {
         OffsetDateTime now = OffsetDateTime.now(clock);
         int pageSize = (size != null) ? size : defaultPageSize;
 
-        Page<Publication> publicationPage = publicationRepository.findPublishedForPublicFeed(
-                PublicationStatus.PUBLISHED,
-                now,
-                PageRequest.of(page, pageSize)
-        );
+        Page<Publication> publicationPage = type == null
+                ? publicationRepository.findPublishedForPublicFeed(
+                        PublicationStatus.PUBLISHED,
+                        now,
+                        PageRequest.of(page, pageSize)
+                )
+                : publicationRepository.findPublishedForPublicFeedByType(
+                        PublicationStatus.PUBLISHED,
+                        type,
+                        now,
+                        PageRequest.of(page, pageSize)
+                );
 
         List<PublicationResponse> items = publicationResponseConverter.toPublicResponseList(
                 publicationPage.getContent(),
