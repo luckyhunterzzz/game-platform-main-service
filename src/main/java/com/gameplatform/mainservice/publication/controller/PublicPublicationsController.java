@@ -31,4 +31,13 @@ public class PublicPublicationsController {
     ) {
         return ResponseEntity.ok(publicationPublicFacade.getLatestPublicFeed(page, size, language, type));
     }
+
+    @GetMapping("/alliances")
+    public ResponseEntity<PublicationFeedResponse> getAlliances(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(required = false) @Min(1) @Max(100) Integer size,
+            @RequestParam(defaultValue = "RU") PublicationLanguage language
+    ) {
+        return ResponseEntity.ok(publicationPublicFacade.getAllianceFeed(page, size, language));
+    }
 }

@@ -20,4 +20,13 @@ public class PublicationScheduler {
             log.info("Published {} scheduled publications", publishedCount);
         }
     }
+
+    @Scheduled(cron = "${publication.scheduler.unpin-cron:0 5/15 * * * *}")
+    public void unpinExpiredPublications() {
+        int unpublishedCount = publicationAdminService.unpinExpiredPublications();
+
+        if (unpublishedCount > 0) {
+            log.info("Unpinned {} expired publications", unpublishedCount);
+        }
+    }
 }

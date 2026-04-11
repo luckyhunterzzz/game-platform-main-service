@@ -12,5 +12,6 @@ public record PublicationResponse(
    String content,
    String imageUrl,
    boolean pinned,
+   boolean showInNewsFeed,
    OffsetDateTime publishedAt
 ) {}
