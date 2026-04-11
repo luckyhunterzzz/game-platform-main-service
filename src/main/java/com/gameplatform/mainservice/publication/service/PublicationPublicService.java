@@ -45,18 +45,29 @@ public class PublicationPublicService {
         OffsetDateTime now = OffsetDateTime.now(clock);
         int pageSize = (size != null) ? size : defaultPageSize;
 
-        Page<Publication> publicationPage = type == null
-                ? publicationRepository.findPublishedForPublicFeed(
-                        PublicationStatus.PUBLISHED,
-                        now,
-                        PageRequest.of(page, pageSize)
-                )
-                : publicationRepository.findPublishedForPublicFeedByType(
-                        PublicationStatus.PUBLISHED,
-                        type,
-                        now,
-                        PageRequest.of(page, pageSize)
-                );
+        Page<Publication> publicationPage;
+        if (type == null) {
+            publicationPage = publicationRepository.findPublishedForPublicFeed(
+                    PublicationStatus.PUBLISHED,
+                    now,
+                    PageRequest.of(page, pageSize)
+            );
+        } else if (type == PublicationType.NEWS) {
+            publicationPage = publicationRepository.findPublishedForNewsFeed(
+                    PublicationStatus.PUBLISHED,
+                    PublicationType.NEWS,
+                    PublicationType.ALLIANCE,
+                    now,
+                    PageRequest.of(page, pageSize)
+            );
+        } else {
+            publicationPage = publicationRepository.findPublishedForPublicFeedByType(
+                    PublicationStatus.PUBLISHED,
+                    type,
+                    now,
+                    PageRequest.of(page, pageSize)
+            );
+        }
 
         List<PublicationResponse> items = publicationResponseConverter.toPublicResponseList(
                 publicationPage.getContent(),
@@ -71,5 +82,11 @@ public class PublicationPublicService {
                 publicationPage.getTotalPages(),
                 publicationPage.hasNext()
         );
+    }
+
+    public PublicationFeedResponse getAllianceFeed(int page,
+                                                   Integer size,
+                                                   PublicationLanguage language) {
+        return getLatestPublicFeed(page, size, language, PublicationType.ALLIANCE);
     }
 }

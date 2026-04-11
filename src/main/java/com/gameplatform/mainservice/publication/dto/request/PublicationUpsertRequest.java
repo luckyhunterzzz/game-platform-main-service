@@ -22,6 +22,8 @@ public record PublicationUpsertRequest(
         String imageBucket,
         String imageObjectKey,
         boolean pinned,
+        OffsetDateTime pinnedUntil,
+        boolean showInNewsFeed,
         OffsetDateTime publishedAt
 ) {
 }

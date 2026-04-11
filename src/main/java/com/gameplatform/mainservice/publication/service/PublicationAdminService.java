@@ -33,6 +33,7 @@ public class PublicationAdminService {
     private static final UUID SYSTEM_ACTOR_ID = new UUID(0L, 0L);
     private static final String PINNED_FIELD = "pinned";
     private static final String PINNED_AT_FIELD = "pinnedAt";
+    private static final String PINNED_UNTIL_FIELD = "pinnedUntil";
     private static final String PUBLISHED_AT_FIELD = "publishedAt";
     private static final String UPDATED_AT_FIELD = "updatedAt";
     private static final String CREATED_AT_FIELD = "createdAt";
@@ -132,6 +133,22 @@ public class PublicationAdminService {
         return publicationsToPublish.size();
     }
 
+    @Transactional
+    public int unpinExpiredPublications() {
+        OffsetDateTime now = OffsetDateTime.now(clock);
+        List<Publication> publicationsToUnpin = publicationRepository
+                .findAllByPinnedTrueAndPinnedUntilLessThanEqual(now);
+
+        for (Publication publication : publicationsToUnpin) {
+            publication.setPinned(false);
+            publication.setPinnedAt(null);
+            publication.setUpdatedAt(now);
+            publication.setUpdatedBy(SYSTEM_ACTOR_ID);
+        }
+
+        return publicationsToUnpin.size();
+    }
+
     private void applyUpsert(Publication publication,
                              PublicationUpsertRequest request,
                              OffsetDateTime now,
@@ -144,6 +161,8 @@ public class PublicationAdminService {
         publication.setStatus(request.status());
         publication.setPublishedAt(resolvePublishedAt(request, now));
         publication.setPinned(request.pinned());
+        publication.setPinnedUntil(request.pinned() ? request.pinnedUntil() : null);
+        publication.setShowInNewsFeed(request.showInNewsFeed());
         publication.setPinnedAt(resolvePinnedAt(request, now));
         publication.setUpdatedBy(actorId);
         publication.setUpdatedAt(now);
@@ -172,6 +191,7 @@ public class PublicationAdminService {
         return switch (status) {
             case PUBLISHED -> Sort.by(
                     Sort.Order.desc(PINNED_FIELD),
+                    Sort.Order.asc(PINNED_UNTIL_FIELD),
                     Sort.Order.desc(PINNED_AT_FIELD),
                     Sort.Order.desc(PUBLISHED_AT_FIELD),
                     Sort.Order.desc(CREATED_AT_FIELD)

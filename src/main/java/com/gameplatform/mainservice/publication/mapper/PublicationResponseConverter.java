@@ -26,6 +26,7 @@ public class PublicationResponseConverter {
                 getLocalized(entity.getContentJson(), language),
                 mediaUrlResolver.resolveUrl(entity.getImageBucket(), entity.getImageObjectKey()),
                 entity.isPinned(),
+                entity.isShowInNewsFeed(),
                 entity.getPublishedAt()
         );
     }
@@ -39,6 +40,8 @@ public class PublicationResponseConverter {
                 entity.getContentJson(),
                 mediaUrlResolver.resolveUrl(entity.getImageBucket(), entity.getImageObjectKey()),
                 entity.isPinned(),
+                entity.getPinnedUntil(),
+                entity.isShowInNewsFeed(),
                 entity.getPublishedAt()
         );
     }
@@ -54,6 +57,8 @@ public class PublicationResponseConverter {
                 entity.getImageObjectKey(),
                 mediaUrlResolver.resolveUrl(entity.getImageBucket(), entity.getImageObjectKey()),
                 entity.isPinned(),
+                entity.getPinnedUntil(),
+                entity.isShowInNewsFeed(),
                 entity.getPublishedAt()
         );
     }
