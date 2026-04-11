@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.publication.repository;
 
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
+import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,6 +32,21 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
     Page<Publication> findPublishedForPublicFeed(
             @Param("status")PublicationStatus status,
             @Param("now")OffsetDateTime now,
+            Pageable pageable
+    );
+
+    @Query("""
+    SELECT p
+    FROM Publication p
+    WHERE p.status = :status
+    AND p.type = :type
+    AND p.publishedAt <= :now
+    ORDER BY p.pinned DESC, p.pinnedAt DESC, p.publishedAt DESC
+    """)
+    Page<Publication> findPublishedForPublicFeedByType(
+            @Param("status") PublicationStatus status,
+            @Param("type") PublicationType type,
+            @Param("now") OffsetDateTime now,
             Pageable pageable
     );
 }
