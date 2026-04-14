@@ -8,5 +8,8 @@ public record HeroClassResponse(
         LocalizedTextJson baseNameJson,
         LocalizedTextJson baseDescriptionJson,
         LocalizedTextJson masterNameJson,
-        LocalizedTextJson masterDescriptionJson
+        LocalizedTextJson masterDescriptionJson,
+        String imageBucket,
+        String imageObjectKey,
+        String imageUrl
 ) {}

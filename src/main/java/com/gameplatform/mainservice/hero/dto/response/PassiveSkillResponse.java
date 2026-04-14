@@ -5,5 +5,8 @@ import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 public record PassiveSkillResponse(
         Long id,
         LocalizedTextJson nameJson,
-        LocalizedTextJson descriptionJson
+        LocalizedTextJson descriptionJson,
+        String imageBucket,
+        String imageObjectKey,
+        String imageUrl
 ) {}

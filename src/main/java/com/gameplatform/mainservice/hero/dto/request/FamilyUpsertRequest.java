@@ -10,6 +10,10 @@ public record FamilyUpsertRequest(
         LocalizedTextJson nameJson,
 
         @Valid
-        LocalizedTextJson descriptionJson
+        LocalizedTextJson descriptionJson,
+
+        String imageBucket,
+
+        String imageObjectKey
 ) {
 }

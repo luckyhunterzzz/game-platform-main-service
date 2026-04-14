@@ -25,4 +25,10 @@ public class PassiveSkill {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "description_json", columnDefinition = "jsonb")
     private LocalizedTextJson descriptionJson;
+
+    @Column(name = "image_bucket")
+    private String imageBucket;
+
+    @Column(name = "image_object_key", length = 1024)
+    private String imageObjectKey;
 }

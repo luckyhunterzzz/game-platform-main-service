@@ -7,6 +7,8 @@ import com.gameplatform.mainservice.hero.repository.HeroPassiveSkillRepository;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.PassiveSkillRepository;
+import com.gameplatform.mainservice.hero.validation.HeroValidator;
+import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,8 @@ public class PassiveSkillService {
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
     private final HeroRepository heroRepository;
     private final DictionaryCatalogSupport catalogSupport;
+    private final HeroValidator heroValidator;
+    private final ImageReferenceValidator imageReferenceValidator;
 
     public List<PassiveSkill> getAll() {
         return catalogSupport.sortLocalized(repository.findAll(), PassiveSkill::getNameJson);
@@ -37,9 +41,19 @@ public class PassiveSkillService {
     }
 
     public PassiveSkill create(PassiveSkillUpsertRequest request) {
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
+        heroValidator.validateDuplicateDictionaryName(
+                "Passive skill",
+                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, null)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+
         PassiveSkill entity = PassiveSkill.builder()
                 .nameJson(request.nameJson())
                 .descriptionJson(request.descriptionJson())
+                .imageBucket(request.imageBucket())
+                .imageObjectKey(request.imageObjectKey())
                 .build();
 
         return repository.save(entity);
@@ -47,9 +61,18 @@ public class PassiveSkillService {
 
     public PassiveSkill update(Long id, PassiveSkillUpsertRequest request) {
         PassiveSkill entity = getById(id);
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
+        heroValidator.validateDuplicateDictionaryName(
+                "Passive skill",
+                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
 
         entity.setNameJson(request.nameJson());
         entity.setDescriptionJson(request.descriptionJson());
+        entity.setImageBucket(request.imageBucket());
+        entity.setImageObjectKey(request.imageObjectKey());
 
         return repository.save(entity);
     }
