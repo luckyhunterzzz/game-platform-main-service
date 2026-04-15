@@ -2,5 +2,6 @@ package com.gameplatform.mainservice.hero.dto.response;
 
 public record HeroRarityResponse(
         Long id,
-        int stars
+        int stars,
+        String imageUrl
 ) {}

@@ -51,6 +51,8 @@ public class HeroPublicResponseConverter {
     public HeroDetailsResponse toDetailsResponse(
             HeroDetailsProjection hero,
             Hero currentHero,
+            Element element,
+            Rarity rarity,
             HeroClass heroClass,
             Family family,
             ManaSpeed manaSpeed,
@@ -66,15 +68,18 @@ public class HeroPublicResponseConverter {
 
                 new SimpleReferenceResponse(
                         hero.getElementId(),
-                        hero.getElementName()
+                        hero.getElementName(),
+                        mediaUrlResolver.resolveUrl(element.getImageBucket(), element.getImageObjectKey())
                 ),
                 new HeroRarityResponse(
                         hero.getRarityId(),
-                        hero.getRarityStars()
+                        hero.getRarityStars(),
+                        mediaUrlResolver.resolveUrl(rarity.getImageBucket(), rarity.getImageObjectKey())
                 ),
                 new HeroClassDetailsResponse(
                         heroClass.getId(),
                         getLocalized(heroClass.getNameJson(), locale),
+                        mediaUrlResolver.resolveUrl(heroClass.getImageBucket(), heroClass.getImageObjectKey()),
                         getLocalized(heroClass.getBaseNameJson(), locale),
                         getLocalized(heroClass.getBaseDescriptionJson(), locale),
                         getLocalized(heroClass.getMasterNameJson(), locale),
@@ -84,19 +89,22 @@ public class HeroPublicResponseConverter {
                         ? new DescribedReferenceResponse(
                         family.getId(),
                         getLocalized(family.getNameJson(), locale),
-                        getLocalized(family.getDescriptionJson(), locale)
+                        getLocalized(family.getDescriptionJson(), locale),
+                        mediaUrlResolver.resolveUrl(family.getImageBucket(), family.getImageObjectKey())
                 )
                         : null,
                 new DescribedReferenceResponse(
                         manaSpeed.getId(),
                         getLocalized(manaSpeed.getNameJson(), locale),
-                        getLocalized(manaSpeed.getDescriptionJson(), locale)
+                        getLocalized(manaSpeed.getDescriptionJson(), locale),
+                        null
                 ),
                 alphaTalent != null
                         ? new DescribedReferenceResponse(
                         alphaTalent.getId(),
                         getLocalized(alphaTalent.getNameJson(), locale),
-                        getLocalized(alphaTalent.getDescriptionJson(), locale)
+                        getLocalized(alphaTalent.getDescriptionJson(), locale),
+                        mediaUrlResolver.resolveUrl(alphaTalent.getImageBucket(), alphaTalent.getImageObjectKey())
                 )
                         : null,
 
@@ -109,7 +117,8 @@ public class HeroPublicResponseConverter {
                         .map(ps -> new HeroPassiveSkillResponse(
                                 ps.getId(),
                                 getLocalized(ps.getNameJson(), locale),
-                                getLocalized(ps.getDescriptionJson(), locale)
+                                getLocalized(ps.getDescriptionJson(), locale),
+                                mediaUrlResolver.resolveUrl(ps.getImageBucket(), ps.getImageObjectKey())
                         ))
                         .toList(),
 
