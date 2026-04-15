@@ -3,6 +3,8 @@ package com.gameplatform.mainservice.hero.service;
 import com.gameplatform.mainservice.hero.domain.entity.Rarity;
 import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
+import com.gameplatform.mainservice.hero.validation.HeroValidator;
+import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +18,8 @@ public class RarityService {
 
     private final RarityRepository rarityRepository;
     private final DictionaryCatalogSupport catalogSupport;
+    private final HeroValidator heroValidator;
+    private final ImageReferenceValidator imageReferenceValidator;
 
     public List<Rarity> getAll() {
         return catalogSupport.sortLocalized(rarityRepository.findAll(), Rarity::getNameJson);
@@ -31,9 +35,19 @@ public class RarityService {
     }
 
     public Rarity create(RarityUpsertRequest request) {
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
+        heroValidator.validateDuplicateDictionaryName(
+                "Rarity",
+                () -> rarityRepository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, null)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+
         Rarity rarity = Rarity.builder()
                 .nameJson(request.nameJson())
                 .stars(request.stars())
+                .imageBucket(request.imageBucket())
+                .imageObjectKey(request.imageObjectKey())
                 .build();
 
         return rarityRepository.save(rarity);
@@ -41,8 +55,17 @@ public class RarityService {
 
     public Rarity update(Long id, RarityUpsertRequest request) {
         Rarity rarity = getById(id);
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
+        heroValidator.validateDuplicateDictionaryName(
+                "Rarity",
+                () -> rarityRepository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
         rarity.setNameJson(request.nameJson());
         rarity.setStars(request.stars());
+        rarity.setImageBucket(request.imageBucket());
+        rarity.setImageObjectKey(request.imageObjectKey());
 
         return rarityRepository.save(rarity);
     }

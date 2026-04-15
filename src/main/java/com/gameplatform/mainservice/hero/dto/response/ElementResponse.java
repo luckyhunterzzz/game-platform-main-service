@@ -4,6 +4,9 @@ import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 
 public record ElementResponse(
         Long id,
-        LocalizedTextJson nameJson
+        LocalizedTextJson nameJson,
+        String imageBucket,
+        String imageObjectKey,
+        String imageUrl
 ) {
 }

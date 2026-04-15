@@ -11,6 +11,10 @@ public record PassiveSkillUpsertRequest(
 
         @NotNull
         @Valid
-        LocalizedTextJson descriptionJson
+        LocalizedTextJson descriptionJson,
+
+        String imageBucket,
+
+        String imageObjectKey
 ) {
 }

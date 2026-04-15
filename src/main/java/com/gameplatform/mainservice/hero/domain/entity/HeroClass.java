@@ -37,5 +37,11 @@ public class HeroClass {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "master_description_json", columnDefinition = "jsonb")
     private LocalizedTextJson masterDescriptionJson;
+
+    @Column(name = "image_bucket")
+    private String imageBucket;
+
+    @Column(name = "image_object_key", length = 1024)
+    private String imageObjectKey;
 }
 

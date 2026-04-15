@@ -10,6 +10,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
+import java.util.function.BooleanSupplier;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +43,25 @@ public class HeroValidator {
         }
 
         validateCommon(heroId, request);
+    }
+
+    public String normalizeDictionaryName(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+
+        return trimmed.toLowerCase(Locale.ROOT);
+    }
+
+    public void validateDuplicateDictionaryName(String dictionaryName, BooleanSupplier duplicateExistsSupplier) {
+        if (duplicateExistsSupplier.getAsBoolean()) {
+            throw new BusinessValidationException(dictionaryName + " with same RU or EN name already exists");
+        }
     }
 
     private void validateCommon(Long heroId, HeroUpsertRequest request) {

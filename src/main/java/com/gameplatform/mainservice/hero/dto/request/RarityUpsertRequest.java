@@ -10,6 +10,10 @@ public record RarityUpsertRequest(
         LocalizedTextJson nameJson,
 
         @NotNull
-        Integer stars
+        Integer stars,
+
+        String imageBucket,
+
+        String imageObjectKey
 ) {
 }
