@@ -10,6 +10,10 @@ public record AlphaTalentUpsertRequest(
         LocalizedTextJson nameJson,
 
         @Valid
-        LocalizedTextJson descriptionJson
+        LocalizedTextJson descriptionJson,
+
+        String imageBucket,
+
+        String imageObjectKey
 ) {
 }

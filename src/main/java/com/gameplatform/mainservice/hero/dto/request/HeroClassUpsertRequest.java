@@ -23,6 +23,10 @@ public record HeroClassUpsertRequest(
 
         @NotNull
         @Valid
-        LocalizedTextJson masterDescriptionJson
+        LocalizedTextJson masterDescriptionJson,
+
+        String imageBucket,
+
+        String imageObjectKey
 ) {
 }

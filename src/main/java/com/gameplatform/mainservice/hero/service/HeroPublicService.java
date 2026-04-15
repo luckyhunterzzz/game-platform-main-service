@@ -12,6 +12,7 @@ import com.gameplatform.mainservice.hero.repository.projection.HeroCardRow;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
+import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,7 @@ public class HeroPublicService {
     private final HeroStatCalculationService heroStatCalculationService;
 
     private final HeroPublicResponseConverter converter;
+    private final MediaUrlResolver mediaUrlResolver;
 
     public HeroPageResponse getHeroes(
             int page,
@@ -94,14 +96,19 @@ public class HeroPublicService {
 
         return new HeroCatalogFiltersResponse(
                 elementRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(item.getId(), localized(item.getNameJson(), locale)))
+                        .map(item -> new HeroCatalogFilterOptionResponse(
+                                item.getId(),
+                                localized(item.getNameJson(), locale),
+                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
+                        ))
                         .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
                         .toList(),
                 rarityRepository.findAll().stream()
                         .map(item -> new HeroCatalogRarityFilterOptionResponse(
                                 item.getId(),
                                 localized(item.getNameJson(), locale),
-                                item.getStars()
+                                item.getStars(),
+                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
                         ))
                         .sorted((left, right) -> {
                             int starsCompare = Integer.compare(left.stars(), right.stars());
@@ -109,19 +116,31 @@ public class HeroPublicService {
                         })
                         .toList(),
                 heroClassRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(item.getId(), localized(item.getNameJson(), locale)))
+                        .map(item -> new HeroCatalogFilterOptionResponse(
+                                item.getId(),
+                                localized(item.getNameJson(), locale),
+                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
+                        ))
                         .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
                         .toList(),
                 familyRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(item.getId(), localized(item.getNameJson(), locale)))
+                        .map(item -> new HeroCatalogFilterOptionResponse(
+                                item.getId(),
+                                localized(item.getNameJson(), locale),
+                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
+                        ))
                         .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
                         .toList(),
                 manaSpeedRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(item.getId(), localized(item.getNameJson(), locale)))
+                        .map(item -> new HeroCatalogFilterOptionResponse(item.getId(), localized(item.getNameJson(), locale), null))
                         .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
                         .toList(),
                 alphaTalentRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(item.getId(), localized(item.getNameJson(), locale)))
+                        .map(item -> new HeroCatalogFilterOptionResponse(
+                                item.getId(),
+                                localized(item.getNameJson(), locale),
+                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
+                        ))
                         .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
                         .toList()
         );
@@ -204,6 +223,10 @@ public class HeroPublicService {
     private HeroDetailsResponse buildHeroDetails(HeroDetailsProjection hero, String locale) {
         Hero currentHero = heroRepository.findById(hero.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Hero not found with id: " + hero.getId()));
+        Element element = elementRepository.findById(hero.getElementId())
+                .orElseThrow(() -> new EntityNotFoundException("Element not found with id: " + hero.getElementId()));
+        Rarity rarity = rarityRepository.findById(hero.getRarityId())
+                .orElseThrow(() -> new EntityNotFoundException("Rarity not found with id: " + hero.getRarityId()));
         HeroClass heroClass = heroClassRepository.findById(hero.getHeroClassId())
                 .orElseThrow(() -> new EntityNotFoundException("Hero class not found with id: " + hero.getHeroClassId()));
         Family family = hero.getFamilyId() == null
@@ -222,6 +245,8 @@ public class HeroPublicService {
         return converter.toDetailsResponse(
                 hero,
                 currentHero,
+                element,
+                rarity,
                 heroClass,
                 family,
                 manaSpeed,

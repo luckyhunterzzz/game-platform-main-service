@@ -7,6 +7,10 @@ import jakarta.validation.constraints.NotNull;
 public record ElementUpsertRequest(
         @NotNull
         @Valid
-        LocalizedTextJson nameJson
+        LocalizedTextJson nameJson,
+
+        String imageBucket,
+
+        String imageObjectKey
 ) {
 }
