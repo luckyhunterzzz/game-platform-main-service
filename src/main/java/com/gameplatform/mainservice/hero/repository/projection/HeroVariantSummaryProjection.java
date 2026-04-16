@@ -7,6 +7,8 @@ public interface HeroVariantSummaryProjection {
     Integer getCostumeIndex();
     String getImageBucket();
     String getImageObjectKey();
+    String getPreviewBucket();
+    String getPreviewObjectKey();
     String getElementName();
     String getRarityName();
     Integer getRarityStars();

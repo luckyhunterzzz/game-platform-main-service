@@ -73,6 +73,12 @@ public class Hero {
     @Column(name = "image_object_key_json", columnDefinition = "jsonb")
     private LocalizedTextJson imageObjectKeyJson;
 
+    @Column(name = "preview_bucket")
+    private String previewBucket;
+
+    @Column(name = "preview_object_key")
+    private String previewObjectKey;
+
     @Column(name = "is_costume", nullable = false)
     private boolean isCostume;
 

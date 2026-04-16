@@ -65,6 +65,12 @@ public record HeroUpsertRequest(
         @Valid
         LocalizedTextJson imageObjectKeyJson,
 
+        @Size(max = 255)
+        String previewBucket,
+
+        @Size(max = 1024)
+        String previewObjectKey,
+
         @NotNull
         Boolean isCostume,
 

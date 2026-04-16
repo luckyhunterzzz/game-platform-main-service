@@ -6,6 +6,7 @@ public record HeroVariantSummaryResponse(
         String name,
         Integer costumeIndex,
         String imageUrl,
+        String previewUrl,
         String elementName,
         String rarityName,
         Integer rarityStars

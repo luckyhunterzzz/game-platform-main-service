@@ -5,6 +5,7 @@ public record HeroCardResponse(
         String slug,
         String name,
         String imageUrl,
+        String previewUrl,
         String elementName,
         String rarityName,
         Integer rarityStars,

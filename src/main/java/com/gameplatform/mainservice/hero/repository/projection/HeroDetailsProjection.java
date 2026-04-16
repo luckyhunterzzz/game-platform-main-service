@@ -30,6 +30,8 @@ public interface HeroDetailsProjection {
 
     String getImageBucket();
     String getImageObjectKey();
+    String getPreviewBucket();
+    String getPreviewObjectKey();
 
     Long getBaseHeroId();
     Boolean getIsCostume();
