@@ -248,6 +248,8 @@ public class HeroAdminService {
         hero.setAlphaTalentId(request.alphaTalentId());
         hero.setImageBucketJson(request.imageBucketJson());
         hero.setImageObjectKeyJson(request.imageObjectKeyJson());
+        hero.setPreviewBucket(request.previewBucket());
+        hero.setPreviewObjectKey(request.previewObjectKey());
         hero.setCostume(request.isCostume());
         hero.setBaseHeroId(request.baseHeroId());
         hero.setCostumeIndex(request.costumeIndex());

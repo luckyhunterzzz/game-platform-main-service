@@ -35,6 +35,7 @@ public class HeroPublicResponseConverter {
                 hero.getSlug(),
                 hero.getName(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
+                mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
                 hero.getElementName(),
                 hero.getRarityName(),
                 hero.getRarityStars(),
@@ -138,6 +139,7 @@ public class HeroPublicResponseConverter {
                 currentHero.getBaseHp(),
                 currentHero.getCostumeBonusJson(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
+                mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
                 hero.getReleaseDate()
         );
     }
@@ -149,6 +151,7 @@ public class HeroPublicResponseConverter {
                 hero.getName(),
                 hero.getCostumeIndex(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
+                mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
                 hero.getElementName(),
                 hero.getRarityName(),
                 hero.getRarityStars()

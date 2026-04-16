@@ -6,6 +6,8 @@ public record HeroCardRow(
         String name,
         String imageBucket,
         String imageObjectKey,
+        String previewBucket,
+        String previewObjectKey,
         String elementName,
         String rarityName,
         Integer rarityStars,
@@ -41,6 +43,16 @@ public record HeroCardRow(
     @Override
     public String getImageObjectKey() {
         return imageObjectKey;
+    }
+
+    @Override
+    public String getPreviewBucket() {
+        return previewBucket;
+    }
+
+    @Override
+    public String getPreviewObjectKey() {
+        return previewObjectKey;
     }
 
     @Override
