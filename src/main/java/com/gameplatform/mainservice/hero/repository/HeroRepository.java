@@ -73,6 +73,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                         COALESCE(h.name_json ->> :locale, h.slug) AS name,
                         COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                         COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                        h.preview_bucket AS previewBucket,
+                        h.preview_object_key AS previewObjectKey,
                         e.name_json ->> :locale AS elementName,
                         r.name_json ->> :locale AS rarityName,
                         r.stars AS rarityStars,
@@ -163,6 +165,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.special_skill_description_json ->> :locale AS specialSkillDescription,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                h.preview_bucket AS previewBucket,
+                h.preview_object_key AS previewObjectKey,
                 h.base_hero_id AS baseHeroId,
                 h.is_costume AS isCostume,
                 h.release_date AS releaseDate
@@ -203,6 +207,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.special_skill_description_json ->> :locale AS specialSkillDescription,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                h.preview_bucket AS previewBucket,
+                h.preview_object_key AS previewObjectKey,
                 h.base_hero_id AS baseHeroId,
                 h.is_costume AS isCostume,
                 h.release_date AS releaseDate
@@ -229,6 +235,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.costume_index AS costumeIndex,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                h.preview_bucket AS previewBucket,
+                h.preview_object_key AS previewObjectKey,
                 e.name_json ->> :locale AS elementName,
                 r.name_json ->> :locale AS rarityName,
                 r.stars AS rarityStars
@@ -251,6 +259,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.costume_index AS costumeIndex,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                h.preview_bucket AS previewBucket,
+                h.preview_object_key AS previewObjectKey,
                 e.name_json ->> :locale AS elementName,
                 r.name_json ->> :locale AS rarityName,
                 r.stars AS rarityStars
@@ -274,6 +284,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.costume_index AS costumeIndex,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                h.preview_bucket AS previewBucket,
+                h.preview_object_key AS previewObjectKey,
                 e.name_json ->> :locale AS elementName,
                 r.name_json ->> :locale AS rarityName,
                 r.stars AS rarityStars
@@ -295,6 +307,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.costume_index AS costumeIndex,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                h.preview_bucket AS previewBucket,
+                h.preview_object_key AS previewObjectKey,
                 e.name_json ->> :locale AS elementName,
                 r.name_json ->> :locale AS rarityName,
                 r.stars AS rarityStars

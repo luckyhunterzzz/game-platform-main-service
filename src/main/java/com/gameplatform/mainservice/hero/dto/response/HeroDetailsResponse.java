@@ -28,5 +28,6 @@ public record HeroDetailsResponse(
         CostumeBonusJson costumeBonusJson,
 
         String imageUrl,
+        String previewUrl,
         LocalDate releaseDate
 ) {}
