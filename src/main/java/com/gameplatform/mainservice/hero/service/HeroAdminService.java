@@ -39,6 +39,7 @@ public class HeroAdminService {
 
     private final HeroRepository heroRepository;
     private final HeroAdminCatalogRepository heroAdminCatalogRepository;
+    private final HeroExpertOpinionRepository heroExpertOpinionRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
 
     private final HeroResponseConverter heroResponseConverter;
@@ -223,6 +224,7 @@ public class HeroAdminService {
             throw new EntityNotFoundException("Hero not found: " + id);
         }
 
+        heroExpertOpinionRepository.deleteAllByHeroId(id);
         heroPassiveSkillRepository.deleteAllByIdHeroId(id);
         heroRepository.deleteById(id);
     }

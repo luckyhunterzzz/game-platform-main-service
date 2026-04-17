@@ -20,6 +20,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     Optional<Hero> findBySlug(String slug);
 
+    Optional<Hero> findBySlugAndStatus(String slug, HeroStatus status);
+
     boolean existsBySlug(String slug);
 
     Optional<Hero> findByBaseHeroIdAndCostumeIndex(Long baseHeroId, Integer costumeIndex);
