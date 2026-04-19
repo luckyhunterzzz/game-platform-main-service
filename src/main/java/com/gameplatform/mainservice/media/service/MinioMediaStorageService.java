@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ public class MinioMediaStorageService implements MediaStorageService {
     private final MinioProperties minioProperties;
     private final ImageUploadValidator imageUploadValidator;
     private final MediaUrlResolver mediaUrlResolver;
+    private final WebpImageConverter webpImageConverter;
 
     @Override
     public StoredImage uploadPublicationImage(MultipartFile file) {
@@ -37,19 +39,19 @@ public class MinioMediaStorageService implements MediaStorageService {
 
         imageUploadValidator.validate(file);
 
-        String contentType = file.getContentType();
-        String extension = resolveExtension(contentType);
+        PreparedImage preparedImage = prepareImage(file);
+        String extension = resolveExtension(preparedImage.contentType());
 
         String objectKey = generateObjectKey(folder, extension);
 
-        try (InputStream inputStream = file.getInputStream()) {
+        try (InputStream inputStream = preparedImage.openStream()) {
 
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(minioProperties.getBucket())
                             .object(objectKey)
-                            .stream(inputStream, file.getSize(), -1)
-                            .contentType(contentType)
+                            .stream(inputStream, preparedImage.size(), -1)
+                            .contentType(preparedImage.contentType())
                             .build()
             );
 
@@ -69,6 +71,18 @@ public class MinioMediaStorageService implements MediaStorageService {
         );
     }
 
+    private PreparedImage prepareImage(MultipartFile file) {
+        try {
+            WebpImageConverter.ConvertedImage convertedImage = webpImageConverter.convert(
+                    file.getBytes(),
+                    file.getContentType()
+            );
+            return new PreparedImage(convertedImage.bytes(), convertedImage.contentType());
+        } catch (Exception e) {
+            throw new MediaStorageException("Failed to prepare image for upload", e);
+        }
+    }
+
     private String resolveExtension(String contentType) {
         return switch (contentType) {
             case "image/png" -> "png";
@@ -80,5 +94,15 @@ public class MinioMediaStorageService implements MediaStorageService {
 
     private String generateObjectKey(String folder, String extension) {
         return folder + "/" + UUID.randomUUID() + "." + extension;
+    }
+
+    private record PreparedImage(byte[] bytes, String contentType) {
+        private InputStream openStream() {
+            return new ByteArrayInputStream(bytes);
+        }
+
+        private long size() {
+            return bytes.length;
+        }
     }
 }

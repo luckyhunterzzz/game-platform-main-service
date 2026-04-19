@@ -26,3 +26,9 @@ logging:
 publication:
   scheduler:
     publish-cron: "0 0,15,30,45 * * * *"
+
+app:
+  media-migration:
+    enabled: false
+    dry-run: true
+    limit: 100
