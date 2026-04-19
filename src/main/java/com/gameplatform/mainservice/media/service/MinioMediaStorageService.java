@@ -1,6 +1,5 @@
 package com.gameplatform.mainservice.media.service;
 
-import com.luciad.imageio.webp.WebPWriteParam;
 import com.gameplatform.mainservice.exception.exceptions.MediaStorageException;
 import com.gameplatform.mainservice.media.config.MinioProperties;
 import com.gameplatform.mainservice.media.model.StoredImage;
@@ -12,13 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.UUID;
 
@@ -26,12 +19,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MinioMediaStorageService implements MediaStorageService {
 
-    private static final float WEBP_COMPRESSION_QUALITY = 0.85f;
-
     private final MinioClient minioClient;
     private final MinioProperties minioProperties;
     private final ImageUploadValidator imageUploadValidator;
     private final MediaUrlResolver mediaUrlResolver;
+    private final WebpImageConverter webpImageConverter;
 
     @Override
     public StoredImage uploadPublicationImage(MultipartFile file) {
@@ -80,42 +72,14 @@ public class MinioMediaStorageService implements MediaStorageService {
     }
 
     private PreparedImage prepareImage(MultipartFile file) {
-        String contentType = file.getContentType();
-        if ("image/webp".equals(contentType)) {
-            try {
-                return new PreparedImage(file.getBytes(), contentType);
-            } catch (Exception e) {
-                throw new MediaStorageException("Failed to read image bytes", e);
-            }
-        }
-
-        ImageWriter writer = ImageIO.getImageWritersByMIMEType("image/webp").next();
-
-        try (InputStream inputStream = file.getInputStream();
-             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-             var imageOutputStream = ImageIO.createImageOutputStream(outputStream)) {
-
-            BufferedImage sourceImage = ImageIO.read(inputStream);
-            if (sourceImage == null) {
-                throw new IllegalArgumentException("Failed to decode uploaded image");
-            }
-
-            WebPWriteParam writeParam = new WebPWriteParam(writer.getLocale());
-            writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            writeParam.setCompressionType(writeParam.getCompressionTypes()[0]);
-            writeParam.setCompressionQuality(WEBP_COMPRESSION_QUALITY);
-
-            writer.setOutput(imageOutputStream);
-            writer.write(null, new IIOImage(sourceImage, null, null), writeParam);
-            imageOutputStream.flush();
-
-            return new PreparedImage(outputStream.toByteArray(), "image/webp");
-        } catch (MediaStorageException e) {
-            throw e;
+        try {
+            WebpImageConverter.ConvertedImage convertedImage = webpImageConverter.convert(
+                    file.getBytes(),
+                    file.getContentType()
+            );
+            return new PreparedImage(convertedImage.bytes(), convertedImage.contentType());
         } catch (Exception e) {
-            throw new MediaStorageException("Failed to convert image to WEBP", e);
-        } finally {
-            writer.dispose();
+            throw new MediaStorageException("Failed to prepare image for upload", e);
         }
     }
 

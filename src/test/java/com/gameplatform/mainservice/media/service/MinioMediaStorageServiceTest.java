@@ -39,7 +39,8 @@ class MinioMediaStorageServiceTest {
                 minioClient,
                 minioProperties,
                 new ImageUploadValidator(),
-                new MediaUrlResolver("https://cdn.example.com")
+                new MediaUrlResolver("https://cdn.example.com"),
+                new WebpImageConverter()
         );
     }
 
