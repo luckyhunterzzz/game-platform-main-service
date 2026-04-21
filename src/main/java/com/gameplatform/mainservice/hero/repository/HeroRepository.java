@@ -28,6 +28,31 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     boolean existsBySlugAndIdNot(String slug, Long id);
 
+    @Query(
+            value = """
+                    SELECT h.id
+                    FROM heroes h
+                    WHERE (:search IS NULL
+                           OR LOWER(h.slug) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(COALESCE(h.name_json ->> 'ru', '')) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(COALESCE(h.name_json ->> 'en', '')) LIKE LOWER(CONCAT('%', :search, '%')))
+                    ORDER BY LOWER(COALESCE(h.name_json ->> 'ru', h.name_json ->> 'en', h.slug)) ASC, h.id ASC
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM heroes h
+                    WHERE (:search IS NULL
+                           OR LOWER(h.slug) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(COALESCE(h.name_json ->> 'ru', '')) LIKE LOWER(CONCAT('%', :search, '%'))
+                           OR LOWER(COALESCE(h.name_json ->> 'en', '')) LIKE LOWER(CONCAT('%', :search, '%')))
+                    """,
+            nativeQuery = true
+    )
+    Page<Long> findHeroIdsForAdminCatalog(
+            @Param("search") String search,
+            Pageable pageable
+    );
+
     @Query("SELECT COALESCE(MAX(h.costumeIndex), 0) FROM Hero h WHERE h.baseHeroId = :baseHeroId")
     Integer findMaxCostumeIndexByBaseHeroId(@Param("baseHeroId") Long baseHeroId);
 
@@ -73,6 +98,9 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                         h.id AS id,
                         h.slug AS slug,
                         COALESCE(h.name_json ->> :locale, h.slug) AS name,
+                        h.base_hero_id AS baseHeroId,
+                        h.is_costume AS isCostume,
+                        h.costume_index AS costumeIndex,
                         COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                         COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
                         h.preview_bucket AS previewBucket,
@@ -95,19 +123,47 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                     LEFT JOIN families f ON f.id = h.family_id
                     LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
                     WHERE h.status = 'READY'
-                      AND h.is_costume = false
-                    ORDER BY LOWER(COALESCE(h.name_json ->> :locale, h.slug)) ASC, h.id ASC
+                      AND (:search IS NULL OR LOWER(COALESCE(h.name_json ->> :locale, h.slug)) LIKE LOWER(CONCAT('%', :search, '%')))
+                      AND (:elementIdsEmpty = true OR h.element_id IN (:elementIds))
+                      AND (:rarityIdsEmpty = true OR h.rarity_id IN (:rarityIds))
+                      AND (:heroClassIdsEmpty = true OR h.hero_class_id IN (:heroClassIds))
+                      AND (:familyIdsEmpty = true OR h.family_id IN (:familyIds))
+                      AND (:manaSpeedIdsEmpty = true OR h.mana_speed_id IN (:manaSpeedIds))
+                      AND (:alphaTalentIdsEmpty = true OR h.alpha_talent_id IN (:alphaTalentIds))
+                    ORDER BY LOWER(COALESCE(h.name_json ->> :locale, h.slug)) ASC,
+                             h.is_costume ASC,
+                             COALESCE(h.costume_index, 2147483647) ASC,
+                             h.id ASC
                     """,
             countQuery = """
                     SELECT COUNT(*)
                     FROM heroes h
                     WHERE h.status = 'READY'
-                      AND h.is_costume = false
+                      AND (:search IS NULL OR LOWER(COALESCE(h.name_json ->> :locale, h.slug)) LIKE LOWER(CONCAT('%', :search, '%')))
+                      AND (:elementIdsEmpty = true OR h.element_id IN (:elementIds))
+                      AND (:rarityIdsEmpty = true OR h.rarity_id IN (:rarityIds))
+                      AND (:heroClassIdsEmpty = true OR h.hero_class_id IN (:heroClassIds))
+                      AND (:familyIdsEmpty = true OR h.family_id IN (:familyIds))
+                      AND (:manaSpeedIdsEmpty = true OR h.mana_speed_id IN (:manaSpeedIds))
+                      AND (:alphaTalentIdsEmpty = true OR h.alpha_talent_id IN (:alphaTalentIds))
                     """,
             nativeQuery = true
     )
-    Page<HeroCardProjection> findReadyBaseHeroCards(
+    Page<HeroCardProjection> findReadyHeroCards(
             @Param("locale") String locale,
+            @Param("search") String search,
+            @Param("elementIds") List<Long> elementIds,
+            @Param("elementIdsEmpty") boolean elementIdsEmpty,
+            @Param("rarityIds") List<Long> rarityIds,
+            @Param("rarityIdsEmpty") boolean rarityIdsEmpty,
+            @Param("heroClassIds") List<Long> heroClassIds,
+            @Param("heroClassIdsEmpty") boolean heroClassIdsEmpty,
+            @Param("familyIds") List<Long> familyIds,
+            @Param("familyIdsEmpty") boolean familyIdsEmpty,
+            @Param("manaSpeedIds") List<Long> manaSpeedIds,
+            @Param("manaSpeedIdsEmpty") boolean manaSpeedIdsEmpty,
+            @Param("alphaTalentIds") List<Long> alphaTalentIds,
+            @Param("alphaTalentIdsEmpty") boolean alphaTalentIdsEmpty,
             Pageable pageable
     );
 

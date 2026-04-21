@@ -4,6 +4,9 @@ public record HeroCardRow(
         Long id,
         String slug,
         String name,
+        Long baseHeroId,
+        Boolean isCostume,
+        Integer costumeIndex,
         String imageBucket,
         String imageObjectKey,
         String previewBucket,
@@ -33,6 +36,21 @@ public record HeroCardRow(
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public Long getBaseHeroId() {
+        return baseHeroId;
+    }
+
+    @Override
+    public Boolean getIsCostume() {
+        return isCostume;
+    }
+
+    @Override
+    public Integer getCostumeIndex() {
+        return costumeIndex;
     }
 
     @Override
