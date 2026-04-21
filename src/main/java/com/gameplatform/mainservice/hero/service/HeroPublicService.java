@@ -8,7 +8,6 @@ import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.repository.*;
-import com.gameplatform.mainservice.hero.repository.projection.HeroCardRow;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
@@ -27,7 +26,6 @@ import java.util.List;
 public class HeroPublicService {
 
     private final HeroRepository heroRepository;
-    private final HeroCatalogRepository heroCatalogRepository;
     private final ElementRepository elementRepository;
     private final RarityRepository rarityRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
@@ -58,24 +56,33 @@ public class HeroPublicService {
 
         PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize);
 
-        Page<HeroCardRow> heroPage = heroCatalogRepository.findReadyBaseHeroCards(
+        List<Long> normalizedElementIds = normalizeIds(elementIds);
+        List<Long> normalizedRarityIds = normalizeIds(rarityIds);
+        List<Long> normalizedHeroClassIds = normalizeIds(heroClassIds);
+        List<Long> normalizedFamilyIds = normalizeIds(familyIds);
+        List<Long> normalizedManaSpeedIds = normalizeIds(manaSpeedIds);
+        List<Long> normalizedAlphaTalentIds = normalizeIds(alphaTalentIds);
+
+        Page<HeroCardResponse> heroPage = heroRepository.findReadyHeroCards(
                 language.getJsonKey(),
                 StringUtils.hasText(search) ? search.trim() : null,
-                normalizeIds(elementIds),
-                normalizeIds(rarityIds),
-                normalizeIds(heroClassIds),
-                normalizeIds(familyIds),
-                normalizeIds(manaSpeedIds),
-                normalizeIds(alphaTalentIds),
+                sqlFilterIds(normalizedElementIds),
+                normalizedElementIds.isEmpty(),
+                sqlFilterIds(normalizedRarityIds),
+                normalizedRarityIds.isEmpty(),
+                sqlFilterIds(normalizedHeroClassIds),
+                normalizedHeroClassIds.isEmpty(),
+                sqlFilterIds(normalizedFamilyIds),
+                normalizedFamilyIds.isEmpty(),
+                sqlFilterIds(normalizedManaSpeedIds),
+                normalizedManaSpeedIds.isEmpty(),
+                sqlFilterIds(normalizedAlphaTalentIds),
+                normalizedAlphaTalentIds.isEmpty(),
                 pageable
-        );
-
-        List<HeroCardResponse> items = heroPage.getContent().stream()
-                .map(converter::toCardResponse)
-                .toList();
+        ).map(converter::toCardResponse);
 
         return new HeroPageResponse(
-                items,
+                heroPage.getContent(),
                 heroPage.getNumber(),
                 heroPage.getSize(),
                 heroPage.getTotalElements(),
@@ -157,6 +164,10 @@ public class HeroPublicService {
                 .toList();
     }
 
+    private List<Long> sqlFilterIds(List<Long> ids) {
+        return ids.isEmpty() ? List.of(-1L) : ids;
+    }
+
     private String localized(LocalizedTextJson value, String locale) {
         if (value == null) {
             return "";
@@ -195,7 +206,7 @@ public class HeroPublicService {
     }
 
     public HeroDetailsResponse getDetails(String slug, HeroLanguage language) {
-        HeroDetailsProjection currentHero = findCurrentBaseHero(slug, language);
+        HeroDetailsProjection currentHero = findCurrentHero(slug, language);
         return buildHeroDetails(currentHero, language.getJsonKey());
     }
 

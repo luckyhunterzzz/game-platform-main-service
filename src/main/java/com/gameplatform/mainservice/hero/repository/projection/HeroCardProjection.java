@@ -4,6 +4,9 @@ public interface HeroCardProjection {
     Long getId();
     String getSlug();
     String getName();
+    Long getBaseHeroId();
+    Boolean getIsCostume();
+    Integer getCostumeIndex();
     String getImageBucket();
     String getImageObjectKey();
     String getPreviewBucket();
