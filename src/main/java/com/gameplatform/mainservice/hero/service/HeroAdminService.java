@@ -38,7 +38,6 @@ public class HeroAdminService {
     private final Clock clock;
 
     private final HeroRepository heroRepository;
-    private final HeroAdminCatalogRepository heroAdminCatalogRepository;
     private final HeroExpertOpinionRepository heroExpertOpinionRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
 
@@ -65,7 +64,7 @@ public class HeroAdminService {
         int normalizedSize = Math.min(Math.max(size, 1), 50);
 
         PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize);
-        Page<Long> heroIdPage = heroAdminCatalogRepository.findHeroIds(
+        Page<Long> heroIdPage = heroRepository.findHeroIdsForAdminCatalog(
                 StringUtils.hasText(search) ? search.trim() : null,
                 pageable
         );
