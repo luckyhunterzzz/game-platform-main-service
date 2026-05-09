@@ -29,5 +29,7 @@ public record HeroDetailsResponse(
 
         String imageUrl,
         String previewUrl,
-        LocalDate releaseDate
+        LocalDate releaseDate,
+        LocalDate heroCoachDate,
+        LocalDate visitingOutfitterDate
 ) {}

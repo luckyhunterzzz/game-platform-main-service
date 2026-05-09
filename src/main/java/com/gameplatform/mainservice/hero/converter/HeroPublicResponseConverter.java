@@ -11,11 +11,15 @@ import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class HeroPublicResponseConverter {
+
+    private static final long HERO_COACH_DAYS = 730L;
+    private static final long VISITING_OUTFITTER_MONTHS = 18L;
 
     private final MediaUrlResolver mediaUrlResolver;
 
@@ -143,7 +147,9 @@ public class HeroPublicResponseConverter {
                 currentHero.getCostumeBonusJson(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
                 mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
-                hero.getReleaseDate()
+                hero.getReleaseDate(),
+                calculateHeroCoachDate(hero.getReleaseDate()),
+                calculateVisitingOutfitterDate(currentHero)
         );
     }
 
@@ -187,5 +193,17 @@ public class HeroPublicResponseConverter {
         }
 
         return null;
+    }
+
+    private LocalDate calculateHeroCoachDate(LocalDate releaseDate) {
+        return releaseDate == null ? null : releaseDate.plusDays(HERO_COACH_DAYS);
+    }
+
+    private LocalDate calculateVisitingOutfitterDate(Hero hero) {
+        if (hero == null || !hero.isCostume() || hero.getReleaseDate() == null) {
+            return null;
+        }
+
+        return hero.getReleaseDate().plusMonths(VISITING_OUTFITTER_MONTHS);
     }
 }
