@@ -234,6 +234,10 @@ public class HeroPublicService {
     private HeroDetailsResponse buildHeroDetails(HeroDetailsProjection hero, String locale) {
         Hero currentHero = heroRepository.findById(hero.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Hero not found with id: " + hero.getId()));
+        Hero baseHero = currentHero.isCostume()
+                ? heroRepository.findById(currentHero.getBaseHeroId())
+                .orElseThrow(() -> new EntityNotFoundException("Base hero not found with id: " + currentHero.getBaseHeroId()))
+                : currentHero;
         Element element = elementRepository.findById(hero.getElementId())
                 .orElseThrow(() -> new EntityNotFoundException("Element not found with id: " + hero.getElementId()));
         Rarity rarity = rarityRepository.findById(hero.getRarityId())
@@ -256,6 +260,7 @@ public class HeroPublicService {
         return converter.toDetailsResponse(
                 hero,
                 currentHero,
+                baseHero,
                 element,
                 rarity,
                 heroClass,
