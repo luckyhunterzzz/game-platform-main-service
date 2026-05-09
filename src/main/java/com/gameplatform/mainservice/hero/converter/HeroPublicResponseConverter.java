@@ -59,6 +59,7 @@ public class HeroPublicResponseConverter {
     public HeroDetailsResponse toDetailsResponse(
             HeroDetailsProjection hero,
             Hero currentHero,
+            Hero baseHero,
             Element element,
             Rarity rarity,
             HeroClass heroClass,
@@ -148,7 +149,7 @@ public class HeroPublicResponseConverter {
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
                 mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
                 hero.getReleaseDate(),
-                calculateHeroCoachDate(hero.getReleaseDate()),
+                calculateHeroCoachDate(currentHero, baseHero),
                 calculateVisitingOutfitterDate(currentHero)
         );
     }
@@ -195,7 +196,15 @@ public class HeroPublicResponseConverter {
         return null;
     }
 
-    private LocalDate calculateHeroCoachDate(LocalDate releaseDate) {
+    private LocalDate calculateHeroCoachDate(Hero hero, Hero baseHero) {
+        if (hero == null) {
+            return null;
+        }
+
+        LocalDate releaseDate = hero.isCostume()
+                ? baseHero != null ? baseHero.getReleaseDate() : null
+                : hero.getReleaseDate();
+
         return releaseDate == null ? null : releaseDate.plusDays(HERO_COACH_DAYS);
     }
 
