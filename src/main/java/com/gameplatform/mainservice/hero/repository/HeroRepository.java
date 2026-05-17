@@ -130,9 +130,10 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                       AND (:familyIdsEmpty = true OR h.family_id IN (:familyIds))
                       AND (:manaSpeedIdsEmpty = true OR h.mana_speed_id IN (:manaSpeedIds))
                       AND (:alphaTalentIdsEmpty = true OR h.alpha_talent_id IN (:alphaTalentIds))
-                    ORDER BY LOWER(COALESCE(h.name_json ->> :locale, h.slug)) ASC,
+                    ORDER BY h.release_date DESC NULLS LAST,
                              h.is_costume ASC,
                              COALESCE(h.costume_index, 2147483647) ASC,
+                             LOWER(COALESCE(h.name_json ->> :locale, h.slug)) ASC,
                              h.id ASC
                     """,
             countQuery = """
