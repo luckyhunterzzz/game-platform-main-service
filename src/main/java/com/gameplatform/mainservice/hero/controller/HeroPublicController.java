@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
+import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import jakarta.validation.Valid;
@@ -23,6 +24,14 @@ public class HeroPublicController {
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
         return ResponseEntity.ok(heroPublicFacade.getNames(language));
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<HeroCardResponse>> getHeroesBatch(
+            @RequestParam(defaultValue = "RU") HeroLanguage language,
+            @RequestBody @Valid HeroBatchLookupRequest request
+    ) {
+        return ResponseEntity.ok(heroPublicFacade.getHeroesBatch(language, request));
     }
 
     @GetMapping("/search")

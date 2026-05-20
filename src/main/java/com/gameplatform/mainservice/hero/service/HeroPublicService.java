@@ -5,6 +5,7 @@ import com.gameplatform.mainservice.hero.domain.entity.*;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
+import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.repository.*;
@@ -96,6 +97,18 @@ public class HeroPublicService {
         return converter.toLookupResponses(
                 heroRepository.findAllReadyBaseHeroNames(locale)
         );
+    }
+
+    public List<HeroCardResponse> getHeroesBatch(HeroLanguage language, HeroBatchLookupRequest request) {
+        List<Long> normalizedHeroIds = normalizeIds(request.heroIds());
+        if (normalizedHeroIds.isEmpty()) {
+            return List.of();
+        }
+
+        return heroRepository.findReadyHeroCardsByIds(normalizedHeroIds, language.getJsonKey())
+                .stream()
+                .map(converter::toCardResponse)
+                .toList();
     }
 
     public HeroCatalogFiltersResponse getFilters(HeroLanguage language) {
