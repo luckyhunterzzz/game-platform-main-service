@@ -1,5 +1,7 @@
 package com.gameplatform.mainservice.hero.repository.projection;
 
+import java.time.LocalDate;
+
 public record HeroCardRow(
         Long id,
         String slug,
@@ -20,7 +22,8 @@ public record HeroCardRow(
         String alphaTalentName,
         Integer baseAttack,
         Integer baseArmor,
-        Integer baseHp
+        Integer baseHp,
+        LocalDate releaseDate
 ) implements HeroCardProjection {
 
     @Override
@@ -121,5 +124,10 @@ public record HeroCardRow(
     @Override
     public Integer getBaseHp() {
         return baseHp;
+    }
+
+    @Override
+    public LocalDate getReleaseDate() {
+        return releaseDate;
     }
 }

@@ -1,5 +1,7 @@
 package com.gameplatform.mainservice.hero.repository.projection;
 
+import java.time.LocalDate;
+
 public interface HeroCardProjection {
     Long getId();
     String getSlug();
@@ -21,4 +23,5 @@ public interface HeroCardProjection {
     Integer getBaseAttack();
     Integer getBaseArmor();
     Integer getBaseHp();
+    LocalDate getReleaseDate();
 }
