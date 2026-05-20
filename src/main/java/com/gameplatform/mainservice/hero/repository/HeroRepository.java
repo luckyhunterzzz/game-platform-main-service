@@ -114,7 +114,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                         at.name_json ->> :locale AS alphaTalentName,
                         h.base_attack AS baseAttack,
                         h.base_armor AS baseArmor,
-                        h.base_hp AS baseHp
+                        h.base_hp AS baseHp,
+                        h.release_date AS releaseDate
                     FROM heroes h
                     JOIN elements e ON e.id = h.element_id
                     JOIN rarities r ON r.id = h.rarity_id
@@ -166,6 +167,49 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             @Param("alphaTalentIds") List<Long> alphaTalentIds,
             @Param("alphaTalentIdsEmpty") boolean alphaTalentIdsEmpty,
             Pageable pageable
+    );
+
+    @Query(value = """
+            SELECT
+                h.id AS id,
+                h.slug AS slug,
+                COALESCE(h.name_json ->> :locale, h.slug) AS name,
+                h.base_hero_id AS baseHeroId,
+                h.is_costume AS isCostume,
+                h.costume_index AS costumeIndex,
+                COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
+                COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                h.preview_bucket AS previewBucket,
+                h.preview_object_key AS previewObjectKey,
+                e.name_json ->> :locale AS elementName,
+                r.name_json ->> :locale AS rarityName,
+                r.stars AS rarityStars,
+                hc.name_json ->> :locale AS heroClassName,
+                ms.name_json ->> :locale AS manaSpeedName,
+                f.name_json ->> :locale AS familyName,
+                at.name_json ->> :locale AS alphaTalentName,
+                h.base_attack AS baseAttack,
+                h.base_armor AS baseArmor,
+                h.base_hp AS baseHp,
+                h.release_date AS releaseDate
+            FROM heroes h
+            JOIN elements e ON e.id = h.element_id
+            JOIN rarities r ON r.id = h.rarity_id
+            JOIN hero_classes hc ON hc.id = h.hero_class_id
+            JOIN mana_speeds ms ON ms.id = h.mana_speed_id
+            LEFT JOIN families f ON f.id = h.family_id
+            LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
+            WHERE h.status = 'READY'
+              AND h.id IN (:heroIds)
+            ORDER BY h.release_date DESC NULLS LAST,
+                     h.is_costume ASC,
+                     COALESCE(h.costume_index, 2147483647) ASC,
+                     LOWER(COALESCE(h.name_json ->> :locale, h.slug)) ASC,
+                     h.id ASC
+            """, nativeQuery = true)
+    List<HeroCardProjection> findReadyHeroCardsByIds(
+            @Param("heroIds") List<Long> heroIds,
+            @Param("locale") String locale
     );
 
     @Query(value = """

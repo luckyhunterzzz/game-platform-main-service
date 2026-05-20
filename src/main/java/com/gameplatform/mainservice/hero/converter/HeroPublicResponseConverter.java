@@ -52,7 +52,8 @@ public class HeroPublicResponseConverter {
                 hero.getAlphaTalentName(),
                 hero.getBaseAttack(),
                 hero.getBaseArmor(),
-                hero.getBaseHp()
+                hero.getBaseHp(),
+                hero.getReleaseDate()
         );
     }
 

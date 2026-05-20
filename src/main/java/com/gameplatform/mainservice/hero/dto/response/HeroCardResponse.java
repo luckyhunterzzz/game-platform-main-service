@@ -1,5 +1,7 @@
 package com.gameplatform.mainservice.hero.dto.response;
 
+import java.time.LocalDate;
+
 public record HeroCardResponse(
         Long id,
         String slug,
@@ -18,6 +20,7 @@ public record HeroCardResponse(
         String alphaTalentName,
         Integer baseAttack,
         Integer baseArmor,
-        Integer baseHp
+        Integer baseHp,
+        LocalDate releaseDate
 ) {
 }

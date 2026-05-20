@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
+import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.service.HeroPublicService;
@@ -17,6 +18,10 @@ public class HeroPublicFacade {
 
     public List<HeroLookupResponse> getNames(HeroLanguage language) {
         return heroPublicService.getNames(language);
+    }
+
+    public List<HeroCardResponse> getHeroesBatch(HeroLanguage language, HeroBatchLookupRequest request) {
+        return heroPublicService.getHeroesBatch(language, request);
     }
 
     public List<HeroLookupResponse> search(String query, int limit, HeroLanguage language) {
