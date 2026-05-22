@@ -8,6 +8,7 @@ import com.gameplatform.mainservice.hero.repository.projection.HeroCoachHeroProj
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
+import com.gameplatform.mainservice.hero.repository.projection.OutfitterHeroProjection;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -77,6 +78,28 @@ public class HeroPublicResponseConverter {
                 hero.getBaseHp(),
                 hero.getReleaseDate(),
                 hero.getHeroCoachDate()
+        );
+    }
+
+    public OutfitterHeroResponse toOutfitterResponse(OutfitterHeroProjection hero) {
+        return new OutfitterHeroResponse(
+                hero.getId(),
+                hero.getSlug(),
+                hero.getName(),
+                mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
+                mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
+                hero.getElementName(),
+                hero.getRarityName(),
+                hero.getRarityStars(),
+                hero.getHeroClassName(),
+                hero.getManaSpeedName(),
+                hero.getFamilyName(),
+                hero.getAlphaTalentName(),
+                hero.getBaseAttack(),
+                hero.getBaseArmor(),
+                hero.getBaseHp(),
+                hero.getReleaseDate(),
+                hero.getVisitingOutfitterDate()
         );
     }
 

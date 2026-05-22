@@ -5,6 +5,7 @@ import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.repository.projection.HeroCardProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroCoachHeroProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
+import com.gameplatform.mainservice.hero.repository.projection.OutfitterHeroProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroReferenceValidationProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
@@ -308,6 +309,102 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                      h.id ASC
             """, nativeQuery = true)
     List<HeroCoachHeroProjection> findReadyHeroCoachHeroesReleasedBetween(
+            @Param("locale") String locale,
+            @Param("previousEligibleReleaseDate") java.time.LocalDate previousEligibleReleaseDate,
+            @Param("targetEligibleReleaseDate") java.time.LocalDate targetEligibleReleaseDate
+    );
+
+    @Query(
+            value = """
+                    SELECT
+                        h.id AS id,
+                        h.slug AS slug,
+                        COALESCE(h.name_json ->> :locale, h.slug) AS name,
+                        COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
+                        COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                        h.preview_bucket AS previewBucket,
+                        h.preview_object_key AS previewObjectKey,
+                        e.name_json ->> :locale AS elementName,
+                        r.name_json ->> :locale AS rarityName,
+                        r.stars AS rarityStars,
+                        hc.name_json ->> :locale AS heroClassName,
+                        ms.name_json ->> :locale AS manaSpeedName,
+                        f.name_json ->> :locale AS familyName,
+                        at.name_json ->> :locale AS alphaTalentName,
+                        h.base_attack AS baseAttack,
+                        h.base_armor AS baseArmor,
+                        h.base_hp AS baseHp,
+                        h.release_date AS releaseDate,
+                        (h.release_date + INTERVAL '18 months')::date AS visitingOutfitterDate
+                    FROM heroes h
+                    JOIN elements e ON e.id = h.element_id
+                    JOIN rarities r ON r.id = h.rarity_id
+                    JOIN hero_classes hc ON hc.id = h.hero_class_id
+                    JOIN mana_speeds ms ON ms.id = h.mana_speed_id
+                    LEFT JOIN families f ON f.id = h.family_id
+                    LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
+                    WHERE h.status = 'READY'
+                      AND h.is_costume = true
+                      AND h.release_date IS NOT NULL
+                      AND h.release_date <= :eligibleReleaseDate
+                    ORDER BY h.release_date DESC,
+                             LOWER(COALESCE(h.name_json ->> :locale, h.slug)) ASC,
+                             h.id ASC
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM heroes h
+                    WHERE h.status = 'READY'
+                      AND h.is_costume = true
+                      AND h.release_date IS NOT NULL
+                      AND h.release_date <= :eligibleReleaseDate
+                    """,
+            nativeQuery = true
+    )
+    Page<OutfitterHeroProjection> findReadyOutfitterHeroes(
+            @Param("locale") String locale,
+            @Param("eligibleReleaseDate") java.time.LocalDate eligibleReleaseDate,
+            Pageable pageable
+    );
+
+    @Query(value = """
+            SELECT
+                h.id AS id,
+                h.slug AS slug,
+                COALESCE(h.name_json ->> :locale, h.slug) AS name,
+                COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
+                COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
+                h.preview_bucket AS previewBucket,
+                h.preview_object_key AS previewObjectKey,
+                e.name_json ->> :locale AS elementName,
+                r.name_json ->> :locale AS rarityName,
+                r.stars AS rarityStars,
+                hc.name_json ->> :locale AS heroClassName,
+                ms.name_json ->> :locale AS manaSpeedName,
+                f.name_json ->> :locale AS familyName,
+                at.name_json ->> :locale AS alphaTalentName,
+                h.base_attack AS baseAttack,
+                h.base_armor AS baseArmor,
+                h.base_hp AS baseHp,
+                h.release_date AS releaseDate,
+                (h.release_date + INTERVAL '18 months')::date AS visitingOutfitterDate
+            FROM heroes h
+            JOIN elements e ON e.id = h.element_id
+            JOIN rarities r ON r.id = h.rarity_id
+            JOIN hero_classes hc ON hc.id = h.hero_class_id
+            JOIN mana_speeds ms ON ms.id = h.mana_speed_id
+            LEFT JOIN families f ON f.id = h.family_id
+            LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
+            WHERE h.status = 'READY'
+              AND h.is_costume = true
+              AND h.release_date IS NOT NULL
+              AND h.release_date > :previousEligibleReleaseDate
+              AND h.release_date <= :targetEligibleReleaseDate
+            ORDER BY h.release_date DESC,
+                     LOWER(COALESCE(h.name_json ->> :locale, h.slug)) ASC,
+                     h.id ASC
+            """, nativeQuery = true)
+    List<OutfitterHeroProjection> findReadyOutfitterHeroesReleasedBetween(
             @Param("locale") String locale,
             @Param("previousEligibleReleaseDate") java.time.LocalDate previousEligibleReleaseDate,
             @Param("targetEligibleReleaseDate") java.time.LocalDate targetEligibleReleaseDate
