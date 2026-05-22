@@ -21,7 +21,7 @@ import java.util.List;
 public class HeroPublicResponseConverter {
 
     private static final long HERO_COACH_DAYS = 730L;
-    private static final long VISITING_OUTFITTER_MONTHS = 18L;
+    private static final long VISITING_OUTFITTER_DAYS_EXCLUDING_RELEASE_DATE = 549L;
 
     private final MediaUrlResolver mediaUrlResolver;
 
@@ -260,6 +260,6 @@ public class HeroPublicResponseConverter {
             return null;
         }
 
-        return hero.getReleaseDate().plusMonths(VISITING_OUTFITTER_MONTHS);
+        return hero.getReleaseDate().plusDays(VISITING_OUTFITTER_DAYS_EXCLUDING_RELEASE_DATE);
     }
 }
