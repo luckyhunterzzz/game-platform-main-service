@@ -24,7 +24,7 @@ import java.util.List;
 public class OutfitterPublicService {
 
     private static final String VISITING_OUTFITTER_TITLE_FRAGMENT = "Visiting Outfitter";
-    private static final int VISITING_OUTFITTER_MONTHS = 18;
+    private static final long VISITING_OUTFITTER_DAYS_EXCLUDING_RELEASE_DATE = 549L;
 
     private final HeroRepository heroRepository;
     private final PublicationRepository publicationRepository;
@@ -35,7 +35,7 @@ public class OutfitterPublicService {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size, 1), 24);
         LocalDate today = LocalDate.now(clock);
-        LocalDate eligibleReleaseDate = today.minusMonths(VISITING_OUTFITTER_MONTHS);
+        LocalDate eligibleReleaseDate = today.minusDays(VISITING_OUTFITTER_DAYS_EXCLUDING_RELEASE_DATE);
 
         Page<OutfitterHeroResponse> heroPage = heroRepository.findReadyOutfitterHeroes(
                 language.getJsonKey(),
@@ -74,8 +74,8 @@ public class OutfitterPublicService {
 
         List<OutfitterHeroResponse> newlyAvailableHeroes = heroRepository.findReadyOutfitterHeroesReleasedBetween(
                         language.getJsonKey(),
-                        previousComparisonDate.minusMonths(VISITING_OUTFITTER_MONTHS),
-                        targetDate.minusMonths(VISITING_OUTFITTER_MONTHS)
+                        previousComparisonDate.minusDays(VISITING_OUTFITTER_DAYS_EXCLUDING_RELEASE_DATE),
+                        targetDate.minusDays(VISITING_OUTFITTER_DAYS_EXCLUDING_RELEASE_DATE)
                 ).stream()
                 .map(heroPublicResponseConverter::toOutfitterResponse)
                 .toList();

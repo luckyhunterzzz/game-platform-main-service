@@ -335,7 +335,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                         h.base_armor AS baseArmor,
                         h.base_hp AS baseHp,
                         h.release_date AS releaseDate,
-                        (h.release_date + INTERVAL '18 months')::date AS visitingOutfitterDate
+                        (h.release_date + 549) AS visitingOutfitterDate
                     FROM heroes h
                     JOIN elements e ON e.id = h.element_id
                     JOIN rarities r ON r.id = h.rarity_id
@@ -387,7 +387,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.base_armor AS baseArmor,
                 h.base_hp AS baseHp,
                 h.release_date AS releaseDate,
-                (h.release_date + INTERVAL '18 months')::date AS visitingOutfitterDate
+                (h.release_date + 549) AS visitingOutfitterDate
             FROM heroes h
             JOIN elements e ON e.id = h.element_id
             JOIN rarities r ON r.id = h.rarity_id
