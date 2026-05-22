@@ -72,4 +72,19 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
     );
 
     List<Publication> findAllByPinnedTrueAndPinnedUntilLessThanEqual(OffsetDateTime pinnedUntil);
+
+    @Query(value = """
+            SELECT p.published_at
+            FROM publications p
+            WHERE p.status = 'PUBLISHED'
+              AND p.published_at IS NOT NULL
+              AND p.published_at >= :publishedAfter
+              AND LOWER(COALESCE(p.title_json ->> 'en', '')) LIKE LOWER(CONCAT('%', :titleFragment, '%'))
+            ORDER BY p.published_at DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    java.util.Optional<OffsetDateTime> findLatestPublishedAtByEnglishTitleContainingSince(
+            @Param("titleFragment") String titleFragment,
+            @Param("publishedAfter") OffsetDateTime publishedAfter
+    );
 }

@@ -4,6 +4,7 @@ import com.gameplatform.mainservice.hero.domain.entity.*;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.repository.projection.HeroCardProjection;
+import com.gameplatform.mainservice.hero.repository.projection.HeroCoachHeroProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
@@ -54,6 +55,28 @@ public class HeroPublicResponseConverter {
                 hero.getBaseArmor(),
                 hero.getBaseHp(),
                 hero.getReleaseDate()
+        );
+    }
+
+    public HeroCoachHeroResponse toHeroCoachResponse(HeroCoachHeroProjection hero) {
+        return new HeroCoachHeroResponse(
+                hero.getId(),
+                hero.getSlug(),
+                hero.getName(),
+                mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
+                mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
+                hero.getElementName(),
+                hero.getRarityName(),
+                hero.getRarityStars(),
+                hero.getHeroClassName(),
+                hero.getManaSpeedName(),
+                hero.getFamilyName(),
+                hero.getAlphaTalentName(),
+                hero.getBaseAttack(),
+                hero.getBaseArmor(),
+                hero.getBaseHp(),
+                hero.getReleaseDate(),
+                hero.getHeroCoachDate()
         );
     }
 
