@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -83,7 +84,7 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
             ORDER BY p.published_at DESC
             LIMIT 1
             """, nativeQuery = true)
-    java.util.Optional<OffsetDateTime> findLatestPublishedAtByEnglishTitleContainingSince(
+    java.util.Optional<Instant> findLatestPublishedAtByEnglishTitleContainingSince(
             @Param("titleFragment") String titleFragment,
             @Param("publishedAfter") OffsetDateTime publishedAfter
     );

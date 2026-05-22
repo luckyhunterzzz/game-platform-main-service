@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -93,7 +94,11 @@ public class HeroCoachPublicService {
                         HERO_COACH_TITLE_FRAGMENT,
                         now.minusMonths(3)
                 )
-                .map(OffsetDateTime::toLocalDate)
+                .map(this::toLocalDate)
                 .orElse(null);
+    }
+
+    private LocalDate toLocalDate(Instant publishedAt) {
+        return publishedAt.atZone(clock.getZone()).toLocalDate();
     }
 }
