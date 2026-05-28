@@ -7,10 +7,12 @@ import com.gameplatform.mainservice.exception.exceptions.MediaStorageException;
 import com.gameplatform.mainservice.exception.model.DictionaryItemInUseErrorResponse;
 import com.gameplatform.mainservice.exception.model.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -59,6 +61,24 @@ public class GlobalExceptionHandler {
     ) {
         log.warn("Authentication error: {} at {}", ex.getMessage(), request.getRequestURI());
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(
+            EntityNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Entity not found: {} at {}", ex.getMessage(), request.getRequestURI());
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Access denied: {} at {}", ex.getMessage(), request.getRequestURI());
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
