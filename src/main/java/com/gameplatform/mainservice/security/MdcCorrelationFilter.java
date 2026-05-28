@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.security;
 
+import io.sentry.Sentry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,10 +28,12 @@ public class MdcCorrelationFilter extends OncePerRequestFilter {
         String requestId = request.getHeader(CORRELATION_ID_HEADER);
         if (requestId != null) {
             MDC.put(MDC_KEY, requestId);
+            Sentry.setTag("request_id", requestId);
         }
         try {
             filterChain.doFilter(request, response);
         } finally {
+            Sentry.configureScope(scope -> scope.removeTag("request_id"));
             MDC.remove(MDC_KEY);
         }
     }

@@ -6,7 +6,7 @@ import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.hero.repository.projection.HeroReferenceValidationProjection;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ public class HeroValidator {
 
     public void validateCreate(HeroUpsertRequest request, String normalizedSlug) {
         if (heroRepository.existsBySlug(normalizedSlug)) {
-            throw new IllegalStateException("Hero with slug already exists: " + normalizedSlug);
+            throw new BusinessValidationException("Hero with slug already exists: " + normalizedSlug);
         }
 
         validateCommon(null, request);
@@ -35,11 +35,11 @@ public class HeroValidator {
         heroRepository.findBySlug(normalizedSlug)
                 .filter(existing -> !existing.getId().equals(heroId))
                 .ifPresent(existing -> {
-                    throw new IllegalStateException("Hero with slug already exists: " + normalizedSlug);
+                    throw new BusinessValidationException("Hero with slug already exists: " + normalizedSlug);
                 });
 
         if (request.baseHeroId() != null && request.baseHeroId().equals(heroId)) {
-            throw new IllegalStateException("Hero cannot reference itself as base hero");
+            throw new BusinessValidationException("Hero cannot reference itself as base hero");
         }
 
         validateCommon(heroId, request);
@@ -105,31 +105,31 @@ public class HeroValidator {
         );
 
         if (!Boolean.TRUE.equals(validation.getElementExists())) {
-            throw new EntityNotFoundException("Element not found: " + elementId);
+            throw new NotFoundException("Element not found: " + elementId);
         }
 
         if (!Boolean.TRUE.equals(validation.getRarityExists())) {
-            throw new EntityNotFoundException("Rarity not found: " + rarityId);
+            throw new NotFoundException("Rarity not found: " + rarityId);
         }
 
         if (!Boolean.TRUE.equals(validation.getHeroClassExists())) {
-            throw new EntityNotFoundException("HeroClass not found: " + heroClassId);
+            throw new NotFoundException("HeroClass not found: " + heroClassId);
         }
 
         if (!Boolean.TRUE.equals(validation.getFamilyExists())) {
-            throw new EntityNotFoundException("Family not found: " + familyId);
+            throw new NotFoundException("Family not found: " + familyId);
         }
 
         if (!Boolean.TRUE.equals(validation.getManaSpeedExists())) {
-            throw new EntityNotFoundException("ManaSpeed not found: " + manaSpeedId);
+            throw new NotFoundException("ManaSpeed not found: " + manaSpeedId);
         }
 
         if (!Boolean.TRUE.equals(validation.getAlphaTalentExists())) {
-            throw new EntityNotFoundException("AlphaTalent not found: " + alphaTalentId);
+            throw new NotFoundException("AlphaTalent not found: " + alphaTalentId);
         }
 
         if (!Boolean.TRUE.equals(validation.getBaseHeroExists())) {
-            throw new EntityNotFoundException("Base hero not found: " + baseHeroId);
+            throw new NotFoundException("Base hero not found: " + baseHeroId);
         }
 
         if (passiveSkillIds != null && !passiveSkillIds.isEmpty()) {
@@ -140,7 +140,7 @@ public class HeroValidator {
 
             for (Long passiveSkillId : uniquePassiveSkillIds) {
                 if (!existingPassiveSkillIds.contains(passiveSkillId)) {
-                    throw new EntityNotFoundException("PassiveSkill not found: " + passiveSkillId);
+                    throw new NotFoundException("PassiveSkill not found: " + passiveSkillId);
                 }
             }
         }
@@ -184,7 +184,7 @@ public class HeroValidator {
                             throw new BusinessValidationException("Costume hero must reference a base hero");
                         }
                     }, () -> {
-                        throw new EntityNotFoundException("Base hero not found: " + baseHeroId);
+                        throw new NotFoundException("Base hero not found: " + baseHeroId);
                     });
 
             heroRepository.findByBaseHeroIdAndCostumeIndex(baseHeroId, costumeIndex)
@@ -195,3 +195,5 @@ public class HeroValidator {
         }
     }
 }
+
+

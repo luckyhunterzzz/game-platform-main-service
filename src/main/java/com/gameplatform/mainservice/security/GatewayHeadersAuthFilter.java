@@ -1,5 +1,7 @@
 package com.gameplatform.mainservice.security;
 
+import io.sentry.Sentry;
+import io.sentry.protocol.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,6 +47,16 @@ public class GatewayHeadersAuthFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
-        filterChain.doFilter(request, response);
+        if (userId != null && !userId.isBlank()) {
+            User sentryUser = new User();
+            sentryUser.setId(userId);
+            Sentry.setUser(sentryUser);
+        }
+
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            Sentry.setUser(null);
+        }
     }
 }

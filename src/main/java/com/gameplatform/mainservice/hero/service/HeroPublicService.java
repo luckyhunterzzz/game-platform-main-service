@@ -13,7 +13,7 @@ import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjec
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -246,27 +246,27 @@ public class HeroPublicService {
 
     private HeroDetailsResponse buildHeroDetails(HeroDetailsProjection hero, String locale) {
         Hero currentHero = heroRepository.findById(hero.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found with id: " + hero.getId()));
+                .orElseThrow(() -> new NotFoundException("Hero not found with id: " + hero.getId()));
         Hero baseHero = currentHero.isCostume()
                 ? heroRepository.findById(currentHero.getBaseHeroId())
-                .orElseThrow(() -> new EntityNotFoundException("Base hero not found with id: " + currentHero.getBaseHeroId()))
+                .orElseThrow(() -> new NotFoundException("Base hero not found with id: " + currentHero.getBaseHeroId()))
                 : currentHero;
         Element element = elementRepository.findById(hero.getElementId())
-                .orElseThrow(() -> new EntityNotFoundException("Element not found with id: " + hero.getElementId()));
+                .orElseThrow(() -> new NotFoundException("Element not found with id: " + hero.getElementId()));
         Rarity rarity = rarityRepository.findById(hero.getRarityId())
-                .orElseThrow(() -> new EntityNotFoundException("Rarity not found with id: " + hero.getRarityId()));
+                .orElseThrow(() -> new NotFoundException("Rarity not found with id: " + hero.getRarityId()));
         HeroClass heroClass = heroClassRepository.findById(hero.getHeroClassId())
-                .orElseThrow(() -> new EntityNotFoundException("Hero class not found with id: " + hero.getHeroClassId()));
+                .orElseThrow(() -> new NotFoundException("Hero class not found with id: " + hero.getHeroClassId()));
         Family family = hero.getFamilyId() == null
                 ? null
                 : familyRepository.findById(hero.getFamilyId())
-                .orElseThrow(() -> new EntityNotFoundException("Family not found with id: " + hero.getFamilyId()));
+                .orElseThrow(() -> new NotFoundException("Family not found with id: " + hero.getFamilyId()));
         ManaSpeed manaSpeed = manaSpeedRepository.findById(hero.getManaSpeedId())
-                .orElseThrow(() -> new EntityNotFoundException("Mana speed not found with id: " + hero.getManaSpeedId()));
+                .orElseThrow(() -> new NotFoundException("Mana speed not found with id: " + hero.getManaSpeedId()));
         AlphaTalent alphaTalent = hero.getAlphaTalentId() == null
                 ? null
                 : alphaTalentRepository.findById(hero.getAlphaTalentId())
-                .orElseThrow(() -> new EntityNotFoundException("Alpha talent not found with id: " + hero.getAlphaTalentId()));
+                .orElseThrow(() -> new NotFoundException("Alpha talent not found with id: " + hero.getAlphaTalentId()));
         List<PassiveSkill> passiveSkills = findPassiveSkills(hero.getId());
         List<Hero> costumes = findCostumes(hero);
 
@@ -288,26 +288,26 @@ public class HeroPublicService {
 
     private HeroDetailsProjection findCurrentBaseHero(String slug, HeroLanguage language) {
         return heroRepository.findReadyBaseHeroDetailsBySlug(slug, language.getJsonKey())
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found with slug: " + slug));
+                .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
     }
 
     private HeroDetailsProjection findCurrentHero(String slug, HeroLanguage language) {
         return heroRepository.findReadyHeroDetailsBySlug(slug, language.getJsonKey())
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found with slug: " + slug));
+                .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
     }
 
     private HeroVariantSummaryProjection findBaseHero(HeroDetailsProjection hero, HeroLanguage language) {
         if (!Boolean.TRUE.equals(hero.getIsCostume())) {
             return heroRepository.findReadyHeroVariantSummaryById(hero.getId(), language.getJsonKey())
-                    .orElseThrow(() -> new EntityNotFoundException("Hero not found with id: " + hero.getId()));
+                    .orElseThrow(() -> new NotFoundException("Hero not found with id: " + hero.getId()));
         }
 
         Long baseHeroId = hero.getBaseHeroId();
         if (baseHeroId == null) {
-            throw new EntityNotFoundException("Hero not found with baseHeroId: " + baseHeroId);
+            throw new NotFoundException("Hero not found with baseHeroId: " + baseHeroId);
         }
         return heroRepository.findReadyHeroVariantSummaryById(baseHeroId, language.getJsonKey())
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found with baseHeroId: " + baseHeroId));
+                .orElseThrow(() -> new NotFoundException("Hero not found with baseHeroId: " + baseHeroId));
     }
 
     private List<PassiveSkill> findPassiveSkills(Long heroId) {
@@ -337,3 +337,4 @@ public class HeroPublicService {
                 .toList();
     }
 }
+

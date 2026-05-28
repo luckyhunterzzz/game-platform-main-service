@@ -15,7 +15,7 @@ import com.gameplatform.mainservice.hero.converter.HeroResponseConverter;
 import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.repository.*;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -114,7 +114,7 @@ public class HeroAdminService {
 
     public Hero getById(Long id) {
         return heroRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Hero not found: " + id));
     }
 
     public HeroResponse getResponseById(Long id) {
@@ -130,7 +130,7 @@ public class HeroAdminService {
 
         HeroVariantSummaryResponse currentHeroSummary = heroRepository.findHeroVariantSummaryById(currentHero.getId(), locale)
                 .map(heroPublicResponseConverter::toVariantSummary)
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found: " + currentHero.getId()));
+                .orElseThrow(() -> new NotFoundException("Hero not found: " + currentHero.getId()));
 
         if (baseHeroId == null) {
             return new HeroAdminVariantsResponse(currentHeroSummary, currentHeroSummary, List.of());
@@ -138,7 +138,7 @@ public class HeroAdminService {
 
         HeroVariantSummaryResponse baseHeroSummary = heroRepository.findHeroVariantSummaryById(baseHeroId, locale)
                 .map(heroPublicResponseConverter::toVariantSummary)
-                .orElseThrow(() -> new EntityNotFoundException("Base hero not found: " + baseHeroId));
+                .orElseThrow(() -> new NotFoundException("Base hero not found: " + baseHeroId));
 
         List<HeroVariantSummaryResponse> costumes = heroRepository.findHeroVariantSummariesByBaseHeroId(baseHeroId, locale)
                 .stream()
@@ -167,11 +167,11 @@ public class HeroAdminService {
 
     public HeroNextCostumeIndexResponse getNextCostumeIndex(Long baseHeroId) {
         if (baseHeroId == null) {
-            throw new EntityNotFoundException("Base hero not found: null");
+            throw new NotFoundException("Base hero not found: null");
         }
 
         if (!heroRepository.existsById(baseHeroId)) {
-            throw new EntityNotFoundException("Base hero not found: " + baseHeroId);
+            throw new NotFoundException("Base hero not found: " + baseHeroId);
         }
 
         Integer maxCostumeIndex = heroRepository.findMaxCostumeIndexByBaseHeroId(baseHeroId);
@@ -220,7 +220,7 @@ public class HeroAdminService {
     @Transactional
     public void delete(Long id) {
         if (!heroRepository.existsById(id)) {
-            throw new EntityNotFoundException("Hero not found: " + id);
+            throw new NotFoundException("Hero not found: " + id);
         }
 
         heroExpertOpinionRepository.deleteAllByHeroId(id);
@@ -295,3 +295,4 @@ public class HeroAdminService {
         return null;
     }
 }
+

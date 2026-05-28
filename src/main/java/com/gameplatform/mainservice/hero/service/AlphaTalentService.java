@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.AlphaTalentRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class AlphaTalentService {
 
     public AlphaTalent getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("AlphaTalent not found: " + id));
+                .orElseThrow(() -> new NotFoundException("AlphaTalent not found: " + id));
     }
 
     public AlphaTalent create(AlphaTalentUpsertRequest request) {
@@ -73,8 +73,9 @@ public class AlphaTalentService {
 
     public void delete(Long id) {
         if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("AlphaTalent not found: " + id);
+            throw new NotFoundException("AlphaTalent not found: " + id);
         }
         repository.deleteById(id);
     }
 }
+

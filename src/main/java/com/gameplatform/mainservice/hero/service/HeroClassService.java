@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.hero.dto.request.HeroClassUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class HeroClassService {
 
     public HeroClass getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("HeroClass not found: " + id));
+                .orElseThrow(() -> new NotFoundException("HeroClass not found: " + id));
     }
 
     public HeroClass create(HeroClassUpsertRequest request) {
@@ -79,8 +79,9 @@ public class HeroClassService {
 
     public void delete(Long id) {
         if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("HeroClass not found: " + id);
+            throw new NotFoundException("HeroClass not found: " + id);
         }
         repository.deleteById(id);
     }
 }
+

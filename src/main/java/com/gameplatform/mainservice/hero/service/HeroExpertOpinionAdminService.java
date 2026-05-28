@@ -8,7 +8,7 @@ import com.gameplatform.mainservice.hero.dto.request.HeroExpertOpinionUpsertRequ
 import com.gameplatform.mainservice.hero.dto.response.HeroExpertOpinionAdminResponse;
 import com.gameplatform.mainservice.hero.repository.HeroExpertOpinionRepository;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +56,7 @@ public class HeroExpertOpinionAdminService {
         validateRequest(request);
 
         HeroExpertOpinion entity = heroExpertOpinionRepository.findByIdAndHeroId(opinionId, heroId)
-                .orElseThrow(() -> new EntityNotFoundException("Hero expert opinion not found: " + opinionId));
+                .orElseThrow(() -> new NotFoundException("Hero expert opinion not found: " + opinionId));
 
         entity.setUpdatedAt(OffsetDateTime.now(clock));
         applyUpsert(entity, request);
@@ -69,7 +69,7 @@ public class HeroExpertOpinionAdminService {
         requireHero(heroId);
 
         HeroExpertOpinion entity = heroExpertOpinionRepository.findByIdAndHeroId(opinionId, heroId)
-                .orElseThrow(() -> new EntityNotFoundException("Hero expert opinion not found: " + opinionId));
+                .orElseThrow(() -> new NotFoundException("Hero expert opinion not found: " + opinionId));
 
         heroExpertOpinionRepository.delete(entity);
     }
@@ -102,7 +102,7 @@ public class HeroExpertOpinionAdminService {
 
     private void requireHero(Long heroId) {
         if (!heroRepository.existsById(heroId)) {
-            throw new EntityNotFoundException("Hero not found: " + heroId);
+            throw new NotFoundException("Hero not found: " + heroId);
         }
     }
 
@@ -138,3 +138,4 @@ public class HeroExpertOpinionAdminService {
         return value == null || value.isBlank();
     }
 }
+

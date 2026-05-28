@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.hero.domain.enums.EvolutionStageCode;
 import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
 import com.gameplatform.mainservice.hero.repository.RarityEvolutionMultiplierRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ public class RarityEvolutionMultiplierService {
 
     public RarityEvolutionMultiplier getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("RarityEvolutionMultiplier not found: " + id));
+                .orElseThrow(() -> new NotFoundException("RarityEvolutionMultiplier not found: " + id));
     }
 
     public RarityEvolutionMultiplier create(RarityEvolutionMultiplierUpsertRequest request) {
@@ -66,7 +66,7 @@ public class RarityEvolutionMultiplierService {
 
     public void delete(Long id) {
         if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("RarityEvolutionMultiplier not found: " + id);
+            throw new NotFoundException("RarityEvolutionMultiplier not found: " + id);
         }
         repository.deleteById(id);
     }
@@ -115,3 +115,4 @@ public class RarityEvolutionMultiplierService {
         };
     }
 }
+
