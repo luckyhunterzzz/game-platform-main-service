@@ -7,6 +7,7 @@ import com.gameplatform.mainservice.exception.exceptions.MediaStorageException;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import com.gameplatform.mainservice.exception.model.DictionaryItemInUseErrorResponse;
 import com.gameplatform.mainservice.exception.model.ErrorResponse;
+import io.sentry.Sentry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -139,6 +140,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         log.error("Unexpected error occurred at {}", request.getRequestURI(), ex);
+        Sentry.captureException(ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected internal server error", request);
     }
 
@@ -148,6 +150,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         log.error("Media storage error: {} at {}", ex.getMessage(), request.getRequestURI(), ex);
+        Sentry.captureException(ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
     }
 

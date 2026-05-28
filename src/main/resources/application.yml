@@ -26,3 +26,9 @@ logging:
 publication:
   scheduler:
     publish-cron: "0 0,15,30,45 * * * *"
+
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  release: ${SENTRY_RELEASE:${spring.application.name}@local}
+  send-default-pii: false
