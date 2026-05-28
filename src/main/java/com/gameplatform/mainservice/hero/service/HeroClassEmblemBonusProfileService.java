@@ -1,10 +1,12 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
+
 import com.gameplatform.mainservice.hero.domain.entity.HeroClassEmblemBonusProfile;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -37,14 +39,14 @@ public class HeroClassEmblemBonusProfileService {
 
     public HeroClassEmblemBonusProfile getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Profile not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Profile not found: " + id));
     }
 
     public HeroClassEmblemBonusProfile create(HeroClassEmblemBonusProfileUpsertRequest request) {
 
         repository.findByHeroClassIdAndPathType(request.heroClassId(), request.pathType())
                 .ifPresent(p -> {
-                    throw new IllegalStateException("Profile already exists for heroClassId + pathType");
+                    throw new BusinessValidationException("Profile already exists for heroClassId + pathType");
                 });
 
         HeroClassEmblemBonusProfile entity = HeroClassEmblemBonusProfile.builder()
@@ -70,7 +72,7 @@ public class HeroClassEmblemBonusProfileService {
         repository.findByHeroClassIdAndPathType(request.heroClassId(), request.pathType())
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(p -> {
-                    throw new IllegalStateException("Profile already exists for heroClassId + pathType");
+                    throw new BusinessValidationException("Profile already exists for heroClassId + pathType");
                 });
 
         entity.setHeroClassId(request.heroClassId());
@@ -90,7 +92,7 @@ public class HeroClassEmblemBonusProfileService {
 
     public void delete(Long id) {
         if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Profile not found: " + id);
+            throw new NotFoundException("Profile not found: " + id);
         }
         repository.deleteById(id);
     }
@@ -122,3 +124,5 @@ public class HeroClassEmblemBonusProfileService {
                 || catalogSupport.normalize(profile.getPathType().name()).contains(normalizedSearch);
     }
 }
+
+

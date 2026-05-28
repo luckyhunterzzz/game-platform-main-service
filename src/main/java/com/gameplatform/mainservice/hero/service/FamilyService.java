@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.FamilyRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class FamilyService {
 
     public Family getById(Long id) {
         return familyRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Family not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Family not found: " + id));
     }
 
     public Family create(FamilyUpsertRequest request) {
@@ -73,8 +73,9 @@ public class FamilyService {
 
     public void delete(Long id) {
         if (!familyRepository.existsById(id)) {
-            throw new EntityNotFoundException("Family not found: " + id);
+            throw new NotFoundException("Family not found: " + id);
         }
         familyRepository.deleteById(id);
     }
 }
+

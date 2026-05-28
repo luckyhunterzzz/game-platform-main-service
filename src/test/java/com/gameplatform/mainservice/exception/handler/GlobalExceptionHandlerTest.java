@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.exception.exceptions.DictionaryItemInUseException;
 import com.gameplatform.mainservice.exception.exceptions.InvalidAuthenticationException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.response.HeroUsageReferenceResponse;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
@@ -64,7 +64,7 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void shouldReturnNotFoundForEntityNotFoundException() throws Exception {
+    void shouldReturnNotFoundForNotFoundException() throws Exception {
         mockMvc.perform(get("/test/not-found"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
@@ -122,6 +122,26 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void shouldReturnBadRequestForMethodArgumentTypeMismatchException() throws Exception {
+        mockMvc.perform(get("/test/type-mismatch").param("mode", "wrong"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("mode: invalid value 'wrong'"))
+                .andExpect(jsonPath("$.path").value("/test/type-mismatch"));
+    }
+
+    @Test
+    void shouldReturnBadRequestForHttpMessageNotReadableException() throws Exception {
+        mockMvc.perform(post("/test/request-body-validation")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Malformed request body"))
+                .andExpect(jsonPath("$.path").value("/test/request-body-validation"));
+    }
+
+    @Test
     void shouldReturnInternalServerErrorForUnexpectedException() throws Exception {
         mockMvc.perform(get("/test/unexpected"))
                 .andExpect(status().isInternalServerError())
@@ -148,7 +168,7 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/not-found")
         void notFound() {
-            throw new EntityNotFoundException("Hero not found: 42");
+            throw new NotFoundException("Hero not found: 42");
         }
 
         @GetMapping("/dictionary-in-use")
@@ -158,7 +178,7 @@ class GlobalExceptionHandlerTest {
                     List.of(new HeroUsageReferenceResponse(
                             7L,
                             "khufu",
-                            new LocalizedTextJson("Хуфу", "Khufu"),
+                            new LocalizedTextJson("Khufu", "Khufu"),
                             "PUBLISHED"
                     ))
             );
@@ -187,6 +207,10 @@ class GlobalExceptionHandlerTest {
             }
         }
 
+        @GetMapping("/type-mismatch")
+        void typeMismatch(@RequestParam TestMode mode) {
+        }
+
         @GetMapping("/unexpected")
         void unexpected() {
             throw new RuntimeException("boom");
@@ -198,4 +222,10 @@ class GlobalExceptionHandlerTest {
 
     record ConstrainedRequest(@Min(1) int value) {
     }
+
+    enum TestMode {
+        FAST,
+        SLOW
+    }
 }
+

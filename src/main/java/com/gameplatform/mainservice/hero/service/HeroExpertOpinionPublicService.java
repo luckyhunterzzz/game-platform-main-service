@@ -7,7 +7,7 @@ import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.response.HeroExpertOpinionPublicResponse;
 import com.gameplatform.mainservice.hero.repository.HeroExpertOpinionRepository;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,10 +23,11 @@ public class HeroExpertOpinionPublicService {
 
     public List<HeroExpertOpinionPublicResponse> getAllByHeroSlug(String slug, HeroLanguage language) {
         Hero hero = heroRepository.findBySlugAndStatus(slug, HeroStatus.READY)
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found with slug: " + slug));
+                .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
 
         return heroExpertOpinionRepository.findPublishedByHeroIdOrdered(hero.getId()).stream()
                 .map(item -> converter.toPublicResponse(item, language.getJsonKey()))
                 .toList();
     }
 }
+
