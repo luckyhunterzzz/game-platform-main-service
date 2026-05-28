@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.service;
 import com.gameplatform.mainservice.hero.domain.entity.ManaSpeed;
 import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.ManaSpeedRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class ManaSpeedService {
 
     public ManaSpeed getById(Long id) {
         return manaSpeedRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("ManaSpeed not found: " + id));
+                .orElseThrow(() -> new NotFoundException("ManaSpeed not found: " + id));
     }
 
     public ManaSpeed create(ManaSpeedUpsertRequest request) {
@@ -50,8 +50,9 @@ public class ManaSpeedService {
 
     public void delete(Long id) {
         if (!manaSpeedRepository.existsById(id)) {
-            throw new EntityNotFoundException("ManaSpeed not found: " + id);
+            throw new NotFoundException("ManaSpeed not found: " + id);
         }
         manaSpeedRepository.deleteById(id);
     }
 }
+

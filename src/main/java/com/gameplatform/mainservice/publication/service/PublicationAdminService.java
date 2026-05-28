@@ -11,7 +11,7 @@ import com.gameplatform.mainservice.publication.mapper.PublicationResponseConver
 import com.gameplatform.mainservice.publication.repository.PublicationRepository;
 import com.gameplatform.mainservice.publication.validation.PublicationValidator;
 import com.gameplatform.mainservice.security.CurrentUserProvider;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -72,7 +72,7 @@ public class PublicationAdminService {
     @Transactional(readOnly = true)
     public PublicationAdminDetailsResponse getById(UUID id) {
         Publication publication = publicationRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Publication not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Publication not found: " + id));
 
         return publicationResponseConverter.toAdminDetailsResponse(publication);
     }
@@ -105,7 +105,7 @@ public class PublicationAdminService {
         UUID authorId = currentUserProvider.getUserId();
 
         Publication publication = publicationRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Publication not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Publication not found: " + id));
 
         applyUpsert(publication, request, now, authorId);
 
@@ -207,3 +207,4 @@ public class PublicationAdminService {
         };
     }
 }
+

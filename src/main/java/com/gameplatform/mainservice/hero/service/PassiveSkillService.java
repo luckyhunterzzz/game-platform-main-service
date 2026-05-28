@@ -9,7 +9,7 @@ import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.PassiveSkillRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ public class PassiveSkillService {
 
     public PassiveSkill getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("PassiveSkill not found: " + id));
+                .orElseThrow(() -> new NotFoundException("PassiveSkill not found: " + id));
     }
 
     public PassiveSkill create(PassiveSkillUpsertRequest request) {
@@ -79,7 +79,7 @@ public class PassiveSkillService {
 
     public void delete(Long id) {
         if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("PassiveSkill not found: " + id);
+            throw new NotFoundException("PassiveSkill not found: " + id);
         }
 
         if (heroPassiveSkillRepository.existsByIdPassiveSkillId(id)) {
@@ -102,3 +102,4 @@ public class PassiveSkillService {
         repository.deleteById(id);
     }
 }
+

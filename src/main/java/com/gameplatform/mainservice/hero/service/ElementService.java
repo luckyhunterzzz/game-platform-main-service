@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.hero.dto.request.ElementUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.ElementRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class ElementService {
 
     public Element getById(Long id) {
         return elementRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Element not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Element not found: " + id));
     }
 
     public Element create(ElementUpsertRequest request) {
@@ -70,8 +70,9 @@ public class ElementService {
 
     public void delete(Long id) {
         if (!elementRepository.existsById(id)) {
-            throw new EntityNotFoundException("Element not found: " + id);
+            throw new NotFoundException("Element not found: " + id);
         }
         elementRepository.deleteById(id);
     }
 }
+

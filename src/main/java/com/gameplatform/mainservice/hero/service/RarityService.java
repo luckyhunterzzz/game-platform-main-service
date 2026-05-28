@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class RarityService {
 
     public Rarity getById(Long id) {
         return rarityRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Rarity not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Rarity not found: " + id));
     }
 
     public Rarity create(RarityUpsertRequest request) {
@@ -72,9 +72,10 @@ public class RarityService {
 
     public void delete(Long id) {
         if (!rarityRepository.existsById(id)) {
-            throw new EntityNotFoundException("Rarity not found: " + id);
+            throw new NotFoundException("Rarity not found: " + id);
         }
 
         rarityRepository.deleteById(id);
     }
 }
+

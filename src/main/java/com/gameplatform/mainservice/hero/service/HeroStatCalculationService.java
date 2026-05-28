@@ -13,7 +13,7 @@ import com.gameplatform.mainservice.hero.dto.response.HeroStatCalculationRespons
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.hero.repository.RarityEvolutionMultiplierRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +30,7 @@ public class HeroStatCalculationService {
 
     public HeroStatCalculationResponse calculate(Long heroId, HeroStatCalculationRequest request) {
         Hero hero = heroRepository.findById(heroId)
-                .orElseThrow(() -> new EntityNotFoundException("Hero not found: " + heroId));
+                .orElseThrow(() -> new NotFoundException("Hero not found: " + heroId));
 
         requireBaseStats(hero);
 
@@ -142,7 +142,7 @@ public class HeroStatCalculationService {
 
     private RarityEvolutionMultiplier getMultiplier(Long rarityId, EvolutionStageCode stageCode) {
         return rarityEvolutionMultiplierRepository.findByRarityIdAndStageCode(rarityId, stageCode)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NotFoundException(
                         "RarityEvolutionMultiplier not found for rarityId=" + rarityId + ", stageCode=" + stageCode
                 ));
     }
@@ -153,7 +153,7 @@ public class HeroStatCalculationService {
         }
 
         Hero costumeHero = heroRepository.findById(costumeHeroId)
-                .orElseThrow(() -> new EntityNotFoundException("Costume hero not found: " + costumeHeroId));
+                .orElseThrow(() -> new NotFoundException("Costume hero not found: " + costumeHeroId));
 
         if (!costumeHero.isCostume()) {
             throw new BusinessValidationException("Selected hero is not a costume");
@@ -192,7 +192,7 @@ public class HeroStatCalculationService {
         }
 
         return heroClassEmblemBonusProfileRepository.findByHeroClassIdAndPathType(heroClassId, emblemPathType)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new NotFoundException(
                         "HeroClassEmblemBonusProfile not found for heroClassId=" + heroClassId + ", pathType=" + emblemPathType
                 ));
     }
@@ -271,3 +271,4 @@ public class HeroStatCalculationService {
         return new HeroStatBlockResponse(0, 0, 0);
     }
 }
+
