@@ -53,17 +53,19 @@ public class HeroPublicController {
     @GetMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}")
     public ResponseEntity<HeroDetailsResponse> getDetails(
             @PathVariable String slug,
-            @RequestParam(defaultValue = "RU") HeroLanguage language ) {
-        return ResponseEntity.ok(heroPublicFacade.getDetails(slug, language));
+            @RequestParam(defaultValue = "RU") HeroLanguage language,
+            @RequestParam(defaultValue = "false") boolean includeDrafts ) {
+        return ResponseEntity.ok(heroPublicFacade.getDetails(slug, language, includeDrafts));
     }
 
     @PostMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}/stats/calculate")
     public ResponseEntity<HeroStatCalculationResponse> calculateStats(
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language,
+            @RequestParam(defaultValue = "false") boolean includeDrafts,
             @RequestBody @Valid HeroStatCalculationRequest request
     ) {
-        return ResponseEntity.ok(heroPublicFacade.calculateStats(slug, language, request));
+        return ResponseEntity.ok(heroPublicFacade.calculateStats(slug, language, includeDrafts, request));
     }
 
     @GetMapping
@@ -77,6 +79,7 @@ public class HeroPublicController {
             @RequestParam(required = false) List<Long> familyIds,
             @RequestParam(required = false) List<Long> manaSpeedIds,
             @RequestParam(required = false) List<Long> alphaTalentIds,
+            @RequestParam(defaultValue = "false") boolean includeDrafts,
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
         return ResponseEntity.ok(heroPublicFacade.getHeroes(
@@ -89,15 +92,17 @@ public class HeroPublicController {
                 heroClassIds,
                 familyIds,
                 manaSpeedIds,
-                alphaTalentIds
+                alphaTalentIds,
+                includeDrafts
         ));
     }
 
     @GetMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}/variants")
     public ResponseEntity<HeroVariantsResponse> getVariants(
             @PathVariable String slug,
-            @RequestParam(defaultValue = "RU") HeroLanguage language
+            @RequestParam(defaultValue = "RU") HeroLanguage language,
+            @RequestParam(defaultValue = "false") boolean includeDrafts
     ) {
-        return ResponseEntity.ok(heroPublicFacade.getVariants(slug, language));
+        return ResponseEntity.ok(heroPublicFacade.getVariants(slug, language, includeDrafts));
     }
 }

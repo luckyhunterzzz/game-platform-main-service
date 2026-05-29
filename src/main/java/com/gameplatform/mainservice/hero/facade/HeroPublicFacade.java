@@ -32,16 +32,17 @@ public class HeroPublicFacade {
         return heroPublicService.getFilters(language);
     }
 
-    public HeroDetailsResponse getDetails(String slug, HeroLanguage language) {
-        return heroPublicService.getDetails(slug, language);
+    public HeroDetailsResponse getDetails(String slug, HeroLanguage language, boolean includeDrafts) {
+        return heroPublicService.getDetails(slug, language, includeDrafts);
     }
 
     public HeroStatCalculationResponse calculateStats(
             String slug,
             HeroLanguage language,
+            boolean includeDrafts,
             HeroStatCalculationRequest request
     ) {
-        return heroPublicService.calculateStats(slug, language, request);
+        return heroPublicService.calculateStats(slug, language, includeDrafts, request);
     }
 
     public HeroPageResponse getHeroes(
@@ -54,7 +55,8 @@ public class HeroPublicFacade {
             List<Long> heroClassIds,
             List<Long> familyIds,
             List<Long> manaSpeedIds,
-            List<Long> alphaTalentIds
+            List<Long> alphaTalentIds,
+            boolean includeDrafts
     ) {
         return heroPublicService.getHeroes(
                 page,
@@ -66,11 +68,12 @@ public class HeroPublicFacade {
                 heroClassIds,
                 familyIds,
                 manaSpeedIds,
-                alphaTalentIds
+                alphaTalentIds,
+                includeDrafts
         );
     }
 
-    public HeroVariantsResponse getVariants(String slug, HeroLanguage language) {
-        return heroPublicService.getVariants(slug, language);
+    public HeroVariantsResponse getVariants(String slug, HeroLanguage language, boolean includeDrafts) {
+        return heroPublicService.getVariants(slug, language, includeDrafts);
     }
 }

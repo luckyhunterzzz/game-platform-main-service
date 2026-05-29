@@ -17,6 +17,8 @@ import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -36,6 +38,7 @@ public class HeroPublicService {
     private final ManaSpeedRepository manaSpeedRepository;
     private final AlphaTalentRepository alphaTalentRepository;
     private final HeroStatCalculationService heroStatCalculationService;
+    private final HeroPublicVisibilityService heroPublicVisibilityService;
 
     private final HeroPublicResponseConverter converter;
     private final MediaUrlResolver mediaUrlResolver;
@@ -50,7 +53,8 @@ public class HeroPublicService {
             List<Long> heroClassIds,
             List<Long> familyIds,
             List<Long> manaSpeedIds,
-            List<Long> alphaTalentIds
+            List<Long> alphaTalentIds,
+            boolean includeDrafts
     ) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size, 1), 50);
@@ -64,6 +68,7 @@ public class HeroPublicService {
         List<Long> normalizedManaSpeedIds = normalizeIds(manaSpeedIds);
         List<Long> normalizedAlphaTalentIds = normalizeIds(alphaTalentIds);
 
+        boolean includeDraftsAuthorized = canIncludeDrafts(includeDrafts);
         Page<HeroCardResponse> heroPage = heroRepository.findReadyHeroCards(
                 language.getJsonKey(),
                 StringUtils.hasText(search) ? search.trim() : null,
@@ -79,6 +84,7 @@ public class HeroPublicService {
                 normalizedManaSpeedIds.isEmpty(),
                 sqlFilterIds(normalizedAlphaTalentIds),
                 normalizedAlphaTalentIds.isEmpty(),
+                includeDraftsAuthorized,
                 pageable
         ).map(converter::toCardResponse);
 
@@ -218,33 +224,34 @@ public class HeroPublicService {
         return converter.toLookupResponses(results);
     }
 
-    public HeroDetailsResponse getDetails(String slug, HeroLanguage language) {
-        HeroDetailsProjection currentHero = findCurrentHero(slug, language);
-        return buildHeroDetails(currentHero, language.getJsonKey());
+    public HeroDetailsResponse getDetails(String slug, HeroLanguage language, boolean includeDrafts) {
+        HeroDetailsProjection currentHero = findCurrentHero(slug, language, includeDrafts);
+        return buildHeroDetails(currentHero, language.getJsonKey(), includeDrafts);
     }
 
     public HeroStatCalculationResponse calculateStats(
             String slug,
             HeroLanguage language,
+            boolean includeDrafts,
             HeroStatCalculationRequest request
     ) {
-        HeroDetailsProjection currentHero = findCurrentHero(slug, language);
+        HeroDetailsProjection currentHero = findCurrentHero(slug, language, includeDrafts);
         return heroStatCalculationService.calculate(currentHero.getId(), request);
     }
 
-    public HeroVariantsResponse getVariants(String slug, HeroLanguage language) {
-        HeroDetailsProjection currentHero = findCurrentHero(slug, language);
-        HeroVariantSummaryProjection baseHero = findBaseHero(currentHero, language);
-        HeroDetailsResponse currentHeroDetails = buildHeroDetails(currentHero, language.getJsonKey());
+    public HeroVariantsResponse getVariants(String slug, HeroLanguage language, boolean includeDrafts) {
+        HeroDetailsProjection currentHero = findCurrentHero(slug, language, includeDrafts);
+        HeroVariantSummaryProjection baseHero = findBaseHero(currentHero, language, includeDrafts);
+        HeroDetailsResponse currentHeroDetails = buildHeroDetails(currentHero, language.getJsonKey(), includeDrafts);
 
         return new HeroVariantsResponse(
                 currentHeroDetails,
                 converter.toVariantSummary(baseHero),
-                buildVariantCostumes(baseHero.getId(), language)
+                buildVariantCostumes(baseHero.getId(), language, includeDrafts)
         );
     }
 
-    private HeroDetailsResponse buildHeroDetails(HeroDetailsProjection hero, String locale) {
+    private HeroDetailsResponse buildHeroDetails(HeroDetailsProjection hero, String locale, boolean includeDrafts) {
         Hero currentHero = heroRepository.findById(hero.getId())
                 .orElseThrow(() -> new NotFoundException("Hero not found with id: " + hero.getId()));
         Hero baseHero = currentHero.isCostume()
@@ -268,7 +275,7 @@ public class HeroPublicService {
                 : alphaTalentRepository.findById(hero.getAlphaTalentId())
                 .orElseThrow(() -> new NotFoundException("Alpha talent not found with id: " + hero.getAlphaTalentId()));
         List<PassiveSkill> passiveSkills = findPassiveSkills(hero.getId());
-        List<Hero> costumes = findCostumes(hero);
+        List<Hero> costumes = findCostumes(hero, includeDrafts);
 
         return converter.toDetailsResponse(
                 hero,
@@ -291,14 +298,15 @@ public class HeroPublicService {
                 .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
     }
 
-    private HeroDetailsProjection findCurrentHero(String slug, HeroLanguage language) {
-        return heroRepository.findReadyHeroDetailsBySlug(slug, language.getJsonKey())
+    private HeroDetailsProjection findCurrentHero(String slug, HeroLanguage language, boolean includeDrafts) {
+        return heroRepository.findReadyHeroDetailsBySlug(slug, language.getJsonKey(), canIncludeDrafts(includeDrafts))
                 .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
     }
 
-    private HeroVariantSummaryProjection findBaseHero(HeroDetailsProjection hero, HeroLanguage language) {
+    private HeroVariantSummaryProjection findBaseHero(HeroDetailsProjection hero, HeroLanguage language, boolean includeDrafts) {
+        boolean includeDraftsAuthorized = canIncludeDrafts(includeDrafts);
         if (!Boolean.TRUE.equals(hero.getIsCostume())) {
-            return heroRepository.findReadyHeroVariantSummaryById(hero.getId(), language.getJsonKey())
+            return heroRepository.findReadyHeroVariantSummaryById(hero.getId(), language.getJsonKey(), includeDraftsAuthorized)
                     .orElseThrow(() -> new NotFoundException("Hero not found with id: " + hero.getId()));
         }
 
@@ -306,7 +314,7 @@ public class HeroPublicService {
         if (baseHeroId == null) {
             throw new NotFoundException("Hero not found with baseHeroId: " + baseHeroId);
         }
-        return heroRepository.findReadyHeroVariantSummaryById(baseHeroId, language.getJsonKey())
+        return heroRepository.findReadyHeroVariantSummaryById(baseHeroId, language.getJsonKey(), includeDraftsAuthorized)
                 .orElseThrow(() -> new NotFoundException("Hero not found with baseHeroId: " + baseHeroId));
     }
 
@@ -320,21 +328,45 @@ public class HeroPublicService {
                 : passiveSkillRepository.findAllByIdIn(passiveIds);
     }
 
-    private List<Hero> findCostumes(HeroDetailsProjection hero) {
+    private List<Hero> findCostumes(HeroDetailsProjection hero, boolean includeDrafts) {
         Long variantsRootId = Boolean.TRUE.equals(hero.getIsCostume())
                 ? hero.getBaseHeroId()
                 : hero.getId();
 
         return variantsRootId == null
                 ? List.of()
+                : canIncludeDrafts(includeDrafts)
+                ? heroRepository.findAllByBaseHeroIdAndStatusIn(variantsRootId, List.of(HeroStatus.READY, HeroStatus.DRAFT))
                 : heroRepository.findAllByBaseHeroIdAndStatus(variantsRootId, HeroStatus.READY);
     }
 
-    private List<HeroVariantSummaryResponse> buildVariantCostumes(Long baseHeroId, HeroLanguage language) {
-        return heroRepository.findReadyHeroVariantSummariesByBaseHeroId(baseHeroId, language.getJsonKey())
+    private List<HeroVariantSummaryResponse> buildVariantCostumes(Long baseHeroId, HeroLanguage language, boolean includeDrafts) {
+        return heroRepository.findReadyHeroVariantSummariesByBaseHeroId(
+                        baseHeroId,
+                        language.getJsonKey(),
+                        canIncludeDrafts(includeDrafts)
+                )
                 .stream()
                 .map(converter::toVariantSummary)
                 .toList();
+    }
+
+    private boolean canIncludeDrafts(boolean includeDraftsRequested) {
+        if (heroPublicVisibilityService.isDraftVisibleInPublicCatalog()) {
+            return true;
+        }
+
+        if (!includeDraftsRequested) {
+            return false;
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_superadmin".equals(authority.getAuthority()));
     }
 }
 

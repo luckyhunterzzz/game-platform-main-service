@@ -20,9 +20,13 @@ public class HeroExpertOpinionPublicService {
     private final HeroRepository heroRepository;
     private final HeroExpertOpinionRepository heroExpertOpinionRepository;
     private final HeroExpertOpinionResponseConverter converter;
+    private final HeroPublicVisibilityService heroPublicVisibilityService;
 
     public List<HeroExpertOpinionPublicResponse> getAllByHeroSlug(String slug, HeroLanguage language) {
-        Hero hero = heroRepository.findBySlugAndStatus(slug, HeroStatus.READY)
+        Hero hero = heroPublicVisibilityService.isDraftVisibleInPublicCatalog()
+                ? heroRepository.findBySlugAndStatusIn(slug, List.of(HeroStatus.READY, HeroStatus.DRAFT))
+                .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug))
+                : heroRepository.findBySlugAndStatus(slug, HeroStatus.READY)
                 .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
 
         return heroExpertOpinionRepository.findPublishedByHeroIdOrdered(hero.getId()).stream()

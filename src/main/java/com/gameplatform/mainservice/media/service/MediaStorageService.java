@@ -7,4 +7,6 @@ public interface MediaStorageService {
     StoredImage uploadPublicationImage(MultipartFile file);
 
     StoredImage uploadHeroImage(MultipartFile file);
+
+    StoredImage uploadHeroImage(String originalFilename, byte[] bytes, String contentType);
 }

@@ -24,6 +24,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     Optional<Hero> findBySlugAndStatus(String slug, HeroStatus status);
 
+    Optional<Hero> findBySlugAndStatusIn(String slug, List<HeroStatus> statuses);
+
     boolean existsBySlug(String slug);
 
     Optional<Hero> findByBaseHeroIdAndCostumeIndex(Long baseHeroId, Integer costumeIndex);
@@ -38,6 +40,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                            OR LOWER(h.slug) LIKE LOWER(CONCAT('%', :search, '%'))
                            OR LOWER(COALESCE(h.name_json ->> 'ru', '')) LIKE LOWER(CONCAT('%', :search, '%'))
                            OR LOWER(COALESCE(h.name_json ->> 'en', '')) LIKE LOWER(CONCAT('%', :search, '%')))
+                      AND (:rarityIdsEmpty = true OR h.rarity_id IN (:rarityIds))
+                      AND (:statusesEmpty = true OR h.status IN (:statuses))
                     ORDER BY LOWER(COALESCE(h.name_json ->> 'ru', h.name_json ->> 'en', h.slug)) ASC, h.id ASC
                     """,
             countQuery = """
@@ -47,11 +51,17 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                            OR LOWER(h.slug) LIKE LOWER(CONCAT('%', :search, '%'))
                            OR LOWER(COALESCE(h.name_json ->> 'ru', '')) LIKE LOWER(CONCAT('%', :search, '%'))
                            OR LOWER(COALESCE(h.name_json ->> 'en', '')) LIKE LOWER(CONCAT('%', :search, '%')))
+                      AND (:rarityIdsEmpty = true OR h.rarity_id IN (:rarityIds))
+                      AND (:statusesEmpty = true OR h.status IN (:statuses))
                     """,
             nativeQuery = true
     )
     Page<Long> findHeroIdsForAdminCatalog(
             @Param("search") String search,
+            @Param("rarityIds") List<Long> rarityIds,
+            @Param("rarityIdsEmpty") boolean rarityIdsEmpty,
+            @Param("statuses") List<String> statuses,
+            @Param("statusesEmpty") boolean statusesEmpty,
             Pageable pageable
     );
 
@@ -125,7 +135,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                     JOIN mana_speeds ms ON ms.id = h.mana_speed_id
                     LEFT JOIN families f ON f.id = h.family_id
                     LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
-                    WHERE h.status = 'READY'
+                    WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
                       AND (:search IS NULL OR LOWER(COALESCE(h.name_json ->> :locale, h.slug)) LIKE LOWER(CONCAT('%', :search, '%')))
                       AND (:elementIdsEmpty = true OR h.element_id IN (:elementIds))
                       AND (:rarityIdsEmpty = true OR h.rarity_id IN (:rarityIds))
@@ -142,7 +152,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             countQuery = """
                     SELECT COUNT(*)
                     FROM heroes h
-                    WHERE h.status = 'READY'
+                    WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
                       AND (:search IS NULL OR LOWER(COALESCE(h.name_json ->> :locale, h.slug)) LIKE LOWER(CONCAT('%', :search, '%')))
                       AND (:elementIdsEmpty = true OR h.element_id IN (:elementIds))
                       AND (:rarityIdsEmpty = true OR h.rarity_id IN (:rarityIds))
@@ -168,6 +178,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             @Param("manaSpeedIdsEmpty") boolean manaSpeedIdsEmpty,
             @Param("alphaTalentIds") List<Long> alphaTalentIds,
             @Param("alphaTalentIdsEmpty") boolean alphaTalentIdsEmpty,
+            @Param("includeDrafts") boolean includeDrafts,
             Pageable pageable
     );
 
@@ -521,11 +532,12 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             LEFT JOIN families f ON f.id = h.family_id
             LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
             WHERE h.slug = :slug
-              AND h.status = 'READY'
+              AND (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
             """, nativeQuery = true)
     Optional<HeroDetailsProjection> findReadyHeroDetailsBySlug(
             @Param("slug") String slug,
-            @Param("locale") String locale
+            @Param("locale") String locale,
+            @Param("includeDrafts") boolean includeDrafts
     );
 
     @Query(value = """
@@ -545,11 +557,12 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             JOIN elements e ON e.id = h.element_id
             JOIN rarities r ON r.id = h.rarity_id
             WHERE h.id = :id
-              AND h.status = 'READY'
+              AND (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
             """, nativeQuery = true)
     Optional<HeroVariantSummaryProjection> findReadyHeroVariantSummaryById(
             @Param("id") Long id,
-            @Param("locale") String locale
+            @Param("locale") String locale,
+            @Param("includeDrafts") boolean includeDrafts
     );
 
     @Query(value = """
@@ -569,12 +582,13 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             JOIN elements e ON e.id = h.element_id
             JOIN rarities r ON r.id = h.rarity_id
             WHERE h.base_hero_id = :baseHeroId
-              AND h.status = 'READY'
+              AND (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
             ORDER BY COALESCE(h.costume_index, 2147483647) ASC, h.id ASC
             """, nativeQuery = true)
     List<HeroVariantSummaryProjection> findReadyHeroVariantSummariesByBaseHeroId(
             @Param("baseHeroId") Long baseHeroId,
-            @Param("locale") String locale
+            @Param("locale") String locale,
+            @Param("includeDrafts") boolean includeDrafts
     );
 
     @Query(value = """
@@ -627,5 +641,10 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
     List<Hero> findAllByBaseHeroIdAndStatus(
             Long baseHeroId,
             HeroStatus status
+    );
+
+    List<Hero> findAllByBaseHeroIdAndStatusIn(
+            Long baseHeroId,
+            List<HeroStatus> statuses
     );
 }
