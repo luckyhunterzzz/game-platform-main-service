@@ -35,9 +35,11 @@ public class HeroAdminController {
     public ResponseEntity<HeroAdminPageResponse> getCatalog(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
-            @RequestParam(required = false) String search
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<Long> rarityIds,
+            @RequestParam(required = false) List<com.gameplatform.mainservice.hero.domain.enums.HeroStatus> statuses
     ) {
-        return ResponseEntity.ok(heroFacade.getCatalog(page, size, search));
+        return ResponseEntity.ok(heroFacade.getCatalog(page, size, search, rarityIds, statuses));
     }
 
     @GetMapping("/{id}")
