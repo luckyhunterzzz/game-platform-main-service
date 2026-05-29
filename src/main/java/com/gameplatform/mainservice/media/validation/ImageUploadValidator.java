@@ -20,6 +20,18 @@ public class ImageUploadValidator {
         }
     }
 
+    public void validate(byte[] bytes, String contentType) {
+        if (bytes == null || bytes.length == 0) {
+            throw new IllegalArgumentException("Image file must not be empty");
+        }
+        if (bytes.length > MAX_FILE_SIZE_BYTES) {
+            throw new IllegalArgumentException("Image file size must not exceed 5 MB");
+        }
+        if (contentType == null || !isSupportedContentType(contentType)) {
+            throw new IllegalArgumentException("Only PNG, JPEG and WEBP images are allowed");
+        }
+    }
+
     private boolean isSupportedContentType(String contentType) {
         return "image/png".equals(contentType) || "image/jpeg".equals(contentType) || "image/webp".equals(contentType);
     }

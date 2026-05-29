@@ -4,6 +4,7 @@ import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkillId;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
+import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminVariantsResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
@@ -59,13 +60,19 @@ public class HeroAdminService {
         return heroResponseConverter.toResponseList(heroes, allLinks);
     }
 
-    public HeroAdminPageResponse getCatalog(int page, int size, String search) {
+    public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<HeroStatus> statuses) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size, 1), 50);
+        List<Long> normalizedRarityIds = rarityIds == null ? List.of() : rarityIds.stream().filter(java.util.Objects::nonNull).distinct().toList();
+        List<String> normalizedStatuses = statuses == null ? List.of() : statuses.stream().filter(java.util.Objects::nonNull).map(Enum::name).distinct().toList();
 
         PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize);
         Page<Long> heroIdPage = heroRepository.findHeroIdsForAdminCatalog(
                 StringUtils.hasText(search) ? search.trim() : null,
+                normalizedRarityIds,
+                normalizedRarityIds.isEmpty(),
+                normalizedStatuses,
+                normalizedStatuses.isEmpty(),
                 pageable
         );
 
