@@ -155,7 +155,10 @@ public class HeroImportHeroProcessor {
             StoredImage fullImageRu,
             StoredImage previewImage
     ) {
-        String englishName = trimToNull(hero.name());
+        String englishName = firstNonBlank(
+                normalizeLocalizedHeroName(hero.name(), hero),
+                trimToNull(hero.name())
+        );
         String russianName = firstNonBlank(
                 normalizeLocalizedHeroName(localizedHero != null ? localizedHero.name() : null, hero),
                 englishName
@@ -400,6 +403,8 @@ public class HeroImportHeroProcessor {
 
         return normalized
                 .replaceAll("(?iu)(?:\\s+к(?:\\d+)?)$", "")
+                .replaceAll("(?iu)(?:\\s+[cсkк]\\d*)$", "")
+                .replaceAll("(?iu)(?:\\s+[cсkк]\\d*)$", "")
                 .trim();
     }
 

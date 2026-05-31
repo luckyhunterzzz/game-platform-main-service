@@ -20,8 +20,8 @@ public class HeroPublicFacade {
         return heroPublicService.getNames(language);
     }
 
-    public List<HeroCardResponse> getHeroesBatch(HeroLanguage language, HeroBatchLookupRequest request) {
-        return heroPublicService.getHeroesBatch(language, request);
+    public List<HeroCardResponse> getHeroesBatch(HeroLanguage language, boolean includeDrafts, HeroBatchLookupRequest request) {
+        return heroPublicService.getHeroesBatch(language, includeDrafts, request);
     }
 
     public List<HeroLookupResponse> search(String query, int limit, HeroLanguage language) {
