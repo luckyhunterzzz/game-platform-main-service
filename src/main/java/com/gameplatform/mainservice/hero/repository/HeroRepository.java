@@ -212,7 +212,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             JOIN mana_speeds ms ON ms.id = h.mana_speed_id
             LEFT JOIN families f ON f.id = h.family_id
             LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
-            WHERE h.status = 'READY'
+            WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
               AND h.id IN (:heroIds)
             ORDER BY h.release_date DESC NULLS LAST,
                      h.is_costume ASC,
@@ -220,9 +220,10 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                      LOWER(COALESCE(h.name_json ->> :locale, h.slug)) ASC,
                      h.id ASC
             """, nativeQuery = true)
-    List<HeroCardProjection> findReadyHeroCardsByIds(
+    List<HeroCardProjection> findHeroCardsByIds(
             @Param("heroIds") List<Long> heroIds,
-            @Param("locale") String locale
+            @Param("locale") String locale,
+            @Param("includeDrafts") boolean includeDrafts
     );
 
     @Query(
