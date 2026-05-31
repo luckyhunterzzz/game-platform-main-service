@@ -105,13 +105,17 @@ public class HeroPublicService {
         );
     }
 
-    public List<HeroCardResponse> getHeroesBatch(HeroLanguage language, HeroBatchLookupRequest request) {
+    public List<HeroCardResponse> getHeroesBatch(HeroLanguage language, boolean includeDrafts, HeroBatchLookupRequest request) {
         List<Long> normalizedHeroIds = normalizeIds(request.heroIds());
         if (normalizedHeroIds.isEmpty()) {
             return List.of();
         }
 
-        return heroRepository.findReadyHeroCardsByIds(normalizedHeroIds, language.getJsonKey())
+        return heroRepository.findHeroCardsByIds(
+                        normalizedHeroIds,
+                        language.getJsonKey(),
+                        canIncludeDrafts(includeDrafts)
+                )
                 .stream()
                 .map(converter::toCardResponse)
                 .toList();

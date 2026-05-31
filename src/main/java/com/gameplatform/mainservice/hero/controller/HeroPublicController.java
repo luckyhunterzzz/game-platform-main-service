@@ -29,9 +29,10 @@ public class HeroPublicController {
     @PostMapping("/batch")
     public ResponseEntity<List<HeroCardResponse>> getHeroesBatch(
             @RequestParam(defaultValue = "RU") HeroLanguage language,
+            @RequestParam(defaultValue = "false") boolean includeDrafts,
             @RequestBody @Valid HeroBatchLookupRequest request
     ) {
-        return ResponseEntity.ok(heroPublicFacade.getHeroesBatch(language, request));
+        return ResponseEntity.ok(heroPublicFacade.getHeroesBatch(language, includeDrafts, request));
     }
 
     @GetMapping("/search")
