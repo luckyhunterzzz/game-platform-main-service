@@ -7,9 +7,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 @Component
 public class MediaUrlResolver {
 
+    private static final String RU_FRONTEND_HOST = "ru.gameops-platform.dev";
     private static final String RU_API_HOST = "ru-api.gameops-platform.dev";
 
     private final String publicBaseUrl;
@@ -41,7 +45,7 @@ public class MediaUrlResolver {
     private String resolveBaseUrl() {
         String currentHost = resolveCurrentHost();
 
-        if (RU_API_HOST.equals(currentHost)) {
+        if (RU_API_HOST.equals(currentHost) || RU_FRONTEND_HOST.equals(currentHost)) {
             return trimTrailingSlash(ruPublicBaseUrl);
         }
 
@@ -67,7 +71,30 @@ public class MediaUrlResolver {
             return host;
         }
 
+        String originHost = normalizeUriHost(request.getHeader("Origin"));
+        if (!originHost.isBlank()) {
+            return originHost;
+        }
+
+        String refererHost = normalizeUriHost(request.getHeader("Referer"));
+        if (!refererHost.isBlank()) {
+            return refererHost;
+        }
+
         return normalizeHost(request.getServerName());
+    }
+
+    private String normalizeUriHost(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+
+        try {
+            URI uri = new URI(value.trim());
+            return normalizeHost(uri.getHost());
+        } catch (URISyntaxException ignored) {
+            return "";
+        }
     }
 
     private String normalizeHost(String value) {
