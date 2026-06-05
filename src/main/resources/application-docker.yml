@@ -30,6 +30,7 @@ app:
     access-key: ${MINIO_ROOT_USER}
     secret-key: ${MINIO_ROOT_PASSWORD}
     public-base-url: ${APP_MINIO_PUBLIC_BASE_URL}
+    ru-public-base-url: ${APP_MINIO_RU_PUBLIC_BASE_URL:https://ru-media.gameops-platform.dev}
     bucket: game-content
     secure: false
 
