@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.publication.service;
 
+import com.gameplatform.mainservice.config.CacheNames;
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationLanguage;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
@@ -9,6 +10,7 @@ import com.gameplatform.mainservice.publication.dto.response.PublicationResponse
 import com.gameplatform.mainservice.publication.mapper.PublicationResponseConverter;
 import com.gameplatform.mainservice.publication.repository.PublicationRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class PublicationPublicService {
     }
 
 
+    @Cacheable(cacheNames = CacheNames.PUBLIC_PUBLICATIONS_FEED)
     public PublicationFeedResponse getLatestPublicFeed(int page,
                                                        Integer size,
                                                        PublicationLanguage language,
@@ -88,6 +91,7 @@ public class PublicationPublicService {
         );
     }
 
+    @Cacheable(cacheNames = CacheNames.PUBLIC_PUBLICATIONS_FEED)
     public PublicationFeedResponse getAllianceFeed(int page,
                                                    Integer size,
                                                    PublicationLanguage language) {

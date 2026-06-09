@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.converter.ElementResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Element;
 import com.gameplatform.mainservice.hero.dto.request.ElementUpsertRequest;
@@ -23,6 +24,7 @@ public class ElementService {
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
     private final ElementResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<ElementResponse> getAll() {
         return converter.toResponseList(catalogSupport.sortLocalized(elementRepository.findAll(), Element::getNameJson));
@@ -53,7 +55,9 @@ public class ElementService {
         element.setImageBucket(request.imageBucket());
         element.setImageObjectKey(request.imageObjectKey());
 
-        return converter.toResponse(elementRepository.save(element));
+        ElementResponse response = converter.toResponse(elementRepository.save(element));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public ElementResponse update(Long id, ElementUpsertRequest request) {
@@ -70,7 +74,9 @@ public class ElementService {
         element.setImageBucket(request.imageBucket());
         element.setImageObjectKey(request.imageObjectKey());
 
-        return converter.toResponse(elementRepository.save(element));
+        ElementResponse response = converter.toResponse(elementRepository.save(element));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -78,6 +84,7 @@ public class ElementService {
             throw new NotFoundException("Element not found: " + id);
         }
         elementRepository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     private Element getEntityById(Long id) {

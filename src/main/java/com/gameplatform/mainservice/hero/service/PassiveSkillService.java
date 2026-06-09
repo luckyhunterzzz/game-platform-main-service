@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.exception.exceptions.DictionaryItemInUseException;
 import com.gameplatform.mainservice.hero.converter.PassiveSkillResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
@@ -30,6 +31,7 @@ public class PassiveSkillService {
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
     private final PassiveSkillResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<PassiveSkillResponse> getAll() {
         return converter.toResponseList(catalogSupport.sortLocalized(repository.findAll(), PassiveSkill::getNameJson));
@@ -51,7 +53,9 @@ public class PassiveSkillService {
         PassiveSkill entity = PassiveSkill.builder().build();
         applyUpsert(entity, request);
 
-        return converter.toResponse(repository.save(entity));
+        PassiveSkillResponse response = converter.toResponse(repository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public PassiveSkillResponse update(Long id, PassiveSkillUpsertRequest request) {
@@ -59,7 +63,9 @@ public class PassiveSkillService {
         validateUpsert(request, id);
         applyUpsert(entity, request);
 
-        return converter.toResponse(repository.save(entity));
+        PassiveSkillResponse response = converter.toResponse(repository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -85,6 +91,7 @@ public class PassiveSkillService {
         }
 
         repository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     private PassiveSkill getEntityById(Long id) {

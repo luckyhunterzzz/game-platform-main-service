@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.converter.AlphaTalentResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.AlphaTalent;
 import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpsertRequest;
@@ -23,6 +24,7 @@ public class AlphaTalentService {
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
     private final AlphaTalentResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<AlphaTalentResponse> getAll() {
         return converter.toResponseList(catalogSupport.sortLocalized(repository.findAll(), AlphaTalent::getNameJson));
@@ -44,7 +46,9 @@ public class AlphaTalentService {
         AlphaTalent entity = AlphaTalent.builder().build();
         applyUpsert(entity, request);
 
-        return converter.toResponse(repository.save(entity));
+        AlphaTalentResponse response = converter.toResponse(repository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public AlphaTalentResponse update(Long id, AlphaTalentUpsertRequest request) {
@@ -52,7 +56,9 @@ public class AlphaTalentService {
         validateUpsert(request, id);
         applyUpsert(entity, request);
 
-        return converter.toResponse(repository.save(entity));
+        AlphaTalentResponse response = converter.toResponse(repository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -60,6 +66,7 @@ public class AlphaTalentService {
             throw new NotFoundException("AlphaTalent not found: " + id);
         }
         repository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     private AlphaTalent getEntityById(Long id) {

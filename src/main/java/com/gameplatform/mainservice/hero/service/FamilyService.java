@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.converter.FamilyResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Family;
 import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
@@ -23,6 +24,7 @@ public class FamilyService {
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
     private final FamilyResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<FamilyResponse> getAll() {
         return converter.toResponseList(catalogSupport.sortLocalized(familyRepository.findAll(), Family::getNameJson));
@@ -44,7 +46,9 @@ public class FamilyService {
         Family family = Family.builder().build();
         applyUpsert(family, request);
 
-        return converter.toResponse(familyRepository.save(family));
+        FamilyResponse response = converter.toResponse(familyRepository.save(family));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public FamilyResponse update(Long id, FamilyUpsertRequest request) {
@@ -52,7 +56,9 @@ public class FamilyService {
         validateUpsert(request, id);
         applyUpsert(family, request);
 
-        return converter.toResponse(familyRepository.save(family));
+        FamilyResponse response = converter.toResponse(familyRepository.save(family));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -60,6 +66,7 @@ public class FamilyService {
             throw new NotFoundException("Family not found: " + id);
         }
         familyRepository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     private Family getEntityById(Long id) {

@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: main-service
+  cache:
+    type: simple
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
@@ -32,6 +34,18 @@ logging:
 publication:
   scheduler:
     publish-cron: "0 0,15,30,45 * * * *"
+
+app:
+  cache:
+    ttl:
+      hero-page: 10m
+      hero-lookups: 30m
+      hero-filters: 1h
+      hero-details: 30m
+      hero-opinions: 30m
+      hero-coach: 30m
+      outfitter: 30m
+      publications: 15m
 
 sentry:
   dsn: ${SENTRY_DSN:}

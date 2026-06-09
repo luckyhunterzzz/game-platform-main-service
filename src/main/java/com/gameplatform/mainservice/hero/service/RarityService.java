@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.converter.RarityResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Rarity;
 import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
@@ -23,6 +24,7 @@ public class RarityService {
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
     private final RarityResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<RarityResponse> getAll() {
         return converter.toResponseList(catalogSupport.sortLocalized(rarityRepository.findAll(), Rarity::getNameJson));
@@ -55,7 +57,9 @@ public class RarityService {
                 .imageObjectKey(request.imageObjectKey())
                 .build();
 
-        return converter.toResponse(rarityRepository.save(rarity));
+        RarityResponse response = converter.toResponse(rarityRepository.save(rarity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public RarityResponse update(Long id, RarityUpsertRequest request) {
@@ -72,7 +76,9 @@ public class RarityService {
         rarity.setImageBucket(request.imageBucket());
         rarity.setImageObjectKey(request.imageObjectKey());
 
-        return converter.toResponse(rarityRepository.save(rarity));
+        RarityResponse response = converter.toResponse(rarityRepository.save(rarity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -81,6 +87,7 @@ public class RarityService {
         }
 
         rarityRepository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     private Rarity getEntityById(Long id) {
