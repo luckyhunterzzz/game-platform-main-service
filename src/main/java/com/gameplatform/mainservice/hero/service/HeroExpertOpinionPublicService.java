@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.CacheNames;
 import com.gameplatform.mainservice.hero.converter.HeroExpertOpinionResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
@@ -10,6 +11,7 @@ import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +25,7 @@ public class HeroExpertOpinionPublicService {
     private final HeroExpertOpinionResponseConverter converter;
     private final HeroPublicVisibilityService heroPublicVisibilityService;
 
+    @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_EXPERT_OPINIONS)
     public List<HeroExpertOpinionPublicResponse> getAllByHeroSlug(String slug, HeroLanguage language) {
         Hero hero = heroPublicVisibilityService.isDraftVisibleInPublicCatalog()
                 ? heroRepository.findBySlugAndStatusIn(slug, List.of(HeroStatus.READY, HeroStatus.DRAFT))

@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkillId;
@@ -45,6 +46,7 @@ public class HeroAdminService {
     private final HeroResponseConverter heroResponseConverter;
     private final HeroPublicResponseConverter heroPublicResponseConverter;
     private final HeroValidator heroValidator;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<HeroResponse> getAll() {
         List<Hero> heroes = heroRepository.findAll();
@@ -203,6 +205,7 @@ public class HeroAdminService {
         Hero savedHero = heroRepository.save(hero);
 
         syncPassiveSkills(savedHero.getId(), request.passiveSkillIds());
+        publicCacheEvictionService.evictHeroCaches();
 
         return savedHero;
     }
@@ -220,6 +223,7 @@ public class HeroAdminService {
         Hero savedHero = heroRepository.save(hero);
 
         syncPassiveSkills(savedHero.getId(), request.passiveSkillIds());
+        publicCacheEvictionService.evictHeroCaches();
 
         return savedHero;
     }
@@ -233,6 +237,7 @@ public class HeroAdminService {
         heroExpertOpinionRepository.deleteAllByHeroId(id);
         heroPassiveSkillRepository.deleteAllByIdHeroId(id);
         heroRepository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     public HeroResponse buildResponse(Hero hero) {

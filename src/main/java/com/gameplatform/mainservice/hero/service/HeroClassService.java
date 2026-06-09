@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.converter.HeroClassResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.HeroClass;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassUpsertRequest;
@@ -23,6 +24,7 @@ public class HeroClassService {
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
     private final HeroClassResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<HeroClassResponse> getAll() {
         return converter.toResponseList(catalogSupport.sortLocalized(repository.findAll(), HeroClass::getNameJson));
@@ -44,7 +46,9 @@ public class HeroClassService {
         HeroClass entity = HeroClass.builder().build();
         applyUpsert(entity, request);
 
-        return converter.toResponse(repository.save(entity));
+        HeroClassResponse response = converter.toResponse(repository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public HeroClassResponse update(Long id, HeroClassUpsertRequest request) {
@@ -52,7 +56,9 @@ public class HeroClassService {
         validateUpsert(request, id);
         applyUpsert(entity, request);
 
-        return converter.toResponse(repository.save(entity));
+        HeroClassResponse response = converter.toResponse(repository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -60,6 +66,7 @@ public class HeroClassService {
             throw new NotFoundException("HeroClass not found: " + id);
         }
         repository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     private HeroClass getEntityById(Long id) {

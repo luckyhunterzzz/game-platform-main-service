@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.hero.converter.HeroExpertOpinionResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.HeroExpertOpinion;
@@ -25,6 +26,7 @@ public class HeroExpertOpinionAdminService {
     private final HeroRepository heroRepository;
     private final HeroExpertOpinionRepository heroExpertOpinionRepository;
     private final HeroExpertOpinionResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<HeroExpertOpinionAdminResponse> getAllByHeroId(Long heroId) {
         requireHero(heroId);
@@ -47,7 +49,9 @@ public class HeroExpertOpinionAdminService {
                 .build();
 
         applyUpsert(entity, request);
-        return converter.toAdminResponse(heroExpertOpinionRepository.save(entity));
+        HeroExpertOpinionAdminResponse response = converter.toAdminResponse(heroExpertOpinionRepository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     @Transactional
@@ -61,7 +65,9 @@ public class HeroExpertOpinionAdminService {
         entity.setUpdatedAt(OffsetDateTime.now(clock));
         applyUpsert(entity, request);
 
-        return converter.toAdminResponse(heroExpertOpinionRepository.save(entity));
+        HeroExpertOpinionAdminResponse response = converter.toAdminResponse(heroExpertOpinionRepository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     @Transactional
@@ -72,6 +78,7 @@ public class HeroExpertOpinionAdminService {
                 .orElseThrow(() -> new NotFoundException("Hero expert opinion not found: " + opinionId));
 
         heroExpertOpinionRepository.delete(entity);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     @Transactional

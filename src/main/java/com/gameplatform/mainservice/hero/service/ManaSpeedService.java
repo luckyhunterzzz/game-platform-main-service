@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.converter.ManaSpeedResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.ManaSpeed;
 import com.gameplatform.mainservice.hero.dto.request.ManaSpeedUpsertRequest;
@@ -19,6 +20,7 @@ public class ManaSpeedService {
     private final ManaSpeedRepository manaSpeedRepository;
     private final DictionaryCatalogSupport catalogSupport;
     private final ManaSpeedResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<ManaSpeedResponse> getAll() {
         return converter.toResponseList(catalogSupport.sortLocalized(manaSpeedRepository.findAll(), ManaSpeed::getNameJson));
@@ -41,7 +43,9 @@ public class ManaSpeedService {
                 .descriptionJson(request.descriptionJson())
                 .build();
 
-        return converter.toResponse(manaSpeedRepository.save(entity));
+        ManaSpeedResponse response = converter.toResponse(manaSpeedRepository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public ManaSpeedResponse update(Long id, ManaSpeedUpsertRequest request) {
@@ -50,7 +54,9 @@ public class ManaSpeedService {
         entity.setNameJson(request.nameJson());
         entity.setDescriptionJson(request.descriptionJson());
 
-        return converter.toResponse(manaSpeedRepository.save(entity));
+        ManaSpeedResponse response = converter.toResponse(manaSpeedRepository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -58,6 +64,7 @@ public class ManaSpeedService {
             throw new NotFoundException("ManaSpeed not found: " + id);
         }
         manaSpeedRepository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     private ManaSpeed getEntityById(Long id) {

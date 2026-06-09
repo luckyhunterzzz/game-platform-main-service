@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.CacheNames;
 import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.response.HeroCoachForecastResponse;
@@ -8,6 +9,7 @@ import com.gameplatform.mainservice.hero.dto.response.HeroCoachPageResponse;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class HeroCoachPublicService {
     private final HeroEventForecastSupport forecastSupport;
     private final HeroPublicVisibilityService heroPublicVisibilityService;
 
+    @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_COACH_PAGE)
     public HeroCoachPageResponse getAvailableHeroes(int page, int size, HeroLanguage language) {
         int normalizedPage = forecastSupport.normalizePage(page);
         int normalizedSize = forecastSupport.normalizePageSize(size, 24);
@@ -54,6 +57,7 @@ public class HeroCoachPublicService {
         );
     }
 
+    @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_COACH_FORECAST)
     public HeroCoachForecastResponse getForecast(LocalDate targetDate, LocalDate previousEventDate, HeroLanguage language) {
         LocalDate suggestedPreviousEventDate = forecastSupport.resolveSuggestedPreviousEventDate(HERO_COACH_TITLE_FRAGMENT);
         LocalDate effectivePreviousEventDate = forecastSupport.resolveEffectivePreviousEventDate(
