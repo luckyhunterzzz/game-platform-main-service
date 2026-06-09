@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.controller;
 import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.RarityResponse;
-import com.gameplatform.mainservice.hero.facade.RarityFacade;
+import com.gameplatform.mainservice.hero.service.RarityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RarityAdminController {
 
-    private final RarityFacade facade;
+    private final RarityService service;
 
     @GetMapping
     public ResponseEntity<List<RarityResponse>> getAll() {
-        return ResponseEntity.ok(facade.getAll());
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/catalog")
@@ -31,17 +31,17 @@ public class RarityAdminController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search
     ) {
-        return ResponseEntity.ok(facade.getPage(page, size, search));
+        return ResponseEntity.ok(service.getPage(page, size, search));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RarityResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(facade.getById(id));
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
     public ResponseEntity<RarityResponse> create(@RequestBody @Valid RarityUpsertRequest request) {
-        RarityResponse response = facade.create(request);
+        RarityResponse response = service.create(request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -57,12 +57,12 @@ public class RarityAdminController {
             @PathVariable Long id,
             @RequestBody @Valid RarityUpsertRequest request
     ) {
-        return ResponseEntity.ok(facade.update(id, request));
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        facade.delete(id);
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

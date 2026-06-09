@@ -1,14 +1,17 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
+import com.gameplatform.mainservice.hero.converter.RarityResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Rarity;
 import com.gameplatform.mainservice.hero.dto.request.RarityUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.RarityResponse;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -20,21 +23,25 @@ public class RarityService {
     private final DictionaryCatalogSupport catalogSupport;
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
+    private final RarityResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
-    public List<Rarity> getAll() {
-        return catalogSupport.sortLocalized(rarityRepository.findAll(), Rarity::getNameJson);
+    public List<RarityResponse> getAll() {
+        return converter.toResponseList(catalogSupport.sortLocalized(rarityRepository.findAll(), Rarity::getNameJson));
     }
 
-    public Page<Rarity> getPage(int page, int size, String search) {
-        return catalogSupport.pageLocalized(rarityRepository.findAll(), search, page, size, Rarity::getNameJson);
+    public CatalogPageResponse<RarityResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(
+                catalogSupport.pageLocalized(rarityRepository.findAll(), search, page, size, Rarity::getNameJson)
+                        .map(converter::toResponse)
+        );
     }
 
-    public Rarity getById(Long id) {
-        return rarityRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Rarity not found: " + id));
+    public RarityResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
     }
 
-    public Rarity create(RarityUpsertRequest request) {
+    public RarityResponse create(RarityUpsertRequest request) {
         String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
         String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
         heroValidator.validateDuplicateDictionaryName(
@@ -50,11 +57,13 @@ public class RarityService {
                 .imageObjectKey(request.imageObjectKey())
                 .build();
 
-        return rarityRepository.save(rarity);
+        RarityResponse response = converter.toResponse(rarityRepository.save(rarity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
-    public Rarity update(Long id, RarityUpsertRequest request) {
-        Rarity rarity = getById(id);
+    public RarityResponse update(Long id, RarityUpsertRequest request) {
+        Rarity rarity = getEntityById(id);
         String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
         String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
         heroValidator.validateDuplicateDictionaryName(
@@ -67,7 +76,9 @@ public class RarityService {
         rarity.setImageBucket(request.imageBucket());
         rarity.setImageObjectKey(request.imageObjectKey());
 
-        return rarityRepository.save(rarity);
+        RarityResponse response = converter.toResponse(rarityRepository.save(rarity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -76,6 +87,12 @@ public class RarityService {
         }
 
         rarityRepository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
+    }
+
+    private Rarity getEntityById(Long id) {
+        return rarityRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Rarity not found: " + id));
     }
 }
 

@@ -1,9 +1,9 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.ElementUpsertRequest;
-import com.gameplatform.mainservice.hero.dto.response.ElementResponse;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
-import com.gameplatform.mainservice.hero.facade.ElementFacade;
+import com.gameplatform.mainservice.hero.dto.response.ElementResponse;
+import com.gameplatform.mainservice.hero.service.ElementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ElementAdminController {
 
-    private final ElementFacade facade;
+    private final ElementService service;
 
     @GetMapping
     public ResponseEntity<List<ElementResponse>> getAll() {
-        return ResponseEntity.ok(facade.getAll());
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/catalog")
@@ -31,17 +31,17 @@ public class ElementAdminController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search
     ) {
-        return ResponseEntity.ok(facade.getPage(page, size, search));
+        return ResponseEntity.ok(service.getPage(page, size, search));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ElementResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(facade.getById(id));
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
     public ResponseEntity<ElementResponse> create(@RequestBody @Valid ElementUpsertRequest request) {
-        ElementResponse response = facade.create(request);
+        ElementResponse response = service.create(request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -57,12 +57,12 @@ public class ElementAdminController {
             @PathVariable Long id,
             @RequestBody @Valid ElementUpsertRequest request
     ) {
-        return ResponseEntity.ok(facade.update(id, request));
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        facade.delete(id);
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

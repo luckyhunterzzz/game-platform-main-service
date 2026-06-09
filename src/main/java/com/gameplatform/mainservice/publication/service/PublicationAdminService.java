@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.publication.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.publication.domain.entity.Publication;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationStatus;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
@@ -43,6 +44,7 @@ public class PublicationAdminService {
     private final PublicationValidator publicationValidator;
     private final CurrentUserProvider currentUserProvider;
     private final Clock clock;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     @Transactional(readOnly = true)
     public PublicationAdminFeedResponse getFeedByStatus(PublicationStatus status,
@@ -93,6 +95,7 @@ public class PublicationAdminService {
         applyUpsert(publication, request, now, authorId);
 
         Publication savedPublication = publicationRepository.save(publication);
+        publicCacheEvictionService.evictPublicationCaches();
 
         return publicationResponseConverter.toAdminDetailsResponse(savedPublication);
     }
@@ -110,6 +113,7 @@ public class PublicationAdminService {
         applyUpsert(publication, request, now, authorId);
 
         Publication savedPublication = publicationRepository.save(publication);
+        publicCacheEvictionService.evictPublicationCaches();
         return publicationResponseConverter.toAdminDetailsResponse(savedPublication);
     }
 
@@ -130,6 +134,10 @@ public class PublicationAdminService {
             }
         }
 
+        if (!publicationsToPublish.isEmpty()) {
+            publicCacheEvictionService.evictPublicationCaches();
+        }
+
         return publicationsToPublish.size();
     }
 
@@ -144,6 +152,10 @@ public class PublicationAdminService {
             publication.setPinnedAt(null);
             publication.setUpdatedAt(now);
             publication.setUpdatedBy(SYSTEM_ACTOR_ID);
+        }
+
+        if (!publicationsToUnpin.isEmpty()) {
+            publicCacheEvictionService.evictPublicationCaches();
         }
 
         return publicationsToUnpin.size();

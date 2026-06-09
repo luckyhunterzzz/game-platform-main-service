@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.publication.controller;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationLanguage;
 import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.response.PublicationFeedResponse;
-import com.gameplatform.mainservice.publication.facade.PublicationPublicFacade;
+import com.gameplatform.mainservice.publication.service.PublicationPublicService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/public/publications")
 public class PublicPublicationsController {
 
-    private final PublicationPublicFacade publicationPublicFacade;
+    private final PublicationPublicService publicationPublicService;
 
     @GetMapping
     public ResponseEntity<PublicationFeedResponse> getLatest(
@@ -29,7 +29,7 @@ public class PublicPublicationsController {
             @RequestParam(defaultValue = "RU") PublicationLanguage language,
             @RequestParam(required = false) PublicationType type
     ) {
-        return ResponseEntity.ok(publicationPublicFacade.getLatestPublicFeed(page, size, language, type));
+        return ResponseEntity.ok(publicationPublicService.getLatestPublicFeed(page, size, language, type));
     }
 
     @GetMapping("/alliances")
@@ -38,6 +38,6 @@ public class PublicPublicationsController {
             @RequestParam(required = false) @Min(1) @Max(100) Integer size,
             @RequestParam(defaultValue = "RU") PublicationLanguage language
     ) {
-        return ResponseEntity.ok(publicationPublicFacade.getAllianceFeed(page, size, language));
+        return ResponseEntity.ok(publicationPublicService.getAllianceFeed(page, size, language));
     }
 }

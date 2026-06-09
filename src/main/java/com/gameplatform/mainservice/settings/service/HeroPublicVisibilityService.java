@@ -1,5 +1,6 @@
-package com.gameplatform.mainservice.hero.service;
+package com.gameplatform.mainservice.settings.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.domain.enums.HeroPublicVisibilityMode;
 import com.gameplatform.mainservice.hero.dto.request.HeroPublicVisibilityUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroPublicVisibilityResponse;
@@ -20,6 +21,7 @@ public class HeroPublicVisibilityService {
     private static final String HERO_PUBLIC_VISIBILITY_KEY = "hero_public_visibility";
 
     private final AppSettingRepository appSettingRepository;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public HeroPublicVisibilityResponse getVisibility() {
         return toResponse(getOrCreateSetting());
@@ -34,7 +36,9 @@ public class HeroPublicVisibilityService {
         setting.setUpdatedBy(request.updatedBy().trim());
         setting.setUpdatedByEmail(trimToNull(request.updatedByEmail()));
 
-        return toResponse(appSettingRepository.save(setting));
+        HeroPublicVisibilityResponse response = toResponse(appSettingRepository.save(setting));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public boolean isDraftVisibleInPublicCatalog() {

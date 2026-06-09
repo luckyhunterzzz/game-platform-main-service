@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.controller;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.response.HeroCoachForecastResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroCoachPageResponse;
-import com.gameplatform.mainservice.hero.facade.HeroCoachPublicFacade;
+import com.gameplatform.mainservice.hero.service.HeroCoachPublicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +18,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class HeroCoachPublicController {
 
-    private final HeroCoachPublicFacade heroCoachPublicFacade;
+    private final HeroCoachPublicService heroCoachPublicService;
 
     @GetMapping
     public ResponseEntity<HeroCoachPageResponse> getAvailableHeroes(
@@ -26,7 +26,7 @@ public class HeroCoachPublicController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
-        return ResponseEntity.ok(heroCoachPublicFacade.getAvailableHeroes(page, size, language));
+        return ResponseEntity.ok(heroCoachPublicService.getAvailableHeroes(page, size, language));
     }
 
     @GetMapping("/forecast")
@@ -35,6 +35,6 @@ public class HeroCoachPublicController {
             @RequestParam(required = false) LocalDate previousEventDate,
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
-        return ResponseEntity.ok(heroCoachPublicFacade.getForecast(targetDate, previousEventDate, language));
+        return ResponseEntity.ok(heroCoachPublicService.getForecast(targetDate, previousEventDate, language));
     }
 }

@@ -1,8 +1,16 @@
 spring:
+  cache:
+    type: redis
   datasource:
     url: jdbc:postgresql://postgres:5432/main_db
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      repositories:
+        enabled: false
 
   jpa:
     hibernate:
@@ -19,10 +27,9 @@ spring:
 
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    enabled: false
   swagger-ui:
-    path: /swagger-ui.html
-    operations-sorter: alpha
+    enabled: false
 
 app:
   minio:

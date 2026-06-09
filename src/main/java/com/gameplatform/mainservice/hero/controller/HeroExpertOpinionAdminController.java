@@ -2,7 +2,7 @@ package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroExpertOpinionUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroExpertOpinionAdminResponse;
-import com.gameplatform.mainservice.hero.facade.HeroExpertOpinionAdminFacade;
+import com.gameplatform.mainservice.hero.service.HeroExpertOpinionAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +17,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HeroExpertOpinionAdminController {
 
-    private final HeroExpertOpinionAdminFacade facade;
+    private final HeroExpertOpinionAdminService service;
 
     @GetMapping
     public ResponseEntity<List<HeroExpertOpinionAdminResponse>> getAll(@PathVariable Long heroId) {
-        return ResponseEntity.ok(facade.getAllByHeroId(heroId));
+        return ResponseEntity.ok(service.getAllByHeroId(heroId));
     }
 
     @PostMapping
@@ -29,7 +29,7 @@ public class HeroExpertOpinionAdminController {
             @PathVariable Long heroId,
             @RequestBody @Valid HeroExpertOpinionUpsertRequest request
     ) {
-        HeroExpertOpinionAdminResponse response = facade.create(heroId, request);
+        HeroExpertOpinionAdminResponse response = service.create(heroId, request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -46,7 +46,7 @@ public class HeroExpertOpinionAdminController {
             @PathVariable Long opinionId,
             @RequestBody @Valid HeroExpertOpinionUpsertRequest request
     ) {
-        return ResponseEntity.ok(facade.update(heroId, opinionId, request));
+        return ResponseEntity.ok(service.update(heroId, opinionId, request));
     }
 
     @DeleteMapping("/{opinionId}")
@@ -54,7 +54,7 @@ public class HeroExpertOpinionAdminController {
             @PathVariable Long heroId,
             @PathVariable Long opinionId
     ) {
-        facade.delete(heroId, opinionId);
+        service.delete(heroId, opinionId);
         return ResponseEntity.noContent().build();
     }
 }
