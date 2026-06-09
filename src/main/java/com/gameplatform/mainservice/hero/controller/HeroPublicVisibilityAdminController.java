@@ -2,7 +2,7 @@ package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroPublicVisibilityUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroPublicVisibilityResponse;
-import com.gameplatform.mainservice.hero.service.HeroPublicVisibilityService;
+import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

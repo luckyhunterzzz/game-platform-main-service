@@ -6,6 +6,7 @@ import com.gameplatform.mainservice.hero.dto.response.HeroCoachForecastResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroCoachHeroResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroCoachPageResponse;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
+import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,16 +27,19 @@ public class HeroCoachPublicService {
     private final HeroPublicResponseConverter heroPublicResponseConverter;
     private final Clock clock;
     private final HeroEventForecastSupport forecastSupport;
+    private final HeroPublicVisibilityService heroPublicVisibilityService;
 
     public HeroCoachPageResponse getAvailableHeroes(int page, int size, HeroLanguage language) {
         int normalizedPage = forecastSupport.normalizePage(page);
         int normalizedSize = forecastSupport.normalizePageSize(size, 24);
         LocalDate today = LocalDate.now(clock);
         LocalDate eligibleReleaseDate = today.minusDays(HERO_COACH_DAYS);
+        boolean includeDrafts = heroPublicVisibilityService.isDraftVisibleInPublicCatalog();
 
         Page<HeroCoachHeroResponse> heroPage = heroRepository.findReadyHeroCoachHeroes(
                 language.getJsonKey(),
                 eligibleReleaseDate,
+                includeDrafts,
                 PageRequest.of(normalizedPage, normalizedSize)
         ).map(heroPublicResponseConverter::toHeroCoachResponse);
 
@@ -57,6 +61,7 @@ public class HeroCoachPublicService {
                 suggestedPreviousEventDate
         );
         forecastSupport.validateForecastDates(targetDate, effectivePreviousEventDate);
+        boolean includeDrafts = heroPublicVisibilityService.isDraftVisibleInPublicCatalog();
         LocalDate previousComparisonDate = forecastSupport.resolvePreviousComparisonDate(
                 targetDate,
                 effectivePreviousEventDate
@@ -65,7 +70,8 @@ public class HeroCoachPublicService {
         List<HeroCoachHeroResponse> newlyAvailableHeroes = heroRepository.findReadyHeroCoachHeroesReleasedBetween(
                         language.getJsonKey(),
                         previousComparisonDate.minusDays(HERO_COACH_DAYS),
-                        targetDate.minusDays(HERO_COACH_DAYS)
+                        targetDate.minusDays(HERO_COACH_DAYS),
+                        includeDrafts
                 ).stream()
                 .map(heroPublicResponseConverter::toHeroCoachResponse)
                 .toList();

@@ -14,6 +14,7 @@ import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProject
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
+import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +59,7 @@ public class HeroPublicService {
             boolean includeDrafts
     ) {
         int normalizedPage = Math.max(page, 0);
-        int normalizedSize = Math.min(Math.max(size, 1), 50);
+        int normalizedSize = clamp(size, 1, 50);
 
         PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize);
 
@@ -101,7 +103,7 @@ public class HeroPublicService {
     public List<HeroLookupResponse> getNames(HeroLanguage language) {
         String locale = language.getJsonKey();
         return converter.toLookupResponses(
-                heroRepository.findAllReadyBaseHeroNames(locale)
+                heroRepository.findAllReadyBaseHeroNames(locale, canIncludeDrafts(true))
         );
     }
 
@@ -125,54 +127,40 @@ public class HeroPublicService {
         String locale = language.getJsonKey();
 
         return new HeroCatalogFiltersResponse(
-                elementRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(
-                                item.getId(),
-                                localized(item.getNameJson(), locale),
-                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
-                        ))
-                        .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
-                        .toList(),
-                rarityRepository.findAll().stream()
-                        .map(item -> new HeroCatalogRarityFilterOptionResponse(
-                                item.getId(),
-                                localized(item.getNameJson(), locale),
-                                item.getStars(),
-                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
-                        ))
-                        .sorted((left, right) -> {
-                            int starsCompare = Integer.compare(left.stars(), right.stars());
-                            return starsCompare != 0 ? starsCompare : left.name().compareToIgnoreCase(right.name());
-                        })
-                        .toList(),
-                heroClassRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(
-                                item.getId(),
-                                localized(item.getNameJson(), locale),
-                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
-                        ))
-                        .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
-                        .toList(),
-                familyRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(
-                                item.getId(),
-                                localized(item.getNameJson(), locale),
-                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
-                        ))
-                        .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
-                        .toList(),
-                manaSpeedRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(item.getId(), localized(item.getNameJson(), locale), null))
-                        .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
-                        .toList(),
-                alphaTalentRepository.findAll().stream()
-                        .map(item -> new HeroCatalogFilterOptionResponse(
-                                item.getId(),
-                                localized(item.getNameJson(), locale),
-                                mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
-                        ))
-                        .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
-                        .toList()
+                buildFilterOptions(
+                        elementRepository.findAll(),
+                        locale,
+                        Element::getId,
+                        Element::getNameJson,
+                        Element::getImageBucket,
+                        Element::getImageObjectKey
+                ),
+                buildRarityFilterOptions(locale),
+                buildFilterOptions(
+                        heroClassRepository.findAll(),
+                        locale,
+                        HeroClass::getId,
+                        HeroClass::getNameJson,
+                        HeroClass::getImageBucket,
+                        HeroClass::getImageObjectKey
+                ),
+                buildFilterOptions(
+                        familyRepository.findAll(),
+                        locale,
+                        Family::getId,
+                        Family::getNameJson,
+                        Family::getImageBucket,
+                        Family::getImageObjectKey
+                ),
+                buildManaSpeedFilterOptions(locale),
+                buildFilterOptions(
+                        alphaTalentRepository.findAll(),
+                        locale,
+                        AlphaTalent::getId,
+                        AlphaTalent::getNameJson,
+                        AlphaTalent::getImageBucket,
+                        AlphaTalent::getImageObjectKey
+                )
         );
     }
 
@@ -197,14 +185,18 @@ public class HeroPublicService {
         }
 
         if ("ru".equalsIgnoreCase(locale)) {
-            return value.ru() != null && !value.ru().isBlank()
-                    ? value.ru()
-                    : value.en() == null ? "" : value.en();
+            String russianValue = value.ru();
+            String englishValue = emptyIfNull(value.en());
+            return russianValue != null && !russianValue.isBlank()
+                    ? russianValue
+                    : englishValue;
         }
 
-        return value.en() != null && !value.en().isBlank()
-                ? value.en()
-                : value.ru() == null ? "" : value.ru();
+        String englishValue = value.en();
+        String russianValue = emptyIfNull(value.ru());
+        return englishValue != null && !englishValue.isBlank()
+                ? englishValue
+                : russianValue;
     }
 
     public List<HeroLookupResponse> search(String query, int limit, HeroLanguage language) {
@@ -217,12 +209,13 @@ public class HeroPublicService {
             return List.of();
         }
 
-        int normalizedLimit = Math.min(Math.max(limit, 1), 15);
+        int normalizedLimit = clamp(limit, 1, 15);
 
         List<HeroSearchProjection> results = heroRepository.searchReadyBaseHeroesByName(
                 normalizedQuery,
                 language.getJsonKey(),
-                normalizedLimit
+                normalizedLimit,
+                canIncludeDrafts(true)
         );
 
         return converter.toLookupResponses(results);
@@ -297,11 +290,6 @@ public class HeroPublicService {
         );
     }
 
-    private HeroDetailsProjection findCurrentBaseHero(String slug, HeroLanguage language) {
-        return heroRepository.findReadyBaseHeroDetailsBySlug(slug, language.getJsonKey())
-                .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
-    }
-
     private HeroDetailsProjection findCurrentHero(String slug, HeroLanguage language, boolean includeDrafts) {
         return heroRepository.findReadyHeroDetailsBySlug(slug, language.getJsonKey(), canIncludeDrafts(includeDrafts))
                 .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
@@ -337,11 +325,19 @@ public class HeroPublicService {
                 ? hero.getBaseHeroId()
                 : hero.getId();
 
-        return variantsRootId == null
-                ? List.of()
-                : canIncludeDrafts(includeDrafts)
-                ? heroRepository.findAllByBaseHeroIdAndStatusIn(variantsRootId, List.of(HeroStatus.READY, HeroStatus.DRAFT))
-                : heroRepository.findAllByBaseHeroIdAndStatus(variantsRootId, HeroStatus.READY);
+        if (variantsRootId == null) {
+            return List.of();
+        }
+
+        boolean includeDraftsAuthorized = canIncludeDrafts(includeDrafts);
+        if (includeDraftsAuthorized) {
+            return heroRepository.findAllByBaseHeroIdAndStatusIn(
+                    variantsRootId,
+                    List.of(HeroStatus.READY, HeroStatus.DRAFT)
+            );
+        }
+
+        return heroRepository.findAllByBaseHeroIdAndStatus(variantsRootId, HeroStatus.READY);
     }
 
     private List<HeroVariantSummaryResponse> buildVariantCostumes(Long baseHeroId, HeroLanguage language, boolean includeDrafts) {
@@ -371,6 +367,65 @@ public class HeroPublicService {
 
         return authentication.getAuthorities().stream()
                 .anyMatch(authority -> "ROLE_superadmin".equals(authority.getAuthority()));
+    }
+
+    private <T> List<HeroCatalogFilterOptionResponse> buildFilterOptions(
+            List<T> items,
+            String locale,
+            Function<T, Long> idExtractor,
+            Function<T, LocalizedTextJson> nameExtractor,
+            Function<T, String> imageBucketExtractor,
+            Function<T, String> imageObjectKeyExtractor
+    ) {
+        return items.stream()
+                .map(item -> new HeroCatalogFilterOptionResponse(
+                        idExtractor.apply(item),
+                        localized(nameExtractor.apply(item), locale),
+                        mediaUrlResolver.resolveUrl(
+                                imageBucketExtractor.apply(item),
+                                imageObjectKeyExtractor.apply(item)
+                        )
+                ))
+                .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
+                .toList();
+    }
+
+    private List<HeroCatalogRarityFilterOptionResponse> buildRarityFilterOptions(String locale) {
+        return rarityRepository.findAll().stream()
+                .map(item -> new HeroCatalogRarityFilterOptionResponse(
+                        item.getId(),
+                        localized(item.getNameJson(), locale),
+                        item.getStars(),
+                        mediaUrlResolver.resolveUrl(item.getImageBucket(), item.getImageObjectKey())
+                ))
+                .sorted((left, right) -> {
+                    int starsCompare = Integer.compare(left.stars(), right.stars());
+                    return starsCompare != 0 ? starsCompare : left.name().compareToIgnoreCase(right.name());
+                })
+                .toList();
+    }
+
+    private List<HeroCatalogFilterOptionResponse> buildManaSpeedFilterOptions(String locale) {
+        return manaSpeedRepository.findAll().stream()
+                .map(item -> new HeroCatalogFilterOptionResponse(
+                        item.getId(),
+                        localized(item.getNameJson(), locale),
+                        null
+                ))
+                .sorted((left, right) -> left.name().compareToIgnoreCase(right.name()))
+                .toList();
+    }
+
+    private String emptyIfNull(String value) {
+        return value == null ? "" : value;
+    }
+
+    private int clamp(int value, int min, int max) {
+        if (value < min) {
+            return min;
+        }
+
+        return Math.min(value, max);
     }
 }
 

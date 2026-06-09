@@ -255,7 +255,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                     JOIN mana_speeds ms ON ms.id = h.mana_speed_id
                     LEFT JOIN families f ON f.id = h.family_id
                     LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
-                    WHERE h.status = 'READY'
+                    WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
                       AND h.is_costume = false
                       AND r.stars = 5
                       AND h.release_date IS NOT NULL
@@ -268,7 +268,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                     SELECT COUNT(*)
                     FROM heroes h
                     JOIN rarities r ON r.id = h.rarity_id
-                    WHERE h.status = 'READY'
+                    WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
                       AND h.is_costume = false
                       AND r.stars = 5
                       AND h.release_date IS NOT NULL
@@ -279,6 +279,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
     Page<HeroCoachHeroProjection> findReadyHeroCoachHeroes(
             @Param("locale") String locale,
             @Param("eligibleReleaseDate") java.time.LocalDate eligibleReleaseDate,
+            @Param("includeDrafts") boolean includeDrafts,
             Pageable pageable
     );
 
@@ -310,7 +311,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             JOIN mana_speeds ms ON ms.id = h.mana_speed_id
             LEFT JOIN families f ON f.id = h.family_id
             LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
-            WHERE h.status = 'READY'
+            WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
               AND h.is_costume = false
               AND r.stars = 5
               AND h.release_date IS NOT NULL
@@ -323,7 +324,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
     List<HeroCoachHeroProjection> findReadyHeroCoachHeroesReleasedBetween(
             @Param("locale") String locale,
             @Param("previousEligibleReleaseDate") java.time.LocalDate previousEligibleReleaseDate,
-            @Param("targetEligibleReleaseDate") java.time.LocalDate targetEligibleReleaseDate
+            @Param("targetEligibleReleaseDate") java.time.LocalDate targetEligibleReleaseDate,
+            @Param("includeDrafts") boolean includeDrafts
     );
 
     @Query(
@@ -355,7 +357,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                     JOIN mana_speeds ms ON ms.id = h.mana_speed_id
                     LEFT JOIN families f ON f.id = h.family_id
                     LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
-                    WHERE h.status = 'READY'
+                    WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
                       AND h.is_costume = true
                       AND h.release_date IS NOT NULL
                       AND h.release_date <= :eligibleReleaseDate
@@ -366,7 +368,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             countQuery = """
                     SELECT COUNT(*)
                     FROM heroes h
-                    WHERE h.status = 'READY'
+                    WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
                       AND h.is_costume = true
                       AND h.release_date IS NOT NULL
                       AND h.release_date <= :eligibleReleaseDate
@@ -376,6 +378,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
     Page<OutfitterHeroProjection> findReadyOutfitterHeroes(
             @Param("locale") String locale,
             @Param("eligibleReleaseDate") java.time.LocalDate eligibleReleaseDate,
+            @Param("includeDrafts") boolean includeDrafts,
             Pageable pageable
     );
 
@@ -407,7 +410,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             JOIN mana_speeds ms ON ms.id = h.mana_speed_id
             LEFT JOIN families f ON f.id = h.family_id
             LEFT JOIN alpha_talents at ON at.id = h.alpha_talent_id
-            WHERE h.status = 'READY'
+            WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
               AND h.is_costume = true
               AND h.release_date IS NOT NULL
               AND h.release_date > :previousEligibleReleaseDate
@@ -419,7 +422,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
     List<OutfitterHeroProjection> findReadyOutfitterHeroesReleasedBetween(
             @Param("locale") String locale,
             @Param("previousEligibleReleaseDate") java.time.LocalDate previousEligibleReleaseDate,
-            @Param("targetEligibleReleaseDate") java.time.LocalDate targetEligibleReleaseDate
+            @Param("targetEligibleReleaseDate") java.time.LocalDate targetEligibleReleaseDate,
+            @Param("includeDrafts") boolean includeDrafts
     );
 
     @Query(value = """
@@ -428,11 +432,14 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.slug AS slug,
                 h.name_json ->> :locale AS name
             FROM heroes h
-            WHERE h.status = 'READY'
+            WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
               AND h.is_costume = false
             ORDER BY LOWER(h.name_json ->> :locale) ASC, h.id ASC
             """, nativeQuery = true)
-    List<HeroSearchProjection> findAllReadyBaseHeroNames(@Param("locale") String locale);
+    List<HeroSearchProjection> findAllReadyBaseHeroNames(
+            @Param("locale") String locale,
+            @Param("includeDrafts") boolean includeDrafts
+    );
 
     @Query(value = """
         SELECT
@@ -440,7 +447,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             h.slug AS slug,
             COALESCE(h.name_json ->> :locale, h.slug) AS name
         FROM heroes h
-        WHERE h.status = 'READY'
+        WHERE (h.status = 'READY' OR (:includeDrafts = true AND h.status = 'DRAFT'))
           AND h.is_costume = false
           AND LOWER(COALESCE(h.name_json ->> :locale, h.slug)) % LOWER(:query)
         ORDER BY similarity(
@@ -454,7 +461,8 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
     List<HeroSearchProjection> searchReadyBaseHeroesByName(
             @Param("query") String query,
             @Param("locale") String locale,
-            @Param("limit") int limit
+            @Param("limit") int limit,
+            @Param("includeDrafts") boolean includeDrafts
     );
 
     @Query(value = """

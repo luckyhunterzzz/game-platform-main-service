@@ -1,4 +1,4 @@
-package com.gameplatform.mainservice.hero.service;
+package com.gameplatform.mainservice.settings.service;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroPublicVisibilityMode;
 import com.gameplatform.mainservice.hero.dto.request.HeroPublicVisibilityUpdateRequest;
