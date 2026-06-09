@@ -12,13 +12,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.OffsetDateTime;
@@ -125,6 +129,17 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request
+    ) {
+        String message = ex.getParameterName() + ": is required";
+
+        log.warn("Missing request parameter: {} at {}", message, request.getRequestURI());
+        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException ex,
@@ -132,6 +147,28 @@ public class GlobalExceptionHandler {
     ) {
         log.warn("Malformed request body at {}: {}", request.getRequestURI(), ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, "Malformed request body", request);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
+            HttpMediaTypeNotSupportedException ex,
+            HttpServletRequest request
+    ) {
+        MediaType contentType = ex.getContentType();
+        String contentTypeValue = contentType == null ? "unknown" : contentType.toString();
+        String message = "Unsupported content type: " + contentTypeValue;
+
+        log.warn("Unsupported content type at {}: {}", request.getRequestURI(), contentTypeValue);
+        return buildResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, message, request);
+    }
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public ResponseEntity<Void> handleAsyncRequestNotUsableException(
+            AsyncRequestNotUsableException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Client disconnected before response was fully written at {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(Exception.class)

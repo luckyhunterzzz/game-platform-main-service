@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import jakarta.validation.Valid;
-import com.gameplatform.mainservice.hero.facade.HeroPublicFacade;
+import com.gameplatform.mainservice.hero.service.HeroPublicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,13 +17,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HeroPublicController {
 
-    private final HeroPublicFacade heroPublicFacade;
+    private final HeroPublicService heroPublicService;
 
     @GetMapping("/names")
     public ResponseEntity<List<HeroLookupResponse>> getNames(
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
-        return ResponseEntity.ok(heroPublicFacade.getNames(language));
+        return ResponseEntity.ok(heroPublicService.getNames(language));
     }
 
     @PostMapping("/batch")
@@ -32,7 +32,7 @@ public class HeroPublicController {
             @RequestParam(defaultValue = "false") boolean includeDrafts,
             @RequestBody @Valid HeroBatchLookupRequest request
     ) {
-        return ResponseEntity.ok(heroPublicFacade.getHeroesBatch(language, includeDrafts, request));
+        return ResponseEntity.ok(heroPublicService.getHeroesBatch(language, includeDrafts, request));
     }
 
     @GetMapping("/search")
@@ -41,14 +41,14 @@ public class HeroPublicController {
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
-        return ResponseEntity.ok(heroPublicFacade.search(query, limit, language));
+        return ResponseEntity.ok(heroPublicService.search(query, limit, language));
     }
 
     @GetMapping("/filters")
     public ResponseEntity<HeroCatalogFiltersResponse> getFilters(
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
-        return ResponseEntity.ok(heroPublicFacade.getFilters(language));
+        return ResponseEntity.ok(heroPublicService.getFilters(language));
     }
 
     @GetMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}")
@@ -56,7 +56,7 @@ public class HeroPublicController {
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language,
             @RequestParam(defaultValue = "false") boolean includeDrafts ) {
-        return ResponseEntity.ok(heroPublicFacade.getDetails(slug, language, includeDrafts));
+        return ResponseEntity.ok(heroPublicService.getDetails(slug, language, includeDrafts));
     }
 
     @PostMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}/stats/calculate")
@@ -66,7 +66,7 @@ public class HeroPublicController {
             @RequestParam(defaultValue = "false") boolean includeDrafts,
             @RequestBody @Valid HeroStatCalculationRequest request
     ) {
-        return ResponseEntity.ok(heroPublicFacade.calculateStats(slug, language, includeDrafts, request));
+        return ResponseEntity.ok(heroPublicService.calculateStats(slug, language, includeDrafts, request));
     }
 
     @GetMapping
@@ -83,7 +83,7 @@ public class HeroPublicController {
             @RequestParam(defaultValue = "false") boolean includeDrafts,
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
-        return ResponseEntity.ok(heroPublicFacade.getHeroes(
+        return ResponseEntity.ok(heroPublicService.getHeroes(
                 page,
                 size,
                 language,
@@ -104,6 +104,6 @@ public class HeroPublicController {
             @RequestParam(defaultValue = "RU") HeroLanguage language,
             @RequestParam(defaultValue = "false") boolean includeDrafts
     ) {
-        return ResponseEntity.ok(heroPublicFacade.getVariants(slug, language, includeDrafts));
+        return ResponseEntity.ok(heroPublicService.getVariants(slug, language, includeDrafts));
     }
 }

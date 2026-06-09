@@ -11,18 +11,22 @@ import javax.imageio.ImageWriter;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Objects;
 
 @Component
 public class WebpImageConverter {
 
     private static final float WEBP_COMPRESSION_QUALITY = 0.85f;
+    private static final String WEBP_CONTENT_TYPE = "image/webp";
+    private static final String WEBP_EXTENSION = "webp";
 
     public ConvertedImage convert(byte[] sourceBytes, String contentType) {
-        if ("image/webp".equals(contentType)) {
-            return new ConvertedImage(sourceBytes, contentType, "webp");
+        if (WEBP_CONTENT_TYPE.equals(contentType)) {
+            return new ConvertedImage(sourceBytes, contentType, WEBP_EXTENSION);
         }
 
-        ImageWriter writer = ImageIO.getImageWritersByMIMEType("image/webp").next();
+        ImageWriter writer = ImageIO.getImageWritersByMIMEType(WEBP_CONTENT_TYPE).next();
 
         try (InputStream inputStream = new java.io.ByteArrayInputStream(sourceBytes);
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -42,7 +46,7 @@ public class WebpImageConverter {
             writer.write(null, new IIOImage(sourceImage, null, null), writeParam);
             imageOutputStream.flush();
 
-            return new ConvertedImage(outputStream.toByteArray(), "image/webp", "webp");
+            return new ConvertedImage(outputStream.toByteArray(), WEBP_CONTENT_TYPE, WEBP_EXTENSION);
         } catch (Exception e) {
             throw new MediaStorageException("Failed to convert image to WEBP", e);
         } finally {
@@ -63,12 +67,39 @@ public class WebpImageConverter {
             return "image/jpeg";
         }
         if (normalizedKey.endsWith(".webp")) {
-            return "image/webp";
+            return WEBP_CONTENT_TYPE;
         }
 
         return null;
     }
 
     public record ConvertedImage(byte[] bytes, String contentType, String extension) {
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
+            }
+            if (!(object instanceof ConvertedImage that)) {
+                return false;
+            }
+            return Arrays.equals(bytes, that.bytes)
+                    && Objects.equals(contentType, that.contentType)
+                    && Objects.equals(extension, that.extension);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Arrays.hashCode(bytes);
+            result = 31 * result + Objects.hashCode(contentType);
+            result = 31 * result + Objects.hashCode(extension);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "ConvertedImage[bytes=" + Arrays.toString(bytes)
+                    + ", contentType=" + contentType
+                    + ", extension=" + extension + "]";
+        }
     }
 }

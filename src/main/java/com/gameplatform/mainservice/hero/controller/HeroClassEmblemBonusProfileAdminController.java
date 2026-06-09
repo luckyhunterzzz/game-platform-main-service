@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.controller;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
-import com.gameplatform.mainservice.hero.facade.HeroClassEmblemBonusProfileFacade;
+import com.gameplatform.mainservice.hero.service.HeroClassEmblemBonusProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HeroClassEmblemBonusProfileAdminController {
 
-    private final HeroClassEmblemBonusProfileFacade facade;
+    private final HeroClassEmblemBonusProfileService service;
 
     @GetMapping
     public ResponseEntity<List<HeroClassEmblemBonusProfileResponse>> getAll() {
-        return ResponseEntity.ok(facade.getAll());
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/catalog")
@@ -31,19 +31,19 @@ public class HeroClassEmblemBonusProfileAdminController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search
     ) {
-        return ResponseEntity.ok(facade.getPage(page, size, search));
+        return ResponseEntity.ok(service.getPage(page, size, search));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<HeroClassEmblemBonusProfileResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(facade.getById(id));
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
     public ResponseEntity<HeroClassEmblemBonusProfileResponse> create(
             @RequestBody @Valid HeroClassEmblemBonusProfileUpsertRequest request
     ) {
-        HeroClassEmblemBonusProfileResponse response = facade.create(request);
+        HeroClassEmblemBonusProfileResponse response = service.create(request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -59,12 +59,12 @@ public class HeroClassEmblemBonusProfileAdminController {
             @PathVariable Long id,
             @RequestBody @Valid HeroClassEmblemBonusProfileUpsertRequest request
     ) {
-        return ResponseEntity.ok(facade.update(id, request));
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        facade.delete(id);
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

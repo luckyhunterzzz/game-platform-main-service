@@ -1,14 +1,16 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.hero.converter.AlphaTalentResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.AlphaTalent;
 import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.AlphaTalentResponse;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.repository.AlphaTalentRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -20,55 +22,37 @@ public class AlphaTalentService {
     private final DictionaryCatalogSupport catalogSupport;
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
+    private final AlphaTalentResponseConverter converter;
 
-    public List<AlphaTalent> getAll() {
-        return catalogSupport.sortLocalized(repository.findAll(), AlphaTalent::getNameJson);
+    public List<AlphaTalentResponse> getAll() {
+        return converter.toResponseList(catalogSupport.sortLocalized(repository.findAll(), AlphaTalent::getNameJson));
     }
 
-    public Page<AlphaTalent> getPage(int page, int size, String search) {
-        return catalogSupport.pageLocalized(repository.findAll(), search, page, size, AlphaTalent::getNameJson);
-    }
-
-    public AlphaTalent getById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("AlphaTalent not found: " + id));
-    }
-
-    public AlphaTalent create(AlphaTalentUpsertRequest request) {
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Alpha talent",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, null)
+    public CatalogPageResponse<AlphaTalentResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(
+                catalogSupport.pageLocalized(repository.findAll(), search, page, size, AlphaTalent::getNameJson)
+                        .map(converter::toResponse)
         );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        AlphaTalent entity = AlphaTalent.builder()
-                .nameJson(request.nameJson())
-                .descriptionJson(request.descriptionJson())
-                .imageBucket(request.imageBucket())
-                .imageObjectKey(request.imageObjectKey())
-                .build();
-
-        return repository.save(entity);
     }
 
-    public AlphaTalent update(Long id, AlphaTalentUpsertRequest request) {
-        AlphaTalent entity = getById(id);
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Alpha talent",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+    public AlphaTalentResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
+    }
 
-        entity.setNameJson(request.nameJson());
-        entity.setDescriptionJson(request.descriptionJson());
-        entity.setImageBucket(request.imageBucket());
-        entity.setImageObjectKey(request.imageObjectKey());
+    public AlphaTalentResponse create(AlphaTalentUpsertRequest request) {
+        validateUpsert(request, null);
+        AlphaTalent entity = AlphaTalent.builder().build();
+        applyUpsert(entity, request);
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
+    }
+
+    public AlphaTalentResponse update(Long id, AlphaTalentUpsertRequest request) {
+        AlphaTalent entity = getEntityById(id);
+        validateUpsert(request, id);
+        applyUpsert(entity, request);
+
+        return converter.toResponse(repository.save(entity));
     }
 
     public void delete(Long id) {
@@ -76,6 +60,28 @@ public class AlphaTalentService {
             throw new NotFoundException("AlphaTalent not found: " + id);
         }
         repository.deleteById(id);
+    }
+
+    private AlphaTalent getEntityById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("AlphaTalent not found: " + id));
+    }
+
+    private void validateUpsert(AlphaTalentUpsertRequest request, Long id) {
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson().ru());
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson().en());
+        heroValidator.validateDuplicateDictionaryName(
+                "Alpha talent",
+                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+    }
+
+    private void applyUpsert(AlphaTalent entity, AlphaTalentUpsertRequest request) {
+        entity.setNameJson(request.nameJson());
+        entity.setDescriptionJson(request.descriptionJson());
+        entity.setImageBucket(request.imageBucket());
+        entity.setImageObjectKey(request.imageObjectKey());
     }
 }
 

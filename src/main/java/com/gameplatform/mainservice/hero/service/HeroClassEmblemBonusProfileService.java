@@ -1,20 +1,21 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
-
+import com.gameplatform.mainservice.hero.converter.HeroClassEmblemBonusProfileResponseConverter;
+import com.gameplatform.mainservice.hero.domain.entity.HeroClass;
 import com.gameplatform.mainservice.hero.domain.entity.HeroClassEmblemBonusProfile;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
 import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,57 +25,61 @@ public class HeroClassEmblemBonusProfileService {
     private final HeroClassEmblemBonusProfileRepository repository;
     private final HeroClassRepository heroClassRepository;
     private final DictionaryCatalogSupport catalogSupport;
+    private final HeroClassEmblemBonusProfileResponseConverter converter;
 
-    public List<HeroClassEmblemBonusProfile> getAll() {
-        return sortProfiles(repository.findAll());
+    public List<HeroClassEmblemBonusProfileResponse> getAll() {
+        return converter.toResponseList(sortProfiles(repository.findAll()));
     }
 
-    public Page<HeroClassEmblemBonusProfile> getPage(int page, int size, String search) {
+    public CatalogPageResponse<HeroClassEmblemBonusProfileResponse> getPage(int page, int size, String search) {
         List<HeroClassEmblemBonusProfile> filtered = sortProfiles(repository.findAll()).stream()
                 .filter(profile -> matchesProfile(profile, search))
                 .toList();
 
-        return catalogSupport.toPage(filtered, page, size);
+        return CatalogPageResponse.from(catalogSupport.toPage(filtered, page, size).map(converter::toResponse));
     }
 
-    public HeroClassEmblemBonusProfile getById(Long id) {
+    public HeroClassEmblemBonusProfileResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
+    }
+
+    public HeroClassEmblemBonusProfileResponse create(HeroClassEmblemBonusProfileUpsertRequest request) {
+        validateUniqueProfile(request, null);
+        HeroClassEmblemBonusProfile entity = HeroClassEmblemBonusProfile.builder().build();
+        applyUpsert(entity, request);
+
+        return converter.toResponse(repository.save(entity));
+    }
+
+    public HeroClassEmblemBonusProfileResponse update(Long id, HeroClassEmblemBonusProfileUpsertRequest request) {
+        HeroClassEmblemBonusProfile entity = getEntityById(id);
+        validateUniqueProfile(request, id);
+        applyUpsert(entity, request);
+
+        return converter.toResponse(repository.save(entity));
+    }
+
+    public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new NotFoundException("Profile not found: " + id);
+        }
+        repository.deleteById(id);
+    }
+
+    private HeroClassEmblemBonusProfile getEntityById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Profile not found: " + id));
     }
 
-    public HeroClassEmblemBonusProfile create(HeroClassEmblemBonusProfileUpsertRequest request) {
-
-        repository.findByHeroClassIdAndPathType(request.heroClassId(), request.pathType())
-                .ifPresent(p -> {
-                    throw new BusinessValidationException("Profile already exists for heroClassId + pathType");
-                });
-
-        HeroClassEmblemBonusProfile entity = HeroClassEmblemBonusProfile.builder()
-                .heroClassId(request.heroClassId())
-                .pathType(request.pathType())
-                .attackFlatBonus(request.attackFlatBonus())
-                .armorFlatBonus(request.armorFlatBonus())
-                .hpFlatBonus(request.hpFlatBonus())
-                .attackPercentBonus(request.attackPercentBonus())
-                .armorPercentBonus(request.armorPercentBonus())
-                .hpPercentBonus(request.hpPercentBonus())
-                .masterAttackBonus(request.masterAttackBonus())
-                .masterArmorBonus(request.masterArmorBonus())
-                .masterHpBonus(request.masterHpBonus())
-                .build();
-
-        return repository.save(entity);
-    }
-
-    public HeroClassEmblemBonusProfile update(Long id, HeroClassEmblemBonusProfileUpsertRequest request) {
-        HeroClassEmblemBonusProfile entity = getById(id);
-
+    private void validateUniqueProfile(HeroClassEmblemBonusProfileUpsertRequest request, Long id) {
         repository.findByHeroClassIdAndPathType(request.heroClassId(), request.pathType())
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(p -> {
                     throw new BusinessValidationException("Profile already exists for heroClassId + pathType");
                 });
+    }
 
+    private void applyUpsert(HeroClassEmblemBonusProfile entity, HeroClassEmblemBonusProfileUpsertRequest request) {
         entity.setHeroClassId(request.heroClassId());
         entity.setPathType(request.pathType());
         entity.setAttackFlatBonus(request.attackFlatBonus());
@@ -86,21 +91,12 @@ public class HeroClassEmblemBonusProfileService {
         entity.setMasterAttackBonus(request.masterAttackBonus());
         entity.setMasterArmorBonus(request.masterArmorBonus());
         entity.setMasterHpBonus(request.masterHpBonus());
-
-        return repository.save(entity);
-    }
-
-    public void delete(Long id) {
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("Profile not found: " + id);
-        }
-        repository.deleteById(id);
     }
 
     private List<HeroClassEmblemBonusProfile> sortProfiles(List<HeroClassEmblemBonusProfile> profiles) {
         Map<Long, String> heroClassNames = heroClassRepository.findAll().stream()
                 .collect(Collectors.toMap(
-                        item -> item.getId(),
+                        HeroClass::getId,
                         item -> catalogSupport.sortableLocalized(item.getNameJson())
                 ));
 
@@ -124,5 +120,4 @@ public class HeroClassEmblemBonusProfileService {
                 || catalogSupport.normalize(profile.getPathType().name()).contains(normalizedSearch);
     }
 }
-
 

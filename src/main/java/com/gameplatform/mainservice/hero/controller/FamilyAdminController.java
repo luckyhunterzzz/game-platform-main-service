@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.controller;
 import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.FamilyResponse;
-import com.gameplatform.mainservice.hero.facade.FamilyFacade;
+import com.gameplatform.mainservice.hero.service.FamilyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FamilyAdminController {
 
-    private final FamilyFacade facade;
+    private final FamilyService service;
 
     @GetMapping
     public ResponseEntity<List<FamilyResponse>> getAll() {
-        return ResponseEntity.ok(facade.getAll());
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/catalog")
@@ -31,17 +31,17 @@ public class FamilyAdminController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search
     ) {
-        return ResponseEntity.ok(facade.getPage(page, size, search));
+        return ResponseEntity.ok(service.getPage(page, size, search));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<FamilyResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(facade.getById(id));
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
     public ResponseEntity<FamilyResponse> create(@RequestBody @Valid FamilyUpsertRequest request) {
-        FamilyResponse response = facade.create(request);
+        FamilyResponse response = service.create(request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -57,12 +57,12 @@ public class FamilyAdminController {
             @PathVariable Long id,
             @RequestBody @Valid FamilyUpsertRequest request
     ) {
-        return ResponseEntity.ok(facade.update(id, request));
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        facade.delete(id);
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

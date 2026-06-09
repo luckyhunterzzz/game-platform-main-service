@@ -3,7 +3,7 @@ package com.gameplatform.mainservice.hero.controller;
 import com.gameplatform.mainservice.hero.dto.request.AlphaTalentUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.AlphaTalentResponse;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
-import com.gameplatform.mainservice.hero.facade.AlphaTalentFacade;
+import com.gameplatform.mainservice.hero.service.AlphaTalentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AlphaTalentAdminController {
 
-    private final AlphaTalentFacade facade;
+    private final AlphaTalentService service;
 
     @GetMapping
     public ResponseEntity<List<AlphaTalentResponse>> getAll() {
-        return ResponseEntity.ok(facade.getAll());
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/catalog")
@@ -31,17 +31,17 @@ public class AlphaTalentAdminController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search
     ) {
-        return ResponseEntity.ok(facade.getPage(page, size, search));
+        return ResponseEntity.ok(service.getPage(page, size, search));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AlphaTalentResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(facade.getById(id));
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PostMapping
     public ResponseEntity<AlphaTalentResponse> create(@RequestBody @Valid AlphaTalentUpsertRequest request) {
-        AlphaTalentResponse response = facade.create(request);
+        AlphaTalentResponse response = service.create(request);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -57,12 +57,12 @@ public class AlphaTalentAdminController {
             @PathVariable Long id,
             @RequestBody @Valid AlphaTalentUpsertRequest request
     ) {
-        return ResponseEntity.ok(facade.update(id, request));
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        facade.delete(id);
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

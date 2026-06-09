@@ -1,14 +1,16 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.hero.converter.HeroClassResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.HeroClass;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
 import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -20,61 +22,37 @@ public class HeroClassService {
     private final DictionaryCatalogSupport catalogSupport;
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
+    private final HeroClassResponseConverter converter;
 
-    public List<HeroClass> getAll() {
-        return catalogSupport.sortLocalized(repository.findAll(), HeroClass::getNameJson);
+    public List<HeroClassResponse> getAll() {
+        return converter.toResponseList(catalogSupport.sortLocalized(repository.findAll(), HeroClass::getNameJson));
     }
 
-    public Page<HeroClass> getPage(int page, int size, String search) {
-        return catalogSupport.pageLocalized(repository.findAll(), search, page, size, HeroClass::getNameJson);
-    }
-
-    public HeroClass getById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("HeroClass not found: " + id));
-    }
-
-    public HeroClass create(HeroClassUpsertRequest request) {
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Hero class",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, null)
+    public CatalogPageResponse<HeroClassResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(
+                catalogSupport.pageLocalized(repository.findAll(), search, page, size, HeroClass::getNameJson)
+                        .map(converter::toResponse)
         );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        HeroClass entity = HeroClass.builder()
-                .nameJson(request.nameJson())
-                .baseNameJson(request.baseNameJson())
-                .baseDescriptionJson(request.baseDescriptionJson())
-                .masterNameJson(request.masterNameJson())
-                .masterDescriptionJson(request.masterDescriptionJson())
-                .imageBucket(request.imageBucket())
-                .imageObjectKey(request.imageObjectKey())
-                .build();
-
-        return repository.save(entity);
     }
 
-    public HeroClass update(Long id, HeroClassUpsertRequest request) {
-        HeroClass entity = getById(id);
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Hero class",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+    public HeroClassResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
+    }
 
-        entity.setNameJson(request.nameJson());
-        entity.setBaseNameJson(request.baseNameJson());
-        entity.setBaseDescriptionJson(request.baseDescriptionJson());
-        entity.setMasterNameJson(request.masterNameJson());
-        entity.setMasterDescriptionJson(request.masterDescriptionJson());
-        entity.setImageBucket(request.imageBucket());
-        entity.setImageObjectKey(request.imageObjectKey());
+    public HeroClassResponse create(HeroClassUpsertRequest request) {
+        validateUpsert(request, null);
+        HeroClass entity = HeroClass.builder().build();
+        applyUpsert(entity, request);
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
+    }
+
+    public HeroClassResponse update(Long id, HeroClassUpsertRequest request) {
+        HeroClass entity = getEntityById(id);
+        validateUpsert(request, id);
+        applyUpsert(entity, request);
+
+        return converter.toResponse(repository.save(entity));
     }
 
     public void delete(Long id) {
@@ -82,6 +60,31 @@ public class HeroClassService {
             throw new NotFoundException("HeroClass not found: " + id);
         }
         repository.deleteById(id);
+    }
+
+    private HeroClass getEntityById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("HeroClass not found: " + id));
+    }
+
+    private void validateUpsert(HeroClassUpsertRequest request, Long id) {
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson().ru());
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson().en());
+        heroValidator.validateDuplicateDictionaryName(
+                "Hero class",
+                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+    }
+
+    private void applyUpsert(HeroClass entity, HeroClassUpsertRequest request) {
+        entity.setNameJson(request.nameJson());
+        entity.setBaseNameJson(request.baseNameJson());
+        entity.setBaseDescriptionJson(request.baseDescriptionJson());
+        entity.setMasterNameJson(request.masterNameJson());
+        entity.setMasterDescriptionJson(request.masterDescriptionJson());
+        entity.setImageBucket(request.imageBucket());
+        entity.setImageObjectKey(request.imageObjectKey());
     }
 }
 

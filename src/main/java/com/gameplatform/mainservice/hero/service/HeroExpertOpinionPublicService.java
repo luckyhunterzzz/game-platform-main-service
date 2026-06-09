@@ -8,6 +8,7 @@ import com.gameplatform.mainservice.hero.dto.response.HeroExpertOpinionPublicRes
 import com.gameplatform.mainservice.hero.repository.HeroExpertOpinionRepository;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
+import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

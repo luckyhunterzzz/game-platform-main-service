@@ -26,15 +26,18 @@ public class PublicationPublicService {
     private final PublicationResponseConverter publicationResponseConverter;
     private final Clock clock;
     private final int defaultPageSize;
+    private final int maxPageSize;
 
     public PublicationPublicService(PublicationRepository publicationRepository,
                                     PublicationResponseConverter publicationResponseConverter,
                                     Clock clock,
-                                    @Value("${app.publications.default-page-size:10}") int defaultPageSize) {
+                                    @Value("${app.publications.default-page-size:10}") int defaultPageSize,
+                                    @Value("${app.publications.page-size-max:50}") int maxPageSize) {
         this.publicationRepository = publicationRepository;
         this.publicationResponseConverter = publicationResponseConverter;
         this.clock = clock;
         this.defaultPageSize = defaultPageSize;
+        this.maxPageSize = maxPageSize;
     }
 
 
@@ -43,14 +46,15 @@ public class PublicationPublicService {
                                                        PublicationLanguage language,
                                                        PublicationType type) {
         OffsetDateTime now = OffsetDateTime.now(clock);
-        int pageSize = (size != null) ? size : defaultPageSize;
+        int normalizedPage = Math.max(page, 0);
+        int normalizedPageSize = normalizePageSize(size);
 
         Page<Publication> publicationPage;
         if (type == null) {
             publicationPage = publicationRepository.findPublishedForPublicFeed(
                     PublicationStatus.PUBLISHED,
                     now,
-                    PageRequest.of(page, pageSize)
+                    PageRequest.of(normalizedPage, normalizedPageSize)
             );
         } else if (type == PublicationType.NEWS) {
             publicationPage = publicationRepository.findPublishedForNewsFeed(
@@ -58,14 +62,14 @@ public class PublicationPublicService {
                     PublicationType.NEWS,
                     PublicationType.ALLIANCE,
                     now,
-                    PageRequest.of(page, pageSize)
+                    PageRequest.of(normalizedPage, normalizedPageSize)
             );
         } else {
             publicationPage = publicationRepository.findPublishedForPublicFeedByType(
                     PublicationStatus.PUBLISHED,
                     type,
                     now,
-                    PageRequest.of(page, pageSize)
+                    PageRequest.of(normalizedPage, normalizedPageSize)
             );
         }
 
@@ -88,5 +92,10 @@ public class PublicationPublicService {
                                                    Integer size,
                                                    PublicationLanguage language) {
         return getLatestPublicFeed(page, size, language, PublicationType.ALLIANCE);
+    }
+
+    private int normalizePageSize(Integer size) {
+        int requestedSize = size != null ? size : defaultPageSize;
+        return Math.min(Math.max(requestedSize, 1), maxPageSize);
     }
 }

@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
-import com.gameplatform.mainservice.publication.facade.PublicationAdminFacade;
+import com.gameplatform.mainservice.publication.service.PublicationAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminPublicationsController {
 
-    private final PublicationAdminFacade publicationAdminFacade;
+    private final PublicationAdminService publicationAdminService;
 
     @GetMapping
     public PublicationAdminFeedResponse getFeedByStatus(
@@ -27,22 +27,22 @@ public class AdminPublicationsController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer size
     ) {
-        return publicationAdminFacade.getFeedByStatus(status, type, page, size);
+        return publicationAdminService.getFeedByStatus(status, type, page, size);
     }
 
     @GetMapping("/{id}")
     public PublicationAdminDetailsResponse getById(@PathVariable UUID id) {
-        return publicationAdminFacade.getPublicationById(id);
+        return publicationAdminService.getById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public PublicationAdminDetailsResponse create(@RequestBody @Valid PublicationUpsertRequest request) {
-        return publicationAdminFacade.createPublication(request);
+        return publicationAdminService.create(request);
     }
 
     @PutMapping("/{id}")
     public PublicationAdminDetailsResponse update(@PathVariable UUID id, @RequestBody @Valid PublicationUpsertRequest request) {
-        return publicationAdminFacade.updatePublication(id, request);
+        return publicationAdminService.update(id, request);
     }
 }

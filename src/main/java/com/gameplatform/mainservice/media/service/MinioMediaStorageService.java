@@ -13,6 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -44,45 +46,18 @@ public class MinioMediaStorageService implements MediaStorageService {
 
         imageUploadValidator.validate(file);
 
-        PreparedImage preparedImage = prepareImage(file);
-        String extension = resolveExtension(preparedImage.contentType());
-
-        String objectKey = generateObjectKey(folder, extension);
-
-        try (InputStream inputStream = preparedImage.openStream()) {
-
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(minioProperties.getBucket())
-                            .object(objectKey)
-                            .stream(inputStream, preparedImage.size(), -1)
-                            .contentType(preparedImage.contentType())
-                            .build()
-            );
-
-        } catch (Exception e) {
-            throw new MediaStorageException("Failed to upload image to MinIO", e);
-        }
-
-        String url = mediaUrlResolver.resolveUrl(
-                minioProperties.getBucket(),
-                objectKey
-        );
-
-        return new StoredImage(
-                minioProperties.getBucket(),
-                objectKey,
-                url
-        );
+        return uploadPreparedImage(prepareImage(file), folder);
     }
 
     private StoredImage uploadImage(byte[] bytes, String contentType, String folder) {
 
         imageUploadValidator.validate(bytes, contentType);
 
-        PreparedImage preparedImage = prepareImage(bytes, contentType);
-        String extension = resolveExtension(preparedImage.contentType());
-        String objectKey = generateObjectKey(folder, extension);
+        return uploadPreparedImage(prepareImage(bytes, contentType), folder);
+    }
+
+    private StoredImage uploadPreparedImage(PreparedImage preparedImage, String folder) {
+        String objectKey = generateObjectKey(folder, resolveExtension(preparedImage.contentType()));
 
         try (InputStream inputStream = preparedImage.openStream()) {
 
@@ -155,6 +130,31 @@ public class MinioMediaStorageService implements MediaStorageService {
 
         private long size() {
             return bytes.length;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
+            }
+            if (!(object instanceof PreparedImage that)) {
+                return false;
+            }
+            return Arrays.equals(bytes, that.bytes)
+                    && Objects.equals(contentType, that.contentType);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Arrays.hashCode(bytes);
+            result = 31 * result + Objects.hashCode(contentType);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "PreparedImage[bytes=" + Arrays.toString(bytes)
+                    + ", contentType=" + contentType + "]";
         }
     }
 }
