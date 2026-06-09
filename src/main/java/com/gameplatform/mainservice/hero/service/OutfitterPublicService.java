@@ -1,22 +1,18 @@
 package com.gameplatform.mainservice.hero.service;
 
-import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.response.OutfitterForecastResponse;
 import com.gameplatform.mainservice.hero.dto.response.OutfitterHeroResponse;
 import com.gameplatform.mainservice.hero.dto.response.OutfitterPageResponse;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
-import com.gameplatform.mainservice.publication.repository.PublicationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -27,13 +23,13 @@ public class OutfitterPublicService {
     private static final long VISITING_OUTFITTER_DAYS_EXCLUDING_RELEASE_DATE = 549L;
 
     private final HeroRepository heroRepository;
-    private final PublicationRepository publicationRepository;
     private final HeroPublicResponseConverter heroPublicResponseConverter;
     private final Clock clock;
+    private final HeroEventForecastSupport forecastSupport;
 
     public OutfitterPageResponse getAvailableHeroes(int page, int size, HeroLanguage language) {
-        int normalizedPage = Math.max(page, 0);
-        int normalizedSize = Math.min(Math.max(size, 1), 24);
+        int normalizedPage = forecastSupport.normalizePage(page);
+        int normalizedSize = forecastSupport.normalizePageSize(size, 24);
         LocalDate today = LocalDate.now(clock);
         LocalDate eligibleReleaseDate = today.minusDays(VISITING_OUTFITTER_DAYS_EXCLUDING_RELEASE_DATE);
 
@@ -44,7 +40,7 @@ public class OutfitterPublicService {
         ).map(heroPublicResponseConverter::toOutfitterResponse);
 
         return new OutfitterPageResponse(
-                resolveSuggestedPreviousEventDate(),
+                forecastSupport.resolveSuggestedPreviousEventDate(VISITING_OUTFITTER_TITLE_FRAGMENT),
                 heroPage.getContent(),
                 heroPage.getNumber(),
                 heroPage.getSize(),
@@ -55,22 +51,16 @@ public class OutfitterPublicService {
     }
 
     public OutfitterForecastResponse getForecast(LocalDate targetDate, LocalDate previousEventDate, HeroLanguage language) {
-        LocalDate suggestedPreviousEventDate = resolveSuggestedPreviousEventDate();
-        LocalDate effectivePreviousEventDate = previousEventDate != null
-                ? previousEventDate
-                : suggestedPreviousEventDate;
-
-        if (targetDate == null) {
-            throw new BusinessValidationException("targetDate is required");
-        }
-
-        if (effectivePreviousEventDate != null && effectivePreviousEventDate.isAfter(targetDate)) {
-            throw new BusinessValidationException("previousEventDate must be before or equal to targetDate");
-        }
-
-        LocalDate previousComparisonDate = effectivePreviousEventDate != null
-                ? effectivePreviousEventDate
-                : targetDate.minusMonths(3);
+        LocalDate suggestedPreviousEventDate = forecastSupport.resolveSuggestedPreviousEventDate(VISITING_OUTFITTER_TITLE_FRAGMENT);
+        LocalDate effectivePreviousEventDate = forecastSupport.resolveEffectivePreviousEventDate(
+                previousEventDate,
+                suggestedPreviousEventDate
+        );
+        forecastSupport.validateForecastDates(targetDate, effectivePreviousEventDate);
+        LocalDate previousComparisonDate = forecastSupport.resolvePreviousComparisonDate(
+                targetDate,
+                effectivePreviousEventDate
+        );
 
         List<OutfitterHeroResponse> newlyAvailableHeroes = heroRepository.findReadyOutfitterHeroesReleasedBetween(
                         language.getJsonKey(),
@@ -86,19 +76,5 @@ public class OutfitterPublicService {
                 targetDate,
                 newlyAvailableHeroes
         );
-    }
-
-    private LocalDate resolveSuggestedPreviousEventDate() {
-        OffsetDateTime now = OffsetDateTime.now(clock);
-        return publicationRepository.findLatestPublishedAtByEnglishTitleContainingSince(
-                        VISITING_OUTFITTER_TITLE_FRAGMENT,
-                        now.minusMonths(3)
-                )
-                .map(this::toLocalDate)
-                .orElse(null);
-    }
-
-    private LocalDate toLocalDate(Instant publishedAt) {
-        return publishedAt.atZone(clock.getZone()).toLocalDate();
     }
 }

@@ -40,44 +40,17 @@ public class HeroClassService {
     }
 
     public HeroClassResponse create(HeroClassUpsertRequest request) {
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Hero class",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, null)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        HeroClass entity = HeroClass.builder()
-                .nameJson(request.nameJson())
-                .baseNameJson(request.baseNameJson())
-                .baseDescriptionJson(request.baseDescriptionJson())
-                .masterNameJson(request.masterNameJson())
-                .masterDescriptionJson(request.masterDescriptionJson())
-                .imageBucket(request.imageBucket())
-                .imageObjectKey(request.imageObjectKey())
-                .build();
+        validateUpsert(request, null);
+        HeroClass entity = HeroClass.builder().build();
+        applyUpsert(entity, request);
 
         return converter.toResponse(repository.save(entity));
     }
 
     public HeroClassResponse update(Long id, HeroClassUpsertRequest request) {
         HeroClass entity = getEntityById(id);
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Hero class",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        entity.setNameJson(request.nameJson());
-        entity.setBaseNameJson(request.baseNameJson());
-        entity.setBaseDescriptionJson(request.baseDescriptionJson());
-        entity.setMasterNameJson(request.masterNameJson());
-        entity.setMasterDescriptionJson(request.masterDescriptionJson());
-        entity.setImageBucket(request.imageBucket());
-        entity.setImageObjectKey(request.imageObjectKey());
+        validateUpsert(request, id);
+        applyUpsert(entity, request);
 
         return converter.toResponse(repository.save(entity));
     }
@@ -92,6 +65,26 @@ public class HeroClassService {
     private HeroClass getEntityById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("HeroClass not found: " + id));
+    }
+
+    private void validateUpsert(HeroClassUpsertRequest request, Long id) {
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson().ru());
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson().en());
+        heroValidator.validateDuplicateDictionaryName(
+                "Hero class",
+                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+    }
+
+    private void applyUpsert(HeroClass entity, HeroClassUpsertRequest request) {
+        entity.setNameJson(request.nameJson());
+        entity.setBaseNameJson(request.baseNameJson());
+        entity.setBaseDescriptionJson(request.baseDescriptionJson());
+        entity.setMasterNameJson(request.masterNameJson());
+        entity.setMasterDescriptionJson(request.masterDescriptionJson());
+        entity.setImageBucket(request.imageBucket());
+        entity.setImageObjectKey(request.imageObjectKey());
     }
 }
 

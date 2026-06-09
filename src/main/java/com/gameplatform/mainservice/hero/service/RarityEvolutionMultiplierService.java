@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.hero.converter.RarityEvolutionMultiplierResponseConverter;
+import com.gameplatform.mainservice.hero.domain.entity.Rarity;
 import com.gameplatform.mainservice.hero.domain.entity.RarityEvolutionMultiplier;
 import com.gameplatform.mainservice.hero.domain.enums.EvolutionStageCode;
 import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpsertRequest;
@@ -81,7 +82,7 @@ public class RarityEvolutionMultiplierService {
     private List<RarityEvolutionMultiplier> sortMultipliers(List<RarityEvolutionMultiplier> multipliers) {
         Map<Long, String> rarityNames = rarityRepository.findAll().stream()
                 .collect(Collectors.toMap(
-                        item -> item.getId(),
+                        Rarity::getId,
                         item -> catalogSupport.sortableLocalized(item.getNameJson())
                 ));
 

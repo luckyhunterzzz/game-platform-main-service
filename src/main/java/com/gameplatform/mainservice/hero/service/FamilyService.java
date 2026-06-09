@@ -40,38 +40,17 @@ public class FamilyService {
     }
 
     public FamilyResponse create(FamilyUpsertRequest request) {
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Family",
-                () -> familyRepository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, null)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        Family family = Family.builder()
-                .nameJson(request.nameJson())
-                .descriptionJson(request.descriptionJson())
-                .imageBucket(request.imageBucket())
-                .imageObjectKey(request.imageObjectKey())
-                .build();
+        validateUpsert(request, null);
+        Family family = Family.builder().build();
+        applyUpsert(family, request);
 
         return converter.toResponse(familyRepository.save(family));
     }
 
     public FamilyResponse update(Long id, FamilyUpsertRequest request) {
         Family family = getEntityById(id);
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Family",
-                () -> familyRepository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        family.setNameJson(request.nameJson());
-        family.setDescriptionJson(request.descriptionJson());
-        family.setImageBucket(request.imageBucket());
-        family.setImageObjectKey(request.imageObjectKey());
+        validateUpsert(request, id);
+        applyUpsert(family, request);
 
         return converter.toResponse(familyRepository.save(family));
     }
@@ -86,6 +65,23 @@ public class FamilyService {
     private Family getEntityById(Long id) {
         return familyRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Family not found: " + id));
+    }
+
+    private void validateUpsert(FamilyUpsertRequest request, Long id) {
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson().ru());
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson().en());
+        heroValidator.validateDuplicateDictionaryName(
+                "Family",
+                () -> familyRepository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+    }
+
+    private void applyUpsert(Family entity, FamilyUpsertRequest request) {
+        entity.setNameJson(request.nameJson());
+        entity.setDescriptionJson(request.descriptionJson());
+        entity.setImageBucket(request.imageBucket());
+        entity.setImageObjectKey(request.imageObjectKey());
     }
 }
 

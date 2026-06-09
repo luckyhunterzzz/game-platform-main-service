@@ -91,7 +91,7 @@ public class HeroExpertOpinionAdminService {
 
     private void validateRequest(HeroExpertOpinionUpsertRequest request) {
         LocalizedTextJson content = request.contentJson();
-        if (content == null || isBlank(content.ru()) && isBlank(content.en())) {
+        if (isBlank(content.ru()) && isBlank(content.en())) {
             throw new BusinessValidationException("Hero expert opinion content must contain at least one locale");
         }
 

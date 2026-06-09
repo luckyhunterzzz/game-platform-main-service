@@ -40,38 +40,17 @@ public class AlphaTalentService {
     }
 
     public AlphaTalentResponse create(AlphaTalentUpsertRequest request) {
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Alpha talent",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, null)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        AlphaTalent entity = AlphaTalent.builder()
-                .nameJson(request.nameJson())
-                .descriptionJson(request.descriptionJson())
-                .imageBucket(request.imageBucket())
-                .imageObjectKey(request.imageObjectKey())
-                .build();
+        validateUpsert(request, null);
+        AlphaTalent entity = AlphaTalent.builder().build();
+        applyUpsert(entity, request);
 
         return converter.toResponse(repository.save(entity));
     }
 
     public AlphaTalentResponse update(Long id, AlphaTalentUpsertRequest request) {
         AlphaTalent entity = getEntityById(id);
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Alpha talent",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        entity.setNameJson(request.nameJson());
-        entity.setDescriptionJson(request.descriptionJson());
-        entity.setImageBucket(request.imageBucket());
-        entity.setImageObjectKey(request.imageObjectKey());
+        validateUpsert(request, id);
+        applyUpsert(entity, request);
 
         return converter.toResponse(repository.save(entity));
     }
@@ -86,6 +65,23 @@ public class AlphaTalentService {
     private AlphaTalent getEntityById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("AlphaTalent not found: " + id));
+    }
+
+    private void validateUpsert(AlphaTalentUpsertRequest request, Long id) {
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson().ru());
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson().en());
+        heroValidator.validateDuplicateDictionaryName(
+                "Alpha talent",
+                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+    }
+
+    private void applyUpsert(AlphaTalent entity, AlphaTalentUpsertRequest request) {
+        entity.setNameJson(request.nameJson());
+        entity.setDescriptionJson(request.descriptionJson());
+        entity.setImageBucket(request.imageBucket());
+        entity.setImageObjectKey(request.imageObjectKey());
     }
 }
 

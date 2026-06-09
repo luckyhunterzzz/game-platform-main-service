@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.exception.exceptions.DictionaryItemInUseException;
 import com.gameplatform.mainservice.hero.converter.PassiveSkillResponseConverter;
+import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.PassiveSkill;
 import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
@@ -46,38 +47,17 @@ public class PassiveSkillService {
     }
 
     public PassiveSkillResponse create(PassiveSkillUpsertRequest request) {
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Passive skill",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, null)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        PassiveSkill entity = PassiveSkill.builder()
-                .nameJson(request.nameJson())
-                .descriptionJson(request.descriptionJson())
-                .imageBucket(request.imageBucket())
-                .imageObjectKey(request.imageObjectKey())
-                .build();
+        validateUpsert(request, null);
+        PassiveSkill entity = PassiveSkill.builder().build();
+        applyUpsert(entity, request);
 
         return converter.toResponse(repository.save(entity));
     }
 
     public PassiveSkillResponse update(Long id, PassiveSkillUpsertRequest request) {
         PassiveSkill entity = getEntityById(id);
-        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
-        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
-        heroValidator.validateDuplicateDictionaryName(
-                "Passive skill",
-                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
-        );
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
-
-        entity.setNameJson(request.nameJson());
-        entity.setDescriptionJson(request.descriptionJson());
-        entity.setImageBucket(request.imageBucket());
-        entity.setImageObjectKey(request.imageObjectKey());
+        validateUpsert(request, id);
+        applyUpsert(entity, request);
 
         return converter.toResponse(repository.save(entity));
     }
@@ -92,7 +72,7 @@ public class PassiveSkillService {
                     "Passive skill is used by one or more heroes and cannot be deleted",
                     catalogSupport.sortLocalized(
                                     heroRepository.findAllByPassiveSkillId(id),
-                                    hero -> hero.getNameJson()
+                                    Hero::getNameJson
                             ).stream()
                             .map(hero -> new HeroUsageReferenceResponse(
                                     hero.getId(),
@@ -111,5 +91,21 @@ public class PassiveSkillService {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("PassiveSkill not found: " + id));
     }
-}
 
+    private void validateUpsert(PassiveSkillUpsertRequest request, Long id) {
+        String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson().ru());
+        String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson().en());
+        heroValidator.validateDuplicateDictionaryName(
+                "Passive skill",
+                () -> repository.existsDuplicateLocalizedName(normalizedRu, normalizedEn, id)
+        );
+        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
+    }
+
+    private void applyUpsert(PassiveSkill entity, PassiveSkillUpsertRequest request) {
+        entity.setNameJson(request.nameJson());
+        entity.setDescriptionJson(request.descriptionJson());
+        entity.setImageBucket(request.imageBucket());
+        entity.setImageObjectKey(request.imageObjectKey());
+    }
+}
