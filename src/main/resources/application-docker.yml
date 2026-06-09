@@ -19,10 +19,9 @@ spring:
 
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    enabled: false
   swagger-ui:
-    path: /swagger-ui.html
-    operations-sorter: alpha
+    enabled: false
 
 app:
   minio:
