@@ -1,17 +1,19 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.exception.exceptions.DictionaryItemInUseException;
+import com.gameplatform.mainservice.hero.converter.PassiveSkillResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.PassiveSkill;
+import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.PassiveSkillResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroUsageReferenceResponse;
 import com.gameplatform.mainservice.hero.repository.HeroPassiveSkillRepository;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
-import com.gameplatform.mainservice.hero.dto.request.PassiveSkillUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.PassiveSkillRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,21 +28,24 @@ public class PassiveSkillService {
     private final DictionaryCatalogSupport catalogSupport;
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
+    private final PassiveSkillResponseConverter converter;
 
-    public List<PassiveSkill> getAll() {
-        return catalogSupport.sortLocalized(repository.findAll(), PassiveSkill::getNameJson);
+    public List<PassiveSkillResponse> getAll() {
+        return converter.toResponseList(catalogSupport.sortLocalized(repository.findAll(), PassiveSkill::getNameJson));
     }
 
-    public Page<PassiveSkill> getPage(int page, int size, String search) {
-        return catalogSupport.pageLocalized(repository.findAll(), search, page, size, PassiveSkill::getNameJson);
+    public CatalogPageResponse<PassiveSkillResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(
+                catalogSupport.pageLocalized(repository.findAll(), search, page, size, PassiveSkill::getNameJson)
+                        .map(converter::toResponse)
+        );
     }
 
-    public PassiveSkill getById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("PassiveSkill not found: " + id));
+    public PassiveSkillResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
     }
 
-    public PassiveSkill create(PassiveSkillUpsertRequest request) {
+    public PassiveSkillResponse create(PassiveSkillUpsertRequest request) {
         String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
         String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
         heroValidator.validateDuplicateDictionaryName(
@@ -56,11 +61,11 @@ public class PassiveSkillService {
                 .imageObjectKey(request.imageObjectKey())
                 .build();
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
     }
 
-    public PassiveSkill update(Long id, PassiveSkillUpsertRequest request) {
-        PassiveSkill entity = getById(id);
+    public PassiveSkillResponse update(Long id, PassiveSkillUpsertRequest request) {
+        PassiveSkill entity = getEntityById(id);
         String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
         String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
         heroValidator.validateDuplicateDictionaryName(
@@ -74,7 +79,7 @@ public class PassiveSkillService {
         entity.setImageBucket(request.imageBucket());
         entity.setImageObjectKey(request.imageObjectKey());
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
     }
 
     public void delete(Long id) {
@@ -100,6 +105,11 @@ public class PassiveSkillService {
         }
 
         repository.deleteById(id);
+    }
+
+    private PassiveSkill getEntityById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("PassiveSkill not found: " + id));
     }
 }
 

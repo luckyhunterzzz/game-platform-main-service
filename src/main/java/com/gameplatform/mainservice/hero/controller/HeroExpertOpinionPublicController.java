@@ -2,7 +2,7 @@ package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.response.HeroExpertOpinionPublicResponse;
-import com.gameplatform.mainservice.hero.facade.HeroExpertOpinionPublicFacade;
+import com.gameplatform.mainservice.hero.service.HeroExpertOpinionPublicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,13 +18,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HeroExpertOpinionPublicController {
 
-    private final HeroExpertOpinionPublicFacade facade;
+    private final HeroExpertOpinionPublicService service;
 
     @GetMapping
     public ResponseEntity<List<HeroExpertOpinionPublicResponse>> getAll(
             @PathVariable String slug,
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
-        return ResponseEntity.ok(facade.getAllByHeroSlug(slug, language));
+        return ResponseEntity.ok(service.getAllByHeroSlug(slug, language));
     }
 }

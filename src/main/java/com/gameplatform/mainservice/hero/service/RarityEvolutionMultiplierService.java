@@ -1,13 +1,15 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.hero.converter.RarityEvolutionMultiplierResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.RarityEvolutionMultiplier;
 import com.gameplatform.mainservice.hero.domain.enums.EvolutionStageCode;
 import com.gameplatform.mainservice.hero.dto.request.RarityEvolutionMultiplierUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.RarityEvolutionMultiplierResponse;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
 import com.gameplatform.mainservice.hero.repository.RarityEvolutionMultiplierRepository;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -22,25 +24,25 @@ public class RarityEvolutionMultiplierService {
     private final RarityEvolutionMultiplierRepository repository;
     private final RarityRepository rarityRepository;
     private final DictionaryCatalogSupport catalogSupport;
+    private final RarityEvolutionMultiplierResponseConverter converter;
 
-    public List<RarityEvolutionMultiplier> getAll() {
-        return sortMultipliers(repository.findAll());
+    public List<RarityEvolutionMultiplierResponse> getAll() {
+        return converter.toResponseList(sortMultipliers(repository.findAll()));
     }
 
-    public Page<RarityEvolutionMultiplier> getPage(int page, int size, String search) {
+    public CatalogPageResponse<RarityEvolutionMultiplierResponse> getPage(int page, int size, String search) {
         List<RarityEvolutionMultiplier> filtered = sortMultipliers(repository.findAll()).stream()
                 .filter(item -> matchesMultiplier(item, search))
                 .toList();
 
-        return catalogSupport.toPage(filtered, page, size);
+        return CatalogPageResponse.from(catalogSupport.toPage(filtered, page, size).map(converter::toResponse));
     }
 
-    public RarityEvolutionMultiplier getById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("RarityEvolutionMultiplier not found: " + id));
+    public RarityEvolutionMultiplierResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
     }
 
-    public RarityEvolutionMultiplier create(RarityEvolutionMultiplierUpsertRequest request) {
+    public RarityEvolutionMultiplierResponse create(RarityEvolutionMultiplierUpsertRequest request) {
         RarityEvolutionMultiplier entity = RarityEvolutionMultiplier.builder()
                 .rarityId(request.rarityId())
                 .stageCode(request.stageCode())
@@ -49,11 +51,11 @@ public class RarityEvolutionMultiplierService {
                 .hpMultiplier(request.hpMultiplier())
                 .build();
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
     }
 
-    public RarityEvolutionMultiplier update(Long id, RarityEvolutionMultiplierUpsertRequest request) {
-        RarityEvolutionMultiplier entity = getById(id);
+    public RarityEvolutionMultiplierResponse update(Long id, RarityEvolutionMultiplierUpsertRequest request) {
+        RarityEvolutionMultiplier entity = getEntityById(id);
 
         entity.setRarityId(request.rarityId());
         entity.setStageCode(request.stageCode());
@@ -61,7 +63,7 @@ public class RarityEvolutionMultiplierService {
         entity.setArmorMultiplier(request.armorMultiplier());
         entity.setHpMultiplier(request.hpMultiplier());
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
     }
 
     public void delete(Long id) {
@@ -69,6 +71,11 @@ public class RarityEvolutionMultiplierService {
             throw new NotFoundException("RarityEvolutionMultiplier not found: " + id);
         }
         repository.deleteById(id);
+    }
+
+    private RarityEvolutionMultiplier getEntityById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("RarityEvolutionMultiplier not found: " + id));
     }
 
     private List<RarityEvolutionMultiplier> sortMultipliers(List<RarityEvolutionMultiplier> multipliers) {

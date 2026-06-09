@@ -1,14 +1,15 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
-
+import com.gameplatform.mainservice.hero.converter.HeroClassEmblemBonusProfileResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.HeroClassEmblemBonusProfile;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassEmblemBonusProfileUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroClassEmblemBonusProfileResponse;
 import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -24,26 +25,25 @@ public class HeroClassEmblemBonusProfileService {
     private final HeroClassEmblemBonusProfileRepository repository;
     private final HeroClassRepository heroClassRepository;
     private final DictionaryCatalogSupport catalogSupport;
+    private final HeroClassEmblemBonusProfileResponseConverter converter;
 
-    public List<HeroClassEmblemBonusProfile> getAll() {
-        return sortProfiles(repository.findAll());
+    public List<HeroClassEmblemBonusProfileResponse> getAll() {
+        return converter.toResponseList(sortProfiles(repository.findAll()));
     }
 
-    public Page<HeroClassEmblemBonusProfile> getPage(int page, int size, String search) {
+    public CatalogPageResponse<HeroClassEmblemBonusProfileResponse> getPage(int page, int size, String search) {
         List<HeroClassEmblemBonusProfile> filtered = sortProfiles(repository.findAll()).stream()
                 .filter(profile -> matchesProfile(profile, search))
                 .toList();
 
-        return catalogSupport.toPage(filtered, page, size);
+        return CatalogPageResponse.from(catalogSupport.toPage(filtered, page, size).map(converter::toResponse));
     }
 
-    public HeroClassEmblemBonusProfile getById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Profile not found: " + id));
+    public HeroClassEmblemBonusProfileResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
     }
 
-    public HeroClassEmblemBonusProfile create(HeroClassEmblemBonusProfileUpsertRequest request) {
-
+    public HeroClassEmblemBonusProfileResponse create(HeroClassEmblemBonusProfileUpsertRequest request) {
         repository.findByHeroClassIdAndPathType(request.heroClassId(), request.pathType())
                 .ifPresent(p -> {
                     throw new BusinessValidationException("Profile already exists for heroClassId + pathType");
@@ -63,11 +63,11 @@ public class HeroClassEmblemBonusProfileService {
                 .masterHpBonus(request.masterHpBonus())
                 .build();
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
     }
 
-    public HeroClassEmblemBonusProfile update(Long id, HeroClassEmblemBonusProfileUpsertRequest request) {
-        HeroClassEmblemBonusProfile entity = getById(id);
+    public HeroClassEmblemBonusProfileResponse update(Long id, HeroClassEmblemBonusProfileUpsertRequest request) {
+        HeroClassEmblemBonusProfile entity = getEntityById(id);
 
         repository.findByHeroClassIdAndPathType(request.heroClassId(), request.pathType())
                 .filter(existing -> !existing.getId().equals(id))
@@ -87,7 +87,7 @@ public class HeroClassEmblemBonusProfileService {
         entity.setMasterArmorBonus(request.masterArmorBonus());
         entity.setMasterHpBonus(request.masterHpBonus());
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
     }
 
     public void delete(Long id) {
@@ -95,6 +95,11 @@ public class HeroClassEmblemBonusProfileService {
             throw new NotFoundException("Profile not found: " + id);
         }
         repository.deleteById(id);
+    }
+
+    private HeroClassEmblemBonusProfile getEntityById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Profile not found: " + id));
     }
 
     private List<HeroClassEmblemBonusProfile> sortProfiles(List<HeroClassEmblemBonusProfile> profiles) {

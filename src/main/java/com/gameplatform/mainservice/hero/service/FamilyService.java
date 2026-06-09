@@ -1,14 +1,16 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.hero.converter.FamilyResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Family;
 import com.gameplatform.mainservice.hero.dto.request.FamilyUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.FamilyResponse;
 import com.gameplatform.mainservice.hero.repository.FamilyRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -20,21 +22,24 @@ public class FamilyService {
     private final DictionaryCatalogSupport catalogSupport;
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
+    private final FamilyResponseConverter converter;
 
-    public List<Family> getAll() {
-        return catalogSupport.sortLocalized(familyRepository.findAll(), Family::getNameJson);
+    public List<FamilyResponse> getAll() {
+        return converter.toResponseList(catalogSupport.sortLocalized(familyRepository.findAll(), Family::getNameJson));
     }
 
-    public Page<Family> getPage(int page, int size, String search) {
-        return catalogSupport.pageLocalized(familyRepository.findAll(), search, page, size, Family::getNameJson);
+    public CatalogPageResponse<FamilyResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(
+                catalogSupport.pageLocalized(familyRepository.findAll(), search, page, size, Family::getNameJson)
+                        .map(converter::toResponse)
+        );
     }
 
-    public Family getById(Long id) {
-        return familyRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Family not found: " + id));
+    public FamilyResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
     }
 
-    public Family create(FamilyUpsertRequest request) {
+    public FamilyResponse create(FamilyUpsertRequest request) {
         String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
         String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
         heroValidator.validateDuplicateDictionaryName(
@@ -50,11 +55,11 @@ public class FamilyService {
                 .imageObjectKey(request.imageObjectKey())
                 .build();
 
-        return familyRepository.save(family);
+        return converter.toResponse(familyRepository.save(family));
     }
 
-    public Family update(Long id, FamilyUpsertRequest request) {
-        Family family = getById(id);
+    public FamilyResponse update(Long id, FamilyUpsertRequest request) {
+        Family family = getEntityById(id);
         String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
         String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
         heroValidator.validateDuplicateDictionaryName(
@@ -68,7 +73,7 @@ public class FamilyService {
         family.setImageBucket(request.imageBucket());
         family.setImageObjectKey(request.imageObjectKey());
 
-        return familyRepository.save(family);
+        return converter.toResponse(familyRepository.save(family));
     }
 
     public void delete(Long id) {
@@ -76,6 +81,11 @@ public class FamilyService {
             throw new NotFoundException("Family not found: " + id);
         }
         familyRepository.deleteById(id);
+    }
+
+    private Family getEntityById(Long id) {
+        return familyRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Family not found: " + id));
     }
 }
 

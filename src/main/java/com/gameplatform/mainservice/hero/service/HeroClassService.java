@@ -1,14 +1,16 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.hero.converter.HeroClassResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.HeroClass;
 import com.gameplatform.mainservice.hero.dto.request.HeroClassUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroClassResponse;
 import com.gameplatform.mainservice.hero.repository.HeroClassRepository;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -20,21 +22,24 @@ public class HeroClassService {
     private final DictionaryCatalogSupport catalogSupport;
     private final HeroValidator heroValidator;
     private final ImageReferenceValidator imageReferenceValidator;
+    private final HeroClassResponseConverter converter;
 
-    public List<HeroClass> getAll() {
-        return catalogSupport.sortLocalized(repository.findAll(), HeroClass::getNameJson);
+    public List<HeroClassResponse> getAll() {
+        return converter.toResponseList(catalogSupport.sortLocalized(repository.findAll(), HeroClass::getNameJson));
     }
 
-    public Page<HeroClass> getPage(int page, int size, String search) {
-        return catalogSupport.pageLocalized(repository.findAll(), search, page, size, HeroClass::getNameJson);
+    public CatalogPageResponse<HeroClassResponse> getPage(int page, int size, String search) {
+        return CatalogPageResponse.from(
+                catalogSupport.pageLocalized(repository.findAll(), search, page, size, HeroClass::getNameJson)
+                        .map(converter::toResponse)
+        );
     }
 
-    public HeroClass getById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("HeroClass not found: " + id));
+    public HeroClassResponse getById(Long id) {
+        return converter.toResponse(getEntityById(id));
     }
 
-    public HeroClass create(HeroClassUpsertRequest request) {
+    public HeroClassResponse create(HeroClassUpsertRequest request) {
         String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
         String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
         heroValidator.validateDuplicateDictionaryName(
@@ -53,11 +58,11 @@ public class HeroClassService {
                 .imageObjectKey(request.imageObjectKey())
                 .build();
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
     }
 
-    public HeroClass update(Long id, HeroClassUpsertRequest request) {
-        HeroClass entity = getById(id);
+    public HeroClassResponse update(Long id, HeroClassUpsertRequest request) {
+        HeroClass entity = getEntityById(id);
         String normalizedRu = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().ru() : null);
         String normalizedEn = heroValidator.normalizeDictionaryName(request.nameJson() != null ? request.nameJson().en() : null);
         heroValidator.validateDuplicateDictionaryName(
@@ -74,7 +79,7 @@ public class HeroClassService {
         entity.setImageBucket(request.imageBucket());
         entity.setImageObjectKey(request.imageObjectKey());
 
-        return repository.save(entity);
+        return converter.toResponse(repository.save(entity));
     }
 
     public void delete(Long id) {
@@ -82,6 +87,11 @@ public class HeroClassService {
             throw new NotFoundException("HeroClass not found: " + id);
         }
         repository.deleteById(id);
+    }
+
+    private HeroClass getEntityById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("HeroClass not found: " + id));
     }
 }
 

@@ -2,7 +2,7 @@ package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroPublicVisibilityUpdateRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroPublicVisibilityResponse;
-import com.gameplatform.mainservice.hero.facade.HeroPublicVisibilityFacade;
+import com.gameplatform.mainservice.hero.service.HeroPublicVisibilityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,17 +17,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class HeroPublicVisibilityAdminController {
 
-    private final HeroPublicVisibilityFacade heroPublicVisibilityFacade;
+    private final HeroPublicVisibilityService heroPublicVisibilityService;
 
     @GetMapping
     public ResponseEntity<HeroPublicVisibilityResponse> getVisibility() {
-        return ResponseEntity.ok(heroPublicVisibilityFacade.getVisibility());
+        return ResponseEntity.ok(heroPublicVisibilityService.getVisibility());
     }
 
     @PutMapping
     public ResponseEntity<HeroPublicVisibilityResponse> updateVisibility(
             @RequestBody @Valid HeroPublicVisibilityUpdateRequest request
     ) {
-        return ResponseEntity.ok(heroPublicVisibilityFacade.updateVisibility(request));
+        return ResponseEntity.ok(heroPublicVisibilityService.updateVisibility(request));
     }
 }
