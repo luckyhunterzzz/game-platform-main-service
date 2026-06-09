@@ -15,7 +15,7 @@ public class ImageUploadValidator {
             throw new IllegalArgumentException("Image file size must not exceed 5 MB");
         }
         String contentType = file.getContentType();
-        if (contentType == null || !isSupportedContentType(contentType)) {
+        if (hasUnsupportedContentType(contentType)) {
             throw new IllegalArgumentException("Only PNG, JPEG and WEBP images are allowed");
         }
     }
@@ -27,12 +27,15 @@ public class ImageUploadValidator {
         if (bytes.length > MAX_FILE_SIZE_BYTES) {
             throw new IllegalArgumentException("Image file size must not exceed 5 MB");
         }
-        if (contentType == null || !isSupportedContentType(contentType)) {
+        if (hasUnsupportedContentType(contentType)) {
             throw new IllegalArgumentException("Only PNG, JPEG and WEBP images are allowed");
         }
     }
 
-    private boolean isSupportedContentType(String contentType) {
-        return "image/png".equals(contentType) || "image/jpeg".equals(contentType) || "image/webp".equals(contentType);
+    private boolean hasUnsupportedContentType(String contentType) {
+        return contentType == null
+                || (!"image/png".equals(contentType)
+                && !"image/jpeg".equals(contentType)
+                && !"image/webp".equals(contentType));
     }
 }
