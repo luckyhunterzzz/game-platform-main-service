@@ -42,6 +42,9 @@ public class HeroPublicService {
     private final FamilyRepository familyRepository;
     private final ManaSpeedRepository manaSpeedRepository;
     private final AlphaTalentRepository alphaTalentRepository;
+    private final HeroTagGroupRepository heroTagGroupRepository;
+    private final HeroTagRepository heroTagRepository;
+    private final HeroTagLinkRepository heroTagLinkRepository;
     private final HeroStatCalculationService heroStatCalculationService;
     private final HeroPublicVisibilityService heroPublicVisibilityService;
     private final ObjectProvider<HeroPublicService> selfProvider;
@@ -60,6 +63,8 @@ public class HeroPublicService {
             List<Long> familyIds,
             List<Long> manaSpeedIds,
             List<Long> alphaTalentIds,
+            List<Long> roleGroupIds,
+            List<Long> tagIds,
             boolean includeDrafts
     ) {
         return self().getHeroesCached(
@@ -73,6 +78,8 @@ public class HeroPublicService {
                 familyIds,
                 manaSpeedIds,
                 alphaTalentIds,
+                roleGroupIds,
+                tagIds,
                 canIncludeDrafts(includeDrafts)
         );
     }
@@ -89,6 +96,8 @@ public class HeroPublicService {
             List<Long> familyIds,
             List<Long> manaSpeedIds,
             List<Long> alphaTalentIds,
+            List<Long> roleGroupIds,
+            List<Long> tagIds,
             boolean includeDraftsAuthorized
     ) {
         int normalizedPage = Math.max(page, 0);
@@ -102,6 +111,8 @@ public class HeroPublicService {
         List<Long> normalizedFamilyIds = normalizeIds(familyIds);
         List<Long> normalizedManaSpeedIds = normalizeIds(manaSpeedIds);
         List<Long> normalizedAlphaTalentIds = normalizeIds(alphaTalentIds);
+        List<Long> normalizedRoleGroupIds = normalizeIds(roleGroupIds);
+        List<Long> normalizedTagIds = normalizeIds(tagIds);
 
         Page<HeroCardResponse> heroPage = heroRepository.findReadyHeroCards(
                 language.getJsonKey(),
@@ -118,6 +129,10 @@ public class HeroPublicService {
                 normalizedManaSpeedIds.isEmpty(),
                 sqlFilterIds(normalizedAlphaTalentIds),
                 normalizedAlphaTalentIds.isEmpty(),
+                sqlFilterIds(normalizedRoleGroupIds),
+                normalizedRoleGroupIds.isEmpty(),
+                sqlFilterIds(normalizedTagIds),
+                normalizedTagIds.isEmpty(),
                 includeDraftsAuthorized,
                 pageable
         ).map(converter::toCardResponse);
@@ -207,6 +222,22 @@ public class HeroPublicService {
                         AlphaTalent::getNameJson,
                         AlphaTalent::getImageBucket,
                         AlphaTalent::getImageObjectKey
+                ),
+                buildFilterOptions(
+                        heroTagGroupRepository.findAll(),
+                        locale,
+                        HeroTagGroup::getId,
+                        HeroTagGroup::getNameJson,
+                        ignored -> null,
+                        ignored -> null
+                ),
+                buildFilterOptions(
+                        heroTagRepository.findAll(),
+                        locale,
+                        HeroTag::getId,
+                        HeroTag::getNameJson,
+                        ignored -> null,
+                        ignored -> null
                 )
         );
     }
@@ -337,6 +368,19 @@ public class HeroPublicService {
                 ? null
                 : alphaTalentRepository.findById(hero.getAlphaTalentId())
                 .orElseThrow(() -> new NotFoundException("Alpha talent not found with id: " + hero.getAlphaTalentId()));
+        List<Long> tagIds = heroTagLinkRepository.findAllByIdHeroId(hero.getId()).stream()
+                .map(link -> link.getId().getTagId())
+                .toList();
+        List<HeroTag> tags = tagIds.isEmpty()
+                ? List.of()
+                : heroTagRepository.findAllById(tagIds);
+        List<Long> roleGroupIds = tags.stream()
+                .map(HeroTag::getGroupId)
+                .distinct()
+                .toList();
+        List<HeroTagGroup> roleGroups = roleGroupIds.isEmpty()
+                ? List.of()
+                : heroTagGroupRepository.findAllById(roleGroupIds);
         List<PassiveSkill> passiveSkills = findPassiveSkills(hero.getId());
         List<Hero> costumes = findCostumes(hero, includeDraftsAuthorized);
 
@@ -350,6 +394,22 @@ public class HeroPublicService {
                 family,
                 manaSpeed,
                 alphaTalent,
+                roleGroups.stream()
+                        .map(group -> new DescribedReferenceResponse(
+                                group.getId(),
+                                localized(group.getNameJson(), locale),
+                                localized(group.getDescriptionJson(), locale),
+                                null
+                        ))
+                        .toList(),
+                tags.stream()
+                        .map(tag -> new DescribedReferenceResponse(
+                                tag.getId(),
+                                localized(tag.getNameJson(), locale),
+                                localized(tag.getDescriptionJson(), locale),
+                                null
+                        ))
+                        .toList(),
                 passiveSkills,
                 costumes,
                 locale

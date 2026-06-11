@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.hero.converter;
 
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
+import com.gameplatform.mainservice.hero.domain.entity.HeroTagLink;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
@@ -16,9 +17,12 @@ public class HeroResponseConverter {
 
     private final MediaUrlResolver mediaUrlResolver;
 
-    public HeroResponse toResponse(Hero entity, List<HeroPassiveSkill> passiveSkills) {
+    public HeroResponse toResponse(Hero entity, List<HeroPassiveSkill> passiveSkills, List<HeroTagLink> tagLinks) {
         List<Long> passiveSkillIds = passiveSkills.stream()
                 .map(link -> link.getId().getPassiveSkillId())
+                .toList();
+        List<Long> tagIds = tagLinks.stream()
+                .map(link -> link.getId().getTagId())
                 .toList();
 
         return new HeroResponse(
@@ -30,6 +34,7 @@ public class HeroResponseConverter {
                 entity.getBaseAttack(),
                 entity.getBaseArmor(),
                 entity.getBaseHp(),
+                entity.getBasePower(),
                 entity.getElementId(),
                 entity.getRarityId(),
                 entity.getHeroClassId(),
@@ -52,18 +57,22 @@ public class HeroResponseConverter {
                 entity.getUpdatedAt(),
                 entity.getUpdatedBy(),
                 entity.getUpdatedByEmail(),
-                passiveSkillIds
+                passiveSkillIds,
+                tagIds
         );
     }
 
-    public List<HeroResponse> toResponseList(List<Hero> heroes, List<HeroPassiveSkill> allLinks) {
+    public List<HeroResponse> toResponseList(List<Hero> heroes, List<HeroPassiveSkill> allPassiveLinks, List<HeroTagLink> allTagLinks) {
         return heroes.stream()
                 .map(hero -> {
-                    List<HeroPassiveSkill> heroLinks = allLinks.stream()
+                    List<HeroPassiveSkill> heroLinks = allPassiveLinks.stream()
+                            .filter(link -> link.getId().getHeroId().equals(hero.getId()))
+                            .toList();
+                    List<HeroTagLink> heroTagLinks = allTagLinks.stream()
                             .filter(link -> link.getId().getHeroId().equals(hero.getId()))
                             .toList();
 
-                    return toResponse(hero, heroLinks);
+                    return toResponse(hero, heroLinks, heroTagLinks);
                 })
                 .toList();
     }

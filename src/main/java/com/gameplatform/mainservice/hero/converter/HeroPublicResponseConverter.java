@@ -113,6 +113,8 @@ public class HeroPublicResponseConverter {
             Family family,
             ManaSpeed manaSpeed,
             AlphaTalent alphaTalent,
+            List<DescribedReferenceResponse> roleGroups,
+            List<DescribedReferenceResponse> tags,
             List<PassiveSkill> passiveSkills,
             List<Hero> costumes,
             String locale
@@ -163,6 +165,8 @@ public class HeroPublicResponseConverter {
                         mediaUrlResolver.resolveUrl(alphaTalent.getImageBucket(), alphaTalent.getImageObjectKey())
                 )
                         : null,
+                roleGroups,
+                tags,
 
                 new SpecialSkillResponse(
                         hero.getSpecialSkillName(),

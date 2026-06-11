@@ -192,6 +192,7 @@ public class HeroImportHeroProcessor {
                 hero.attack(),
                 hero.defense(),
                 hero.health(),
+                hero.power(),
                 resolution.elementId(),
                 resolution.rarityId(),
                 resolution.heroClassId(),
@@ -210,6 +211,7 @@ public class HeroImportHeroProcessor {
                 HeroStatus.DRAFT,
                 request.updatedBy().trim(),
                 trimToNull(request.updatedByEmail()),
+                List.of(),
                 List.of()
         );
     }

@@ -4,6 +4,7 @@ import com.gameplatform.mainservice.exception.exceptions.BusinessValidationExcep
 import com.gameplatform.mainservice.hero.dto.json.CostumeBonusJson;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
+import com.gameplatform.mainservice.hero.repository.HeroTagRepository;
 import com.gameplatform.mainservice.hero.repository.projection.HeroReferenceValidationProjection;
 import com.gameplatform.mainservice.media.validation.ImageReferenceValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
@@ -21,6 +22,7 @@ import java.util.Set;
 public class HeroValidator {
 
     private final HeroRepository heroRepository;
+    private final HeroTagRepository heroTagRepository;
     private final ImageReferenceValidator imageReferenceValidator;
 
     public void validateCreate(HeroUpsertRequest request, String normalizedSlug) {
@@ -65,6 +67,10 @@ public class HeroValidator {
     }
 
     private void validateCommon(Long heroId, HeroUpsertRequest request) {
+        if (request.tagIds() == null || request.tagIds().isEmpty()) {
+            throw new BusinessValidationException("Hero must have at least one tag");
+        }
+
         imageReferenceValidator.validate(request.imageBucketJson() != null ? request.imageBucketJson().ru() : null,
                 request.imageObjectKeyJson() != null ? request.imageObjectKeyJson().ru() : null);
         imageReferenceValidator.validate(request.imageBucketJson() != null ? request.imageBucketJson().en() : null,
@@ -78,7 +84,8 @@ public class HeroValidator {
                 request.manaSpeedId(),
                 request.alphaTalentId(),
                 request.baseHeroId(),
-                request.passiveSkillIds()
+                request.passiveSkillIds(),
+                request.tagIds()
         );
 
         validateCostumeFields(heroId, request.isCostume(), request.baseHeroId(), request.costumeIndex(), request.costumeBonusJson());
@@ -92,7 +99,8 @@ public class HeroValidator {
             Long manaSpeedId,
             Long alphaTalentId,
             Long baseHeroId,
-            List<Long> passiveSkillIds
+            List<Long> passiveSkillIds,
+            List<Long> tagIds
     ) {
         HeroReferenceValidationProjection validation = heroRepository.validateReferences(
                 elementId,
@@ -141,6 +149,21 @@ public class HeroValidator {
             for (Long passiveSkillId : uniquePassiveSkillIds) {
                 if (!existingPassiveSkillIds.contains(passiveSkillId)) {
                     throw new NotFoundException("PassiveSkill not found: " + passiveSkillId);
+                }
+            }
+        }
+
+        if (tagIds != null && !tagIds.isEmpty()) {
+            List<Long> uniqueTagIds = List.copyOf(new LinkedHashSet<>(tagIds));
+            Set<Long> existingTagIds = Set.copyOf(
+                    heroTagRepository.findAllById(uniqueTagIds).stream()
+                            .map(tag -> tag.getId())
+                            .toList()
+            );
+
+            for (Long tagId : uniqueTagIds) {
+                if (!existingTagIds.contains(tagId)) {
+                    throw new NotFoundException("HeroTag not found: " + tagId);
                 }
             }
         }

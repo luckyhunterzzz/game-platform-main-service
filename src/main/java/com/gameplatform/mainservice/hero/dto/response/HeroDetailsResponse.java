@@ -16,6 +16,8 @@ public record HeroDetailsResponse(
         DescribedReferenceResponse family,
         DescribedReferenceResponse manaSpeed,
         DescribedReferenceResponse alphaTalent,
+        List<DescribedReferenceResponse> roleGroups,
+        List<DescribedReferenceResponse> tags,
 
         SpecialSkillResponse specialSkill,
         List<HeroPassiveSkillResponse> passiveSkills,

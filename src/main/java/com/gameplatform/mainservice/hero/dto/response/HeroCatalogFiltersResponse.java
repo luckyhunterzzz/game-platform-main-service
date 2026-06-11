@@ -8,6 +8,8 @@ public record HeroCatalogFiltersResponse(
         List<HeroCatalogFilterOptionResponse> heroClasses,
         List<HeroCatalogFilterOptionResponse> families,
         List<HeroCatalogFilterOptionResponse> manaSpeeds,
-        List<HeroCatalogFilterOptionResponse> alphaTalents
+        List<HeroCatalogFilterOptionResponse> alphaTalents,
+        List<HeroCatalogFilterOptionResponse> roleGroups,
+        List<HeroCatalogFilterOptionResponse> heroTags
 ) {
 }

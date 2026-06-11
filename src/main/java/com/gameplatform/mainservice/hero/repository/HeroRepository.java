@@ -143,6 +143,19 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                       AND (:familyIdsEmpty = true OR h.family_id IN (:familyIds))
                       AND (:manaSpeedIdsEmpty = true OR h.mana_speed_id IN (:manaSpeedIds))
                       AND (:alphaTalentIdsEmpty = true OR h.alpha_talent_id IN (:alphaTalentIds))
+                      AND (:roleGroupIdsEmpty = true OR EXISTS (
+                            SELECT 1
+                            FROM heroes_tags ht
+                            JOIN hero_tags t ON t.id = ht.tag_id
+                            WHERE ht.hero_id = h.id
+                              AND t.group_id IN (:roleGroupIds)
+                      ))
+                      AND (:tagIdsEmpty = true OR EXISTS (
+                            SELECT 1
+                            FROM heroes_tags ht
+                            WHERE ht.hero_id = h.id
+                              AND ht.tag_id IN (:tagIds)
+                      ))
                     ORDER BY h.release_date DESC NULLS LAST,
                              h.is_costume ASC,
                              COALESCE(h.costume_index, 2147483647) ASC,
@@ -160,6 +173,19 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                       AND (:familyIdsEmpty = true OR h.family_id IN (:familyIds))
                       AND (:manaSpeedIdsEmpty = true OR h.mana_speed_id IN (:manaSpeedIds))
                       AND (:alphaTalentIdsEmpty = true OR h.alpha_talent_id IN (:alphaTalentIds))
+                      AND (:roleGroupIdsEmpty = true OR EXISTS (
+                            SELECT 1
+                            FROM heroes_tags ht
+                            JOIN hero_tags t ON t.id = ht.tag_id
+                            WHERE ht.hero_id = h.id
+                              AND t.group_id IN (:roleGroupIds)
+                      ))
+                      AND (:tagIdsEmpty = true OR EXISTS (
+                            SELECT 1
+                            FROM heroes_tags ht
+                            WHERE ht.hero_id = h.id
+                              AND ht.tag_id IN (:tagIds)
+                      ))
                     """,
             nativeQuery = true
     )
@@ -178,6 +204,10 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             @Param("manaSpeedIdsEmpty") boolean manaSpeedIdsEmpty,
             @Param("alphaTalentIds") List<Long> alphaTalentIds,
             @Param("alphaTalentIdsEmpty") boolean alphaTalentIdsEmpty,
+            @Param("roleGroupIds") List<Long> roleGroupIds,
+            @Param("roleGroupIdsEmpty") boolean roleGroupIdsEmpty,
+            @Param("tagIds") List<Long> tagIds,
+            @Param("tagIdsEmpty") boolean tagIdsEmpty,
             @Param("includeDrafts") boolean includeDrafts,
             Pageable pageable
     );
