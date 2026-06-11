@@ -47,6 +47,9 @@ public class Hero {
     @Column(name = "base_hp")
     private Integer baseHp;
 
+    @Column(name = "base_power")
+    private Integer basePower;
+
     @Column(name = "element_id", nullable = false)
     private Long elementId;
 
