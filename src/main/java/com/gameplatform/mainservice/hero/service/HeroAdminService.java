@@ -4,6 +4,8 @@ import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkillId;
+import com.gameplatform.mainservice.hero.domain.entity.HeroTagId;
+import com.gameplatform.mainservice.hero.domain.entity.HeroTagLink;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
@@ -42,6 +44,7 @@ public class HeroAdminService {
     private final HeroRepository heroRepository;
     private final HeroExpertOpinionRepository heroExpertOpinionRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
+    private final HeroTagLinkRepository heroTagLinkRepository;
 
     private final HeroResponseConverter heroResponseConverter;
     private final HeroPublicResponseConverter heroPublicResponseConverter;
@@ -59,7 +62,8 @@ public class HeroAdminService {
                 .toList();
 
         List<HeroPassiveSkill> allLinks = heroPassiveSkillRepository.findAllByIdHeroIdIn(heroIds);
-        return heroResponseConverter.toResponseList(heroes, allLinks);
+        List<HeroTagLink> allTagLinks = heroTagLinkRepository.findAllByIdHeroIdIn(heroIds);
+        return heroResponseConverter.toResponseList(heroes, allLinks, allTagLinks);
     }
 
     public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<HeroStatus> statuses) {
@@ -97,9 +101,14 @@ public class HeroAdminService {
         }
 
         List<HeroPassiveSkill> allLinks = heroPassiveSkillRepository.findAllByIdHeroIdIn(heroIds);
+        List<HeroTagLink> allTagLinks = heroTagLinkRepository.findAllByIdHeroIdIn(heroIds);
         Map<Long, List<HeroPassiveSkill>> linksByHeroId = new HashMap<>();
         for (HeroPassiveSkill link : allLinks) {
             linksByHeroId.computeIfAbsent(link.getId().getHeroId(), ignored -> new java.util.ArrayList<>()).add(link);
+        }
+        Map<Long, List<HeroTagLink>> tagLinksByHeroId = new HashMap<>();
+        for (HeroTagLink link : allTagLinks) {
+            tagLinksByHeroId.computeIfAbsent(link.getId().getHeroId(), ignored -> new java.util.ArrayList<>()).add(link);
         }
 
         List<HeroResponse> items = heroIds.stream()
@@ -107,7 +116,8 @@ public class HeroAdminService {
                 .filter(java.util.Objects::nonNull)
                 .map(hero -> heroResponseConverter.toResponse(
                         hero,
-                        linksByHeroId.getOrDefault(hero.getId(), List.of())
+                        linksByHeroId.getOrDefault(hero.getId(), List.of()),
+                        tagLinksByHeroId.getOrDefault(hero.getId(), List.of())
                 ))
                 .toList();
 
@@ -205,6 +215,7 @@ public class HeroAdminService {
         Hero savedHero = heroRepository.save(hero);
 
         syncPassiveSkills(savedHero.getId(), request.passiveSkillIds());
+        syncTags(savedHero.getId(), request.tagIds());
         publicCacheEvictionService.evictHeroCaches();
 
         return savedHero;
@@ -223,6 +234,7 @@ public class HeroAdminService {
         Hero savedHero = heroRepository.save(hero);
 
         syncPassiveSkills(savedHero.getId(), request.passiveSkillIds());
+        syncTags(savedHero.getId(), request.tagIds());
         publicCacheEvictionService.evictHeroCaches();
 
         return savedHero;
@@ -236,13 +248,15 @@ public class HeroAdminService {
 
         heroExpertOpinionRepository.deleteAllByHeroId(id);
         heroPassiveSkillRepository.deleteAllByIdHeroId(id);
+        heroTagLinkRepository.deleteAllByIdHeroId(id);
         heroRepository.deleteById(id);
         publicCacheEvictionService.evictHeroCaches();
     }
 
     public HeroResponse buildResponse(Hero hero) {
-        List<HeroPassiveSkill> links = heroPassiveSkillRepository.findAllByIdHeroId(hero.getId());
-        return heroResponseConverter.toResponse(hero, links);
+        List<HeroPassiveSkill> passiveLinks = heroPassiveSkillRepository.findAllByIdHeroId(hero.getId());
+        List<HeroTagLink> tagLinks = heroTagLinkRepository.findAllByIdHeroId(hero.getId());
+        return heroResponseConverter.toResponse(hero, passiveLinks, tagLinks);
     }
 
     private void applyUpsert(Hero hero, HeroUpsertRequest request, String normalizedSlug) {
@@ -253,6 +267,7 @@ public class HeroAdminService {
         hero.setBaseAttack(request.baseAttack());
         hero.setBaseArmor(request.baseArmor());
         hero.setBaseHp(request.baseHp());
+        hero.setBasePower(request.basePower());
         hero.setElementId(request.elementId());
         hero.setRarityId(request.rarityId());
         hero.setHeroClassId(request.heroClassId());
@@ -289,6 +304,24 @@ public class HeroAdminService {
                 .toList();
 
         heroPassiveSkillRepository.saveAll(links);
+    }
+
+    private void syncTags(Long heroId, List<Long> tagIds) {
+        heroTagLinkRepository.deleteAllByIdHeroId(heroId);
+
+        if (tagIds == null || tagIds.isEmpty()) {
+            return;
+        }
+
+        Set<Long> uniqueTagIds = new LinkedHashSet<>(tagIds);
+
+        List<HeroTagLink> links = uniqueTagIds.stream()
+                .map(tagId -> HeroTagLink.builder()
+                        .id(new HeroTagId(heroId, tagId))
+                        .build())
+                .toList();
+
+        heroTagLinkRepository.saveAll(links);
     }
 
     private String normalizeSlug(String slug) {

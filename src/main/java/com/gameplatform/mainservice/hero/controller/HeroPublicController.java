@@ -80,6 +80,8 @@ public class HeroPublicController {
             @RequestParam(required = false) List<Long> familyIds,
             @RequestParam(required = false) List<Long> manaSpeedIds,
             @RequestParam(required = false) List<Long> alphaTalentIds,
+            @RequestParam(required = false) List<Long> roleGroupIds,
+            @RequestParam(required = false) List<Long> tagIds,
             @RequestParam(defaultValue = "false") boolean includeDrafts,
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
@@ -94,6 +96,8 @@ public class HeroPublicController {
                 familyIds,
                 manaSpeedIds,
                 alphaTalentIds,
+                roleGroupIds,
+                tagIds,
                 includeDrafts
         ));
     }

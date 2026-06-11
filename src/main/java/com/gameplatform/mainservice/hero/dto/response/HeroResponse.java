@@ -17,6 +17,7 @@ public record HeroResponse(
         Integer baseAttack,
         Integer baseArmor,
         Integer baseHp,
+        Integer basePower,
         Long elementId,
         Long rarityId,
         Long heroClassId,
@@ -39,6 +40,7 @@ public record HeroResponse(
         OffsetDateTime updatedAt,
         String updatedBy,
         String updatedByEmail,
-        List<Long> passiveSkillIds
+        List<Long> passiveSkillIds,
+        List<Long> tagIds
 ) {
 }

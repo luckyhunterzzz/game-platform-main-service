@@ -1,0 +1,12 @@
+package com.gameplatform.mainservice.hero.dto.response;
+
+import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
+
+public record HeroTagResponse(
+        Long id,
+        LocalizedTextJson nameJson,
+        LocalizedTextJson descriptionJson,
+        Long groupId,
+        LocalizedTextJson groupNameJson
+) {
+}

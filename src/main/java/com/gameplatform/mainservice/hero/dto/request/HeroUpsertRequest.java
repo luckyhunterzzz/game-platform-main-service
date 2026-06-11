@@ -39,6 +39,9 @@ public record HeroUpsertRequest(
         @PositiveOrZero
         Integer baseHp,
 
+        @PositiveOrZero
+        Integer basePower,
+
         @NotNull
         @Positive
         Long elementId,
@@ -94,6 +97,8 @@ public record HeroUpsertRequest(
         @Size(max = 255)
         String updatedByEmail,
 
-        List<Long> passiveSkillIds
+        List<Long> passiveSkillIds,
+
+        List<Long> tagIds
 ) {
 }
