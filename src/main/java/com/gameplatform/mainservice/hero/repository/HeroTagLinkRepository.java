@@ -12,5 +12,7 @@ public interface HeroTagLinkRepository extends JpaRepository<HeroTagLink, HeroTa
 
     List<HeroTagLink> findAllByIdHeroIdIn(List<Long> heroIds);
 
+    boolean existsByIdTagId(Long tagId);
+
     void deleteAllByIdHeroId(Long heroId);
 }

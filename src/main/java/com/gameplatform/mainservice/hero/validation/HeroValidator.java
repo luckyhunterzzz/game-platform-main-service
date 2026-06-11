@@ -67,6 +67,10 @@ public class HeroValidator {
     }
 
     private void validateCommon(Long heroId, HeroUpsertRequest request) {
+        if (request.tagIds() == null || request.tagIds().isEmpty()) {
+            throw new BusinessValidationException("Hero must have at least one tag");
+        }
+
         imageReferenceValidator.validate(request.imageBucketJson() != null ? request.imageBucketJson().ru() : null,
                 request.imageObjectKeyJson() != null ? request.imageObjectKeyJson().ru() : null);
         imageReferenceValidator.validate(request.imageBucketJson() != null ? request.imageBucketJson().en() : null,
