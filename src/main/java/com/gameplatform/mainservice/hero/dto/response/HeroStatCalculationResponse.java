@@ -15,6 +15,7 @@ public record HeroStatCalculationResponse(
         HeroStatBlockResponse costumeBonus,
         HeroStatBlockResponse emblemBonus,
         HeroStatBlockResponse masterEmblemBonus,
-        HeroStatBlockResponse finalStats
+        HeroStatBlockResponse finalStats,
+        Integer finalPower
 ) {
 }

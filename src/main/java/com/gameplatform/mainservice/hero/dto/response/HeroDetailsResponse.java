@@ -27,6 +27,7 @@ public record HeroDetailsResponse(
         Integer baseAttack,
         Integer baseArmor,
         Integer baseHp,
+        Integer basePower,
         CostumeBonusJson costumeBonusJson,
 
         String imageUrl,
