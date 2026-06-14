@@ -196,6 +196,7 @@ public class HeroPublicResponseConverter {
                 currentHero.getBaseAttack(),
                 currentHero.getBaseArmor(),
                 currentHero.getBaseHp(),
+                currentHero.getBasePower(),
                 currentHero.getCostumeBonusJson(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
                 mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),

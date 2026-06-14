@@ -12,6 +12,7 @@ import com.gameplatform.mainservice.hero.dto.response.HeroStatBlockResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroStatCalculationResponse;
 import com.gameplatform.mainservice.hero.repository.HeroClassEmblemBonusProfileRepository;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
+import com.gameplatform.mainservice.hero.repository.RarityRepository;
 import com.gameplatform.mainservice.hero.repository.RarityEvolutionMultiplierRepository;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ import java.math.RoundingMode;
 public class HeroStatCalculationService {
 
     private final HeroRepository heroRepository;
+    private final RarityRepository rarityRepository;
     private final RarityEvolutionMultiplierRepository rarityEvolutionMultiplierRepository;
     private final HeroClassEmblemBonusProfileRepository heroClassEmblemBonusProfileRepository;
 
@@ -118,6 +120,13 @@ public class HeroStatCalculationService {
                 stageStats.hp() + emblemBonus.hp() + masterEmblemBonus.hp()
         );
 
+        Integer finalPower = calculatePower(
+                finalStats,
+                resolveRarityStars(hero.getRarityId()),
+                request.emblemPathType(),
+                includeMasterEmblems
+        );
+
         return new HeroStatCalculationResponse(
                 request.stageCode(),
                 costumeHero != null ? costumeHero.getId() : null,
@@ -130,7 +139,8 @@ public class HeroStatCalculationService {
                 costumeBonus,
                 emblemBonus,
                 masterEmblemBonus,
-                finalStats
+                finalStats,
+                finalPower
         );
     }
 
@@ -145,6 +155,12 @@ public class HeroStatCalculationService {
                 .orElseThrow(() -> new NotFoundException(
                         "RarityEvolutionMultiplier not found for rarityId=" + rarityId + ", stageCode=" + stageCode
                 ));
+    }
+
+    private Integer resolveRarityStars(Long rarityId) {
+        return rarityRepository.findById(rarityId)
+                .orElseThrow(() -> new NotFoundException("Rarity not found: " + rarityId))
+                .getStars();
     }
 
     private Hero resolveTargetCostumeHero(Hero hero, Long costumeHeroId) {
@@ -269,6 +285,36 @@ public class HeroStatCalculationService {
 
     private HeroStatBlockResponse zeroStats() {
         return new HeroStatBlockResponse(0, 0, 0);
+    }
+
+    private Integer calculatePower(
+            HeroStatBlockResponse finalStats,
+            Integer rarityStars,
+            EmblemPathType emblemPathType,
+            boolean includeMasterEmblems
+    ) {
+        Integer starBonus = switch (rarityStars) {
+            case 3 -> 25;
+            case 4 -> 45;
+            case 5 -> 85;
+            default -> null;
+        };
+
+        if (starBonus == null) {
+            return null;
+        }
+
+        int talentCount = emblemPathType == null
+                ? 0
+                : includeMasterEmblems ? 25 : 20;
+
+        return BigDecimal.valueOf(finalStats.attack())
+                .multiply(BigDecimal.valueOf(0.35))
+                .add(BigDecimal.valueOf(finalStats.armor()).multiply(BigDecimal.valueOf(0.28)))
+                .add(BigDecimal.valueOf(finalStats.hp()).multiply(BigDecimal.valueOf(0.14)))
+                .add(BigDecimal.valueOf(40L + starBonus + talentCount * 5L))
+                .setScale(0, RoundingMode.FLOOR)
+                .intValueExact();
     }
 }
 
