@@ -7,6 +7,7 @@ import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminHomeResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminSummaryResponse;
 import com.gameplatform.mainservice.publication.mapper.PublicationResponseConverter;
 import com.gameplatform.mainservice.publication.repository.PublicationRepository;
@@ -30,7 +31,9 @@ import java.util.UUID;
 public class PublicationAdminService {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int DEFAULT_HOME_SECTION_SIZE = 5;
     private static final int MAX_PAGE_SIZE = 50;
+    private static final int MAX_HOME_SECTION_SIZE = 20;
     private static final UUID SYSTEM_ACTOR_ID = new UUID(0L, 0L);
     private static final String PINNED_FIELD = "pinned";
     private static final String PINNED_AT_FIELD = "pinnedAt";
@@ -52,7 +55,7 @@ public class PublicationAdminService {
                                                         int page,
                                                         Integer size) {
         int normalizedPage = Math.max(page, 0);
-        int normalizedSize = Math.min(Math.max(size != null ? size : DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
+        int normalizedSize = normalizePageSize(size, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
 
         PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize, resolveSort(status));
         Page<Publication> publicationPage = type == null
@@ -68,6 +71,18 @@ public class PublicationAdminService {
                 publicationPage.getTotalElements(),
                 publicationPage.getTotalPages(),
                 publicationPage.hasNext()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public PublicationAdminHomeResponse getHomeOverview(Integer size) {
+        int normalizedSize = normalizePageSize(size, DEFAULT_HOME_SECTION_SIZE, MAX_HOME_SECTION_SIZE);
+
+        return new PublicationAdminHomeResponse(
+                getFeedByStatus(PublicationStatus.PUBLISHED, null, 0, normalizedSize),
+                getFeedByStatus(PublicationStatus.DRAFT, null, 0, normalizedSize),
+                getFeedByStatus(PublicationStatus.SCHEDULED, null, 0, normalizedSize),
+                getFeedByStatus(PublicationStatus.PUBLISHED, PublicationType.ALLIANCE, 0, normalizedSize)
         );
     }
 
@@ -217,6 +232,10 @@ public class PublicationAdminService {
                     Sort.Order.desc(CREATED_AT_FIELD)
             );
         };
+    }
+
+    private int normalizePageSize(Integer size, int defaultSize, int maxSize) {
+        return Math.min(Math.max(size != null ? size : defaultSize, 1), maxSize);
     }
 }
 
