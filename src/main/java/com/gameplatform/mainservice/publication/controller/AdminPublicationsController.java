@@ -5,6 +5,7 @@ import com.gameplatform.mainservice.publication.domain.enums.PublicationType;
 import com.gameplatform.mainservice.publication.dto.request.PublicationUpsertRequest;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminFeedResponse;
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminDetailsResponse;
+import com.gameplatform.mainservice.publication.dto.response.PublicationAdminHomeResponse;
 import com.gameplatform.mainservice.publication.service.PublicationAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,13 @@ public class AdminPublicationsController {
             @RequestParam(required = false) Integer size
     ) {
         return publicationAdminService.getFeedByStatus(status, type, page, size);
+    }
+
+    @GetMapping("/home")
+    public PublicationAdminHomeResponse getHomeOverview(
+            @RequestParam(required = false) Integer size
+    ) {
+        return publicationAdminService.getHomeOverview(size);
     }
 
     @GetMapping("/{id}")
