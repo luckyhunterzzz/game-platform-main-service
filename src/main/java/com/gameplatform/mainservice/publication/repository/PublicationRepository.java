@@ -20,6 +20,107 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
 
     Page<Publication> findAllByStatusAndType(PublicationStatus status, PublicationType type, Pageable pageable);
 
+    @Query(value = """
+            SELECT p.*
+            FROM publications p
+            WHERE p.status=:status
+            AND (:type IS NULL OR p.type=:type)
+            AND (
+            :search IS NULL
+            OR COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+            )
+            ORDER BY
+            p.is_pinned DESC,
+            p.pinned_at DESC NULLS LAST,
+            p.published_at DESC NULLS LAST,
+            p.created_at DESC NULLS LAST
+            """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM publications p
+                    WHERE p.status=:status
+                    AND (:type IS NULL OR p.type=:type)
+                    AND (
+                    :search IS NULL
+                    OR COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                    OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                    )
+                    """,
+            nativeQuery = true)
+    Page<Publication> searchPublishedByTitle(
+            @Param("status") String status,
+            @Param("type") String type,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                    SELECT p.*
+                    FROM publications p
+                    WHERE p.status = :status
+                      AND (:type IS NULL OR p.type = :type)
+                      AND (
+                            COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                      )
+                    ORDER BY
+                      p.updated_at DESC NULLS LAST,
+                      p.created_at DESC NULLS LAST
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM publications p
+                    WHERE p.status = :status
+                      AND (:type IS NULL OR p.type = :type)
+                      AND (
+                            COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                      )
+                    """,
+            nativeQuery = true
+    )
+    Page<Publication> searchDraftsByTitle(
+            @Param("status") String status,
+            @Param("type") String type,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                    SELECT p.*
+                    FROM publications p
+                    WHERE p.status = :status
+                      AND (:type IS NULL OR p.type = :type)
+                      AND (
+                            COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                      )
+                    ORDER BY
+                      p.published_at ASC NULLS LAST,
+                      p.created_at DESC NULLS LAST
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM publications p
+                    WHERE p.status = :status
+                      AND (:type IS NULL OR p.type = :type)
+                      AND (
+                            COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                      )
+                    """,
+            nativeQuery = true
+    )
+    Page<Publication> searchScheduledByTitle(
+            @Param("status") String status,
+            @Param("type") String type,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
     List<Publication> findAllByStatusAndPublishedAtLessThanEqual(
             PublicationStatus status,
             OffsetDateTime publishedAt
