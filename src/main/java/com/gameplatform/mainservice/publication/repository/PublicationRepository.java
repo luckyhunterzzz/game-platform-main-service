@@ -121,6 +121,76 @@ public interface PublicationRepository extends JpaRepository<Publication, UUID> 
             Pageable pageable
     );
 
+    @Query(
+            value = """
+                    SELECT p.*
+                    FROM publications p
+                    WHERE p.status = :status
+                      AND p.type <> :excludedType
+                      AND (
+                            COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                      )
+                    ORDER BY
+                      p.is_pinned DESC,
+                      p.pinned_at DESC NULLS LAST,
+                      p.published_at DESC NULLS LAST,
+                      p.created_at DESC NULLS LAST
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM publications p
+                    WHERE p.status = :status
+                      AND p.type <> :excludedType
+                      AND (
+                            COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                      )
+                    """,
+            nativeQuery = true
+    )
+    Page<Publication> searchPublishedPublicFeedByTitleExcludingType(
+            @Param("status") String status,
+            @Param("excludedType") String excludedType,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                    SELECT p.*
+                    FROM publications p
+                    WHERE p.status = :status
+                      AND p.type = :type
+                      AND (
+                            COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                      )
+                    ORDER BY
+                      p.is_pinned DESC,
+                      p.pinned_at DESC NULLS LAST,
+                      p.published_at DESC NULLS LAST,
+                      p.created_at DESC NULLS LAST
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM publications p
+                    WHERE p.status = :status
+                      AND p.type = :type
+                      AND (
+                            COALESCE(p.title_json ->> 'ru', '') ILIKE CONCAT('%', :search, '%')
+                            OR COALESCE(p.title_json ->> 'en', '') ILIKE CONCAT('%', :search, '%')
+                      )
+                    """,
+            nativeQuery = true
+    )
+    Page<Publication> searchPublishedPublicFeedByTypeAndTitle(
+            @Param("status") String status,
+            @Param("type") String type,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
     List<Publication> findAllByStatusAndPublishedAtLessThanEqual(
             PublicationStatus status,
             OffsetDateTime publishedAt
