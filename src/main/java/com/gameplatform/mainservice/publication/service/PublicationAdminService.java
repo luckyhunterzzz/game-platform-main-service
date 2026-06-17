@@ -11,36 +11,27 @@ import com.gameplatform.mainservice.publication.dto.response.PublicationAdminHom
 import com.gameplatform.mainservice.publication.dto.response.PublicationAdminSummaryResponse;
 import com.gameplatform.mainservice.publication.mapper.PublicationResponseConverter;
 import com.gameplatform.mainservice.publication.repository.PublicationRepository;
+import com.gameplatform.mainservice.publication.service.adminstrategies.AdminPublicationFeedLoader;
 import com.gameplatform.mainservice.publication.validation.PublicationValidator;
 import com.gameplatform.mainservice.security.CurrentUserProvider;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class PublicationAdminService {
 
-    private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int DEFAULT_HOME_SECTION_SIZE = 5;
-    private static final int MAX_PAGE_SIZE = 50;
-    private static final int MAX_HOME_SECTION_SIZE = 20;
     private static final UUID SYSTEM_ACTOR_ID = new UUID(0L, 0L);
-    private static final String PINNED_FIELD = "pinned";
-    private static final String PINNED_AT_FIELD = "pinnedAt";
-    private static final String PINNED_UNTIL_FIELD = "pinnedUntil";
-    private static final String PUBLISHED_AT_FIELD = "publishedAt";
-    private static final String UPDATED_AT_FIELD = "updatedAt";
-    private static final String CREATED_AT_FIELD = "createdAt";
 
     private final PublicationRepository publicationRepository;
     private final PublicationResponseConverter publicationResponseConverter;
@@ -48,19 +39,25 @@ public class PublicationAdminService {
     private final CurrentUserProvider currentUserProvider;
     private final Clock clock;
     private final PublicCacheEvictionService publicCacheEvictionService;
+    private final List<AdminPublicationFeedLoader> adminPublicationFeedLoaders;
 
-    @Transactional(readOnly = true)
+    @Value("${app.publications.page-size-default:10}")
+    private int defaultPageSize;
+
+    @Value("${app.publications.page-size-max:50}")
+    private int maxPageSize;
+
     public PublicationAdminFeedResponse getFeedByStatus(PublicationStatus status,
+                                                        String search,
                                                         PublicationType type,
                                                         int page,
                                                         Integer size) {
-        int normalizedPage = Math.max(page, 0);
-        int normalizedSize = normalizePageSize(size, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+        String normalizedSearch = search == null || search.isBlank() ? null : search.trim();
 
-        PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize, resolveSort(status));
-        Page<Publication> publicationPage = type == null
-                ? publicationRepository.findAllByStatus(status, pageable)
-                : publicationRepository.findAllByStatusAndType(status, type, pageable);
+        int normalizedPage = Math.max(page, 0);
+        int normalizedSize = normalizePageSize(size, defaultPageSize, maxPageSize);
+
+        Page<Publication> publicationPage = loadAdminFeed(status, normalizedSearch, type, normalizedPage, normalizedSize);
         List<PublicationAdminSummaryResponse> items =
                 publicationResponseConverter.toAdminSummaryResponseList(publicationPage.getContent());
 
@@ -74,19 +71,17 @@ public class PublicationAdminService {
         );
     }
 
-    @Transactional(readOnly = true)
     public PublicationAdminHomeResponse getHomeOverview(Integer size) {
-        int normalizedSize = normalizePageSize(size, DEFAULT_HOME_SECTION_SIZE, MAX_HOME_SECTION_SIZE);
+        int normalizedSize = normalizePageSize(size, defaultPageSize, maxPageSize);
 
         return new PublicationAdminHomeResponse(
-                getFeedByStatus(PublicationStatus.PUBLISHED, null, 0, normalizedSize),
-                getFeedByStatus(PublicationStatus.DRAFT, null, 0, normalizedSize),
-                getFeedByStatus(PublicationStatus.SCHEDULED, null, 0, normalizedSize),
-                getFeedByStatus(PublicationStatus.PUBLISHED, PublicationType.ALLIANCE, 0, normalizedSize)
+                getFeedByStatus(PublicationStatus.PUBLISHED, null,null, 0, normalizedSize),
+                getFeedByStatus(PublicationStatus.DRAFT, null, null, 0, normalizedSize),
+                getFeedByStatus(PublicationStatus.SCHEDULED, null, null, 0, normalizedSize),
+                getFeedByStatus(PublicationStatus.PUBLISHED, null, PublicationType.ALLIANCE, 0, normalizedSize)
         );
     }
 
-    @Transactional(readOnly = true)
     public PublicationAdminDetailsResponse getById(UUID id) {
         Publication publication = publicationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Publication not found: " + id));
@@ -165,6 +160,7 @@ public class PublicationAdminService {
         for (Publication publication : publicationsToUnpin) {
             publication.setPinned(false);
             publication.setPinnedAt(null);
+            publication.setPinnedUntil(null);
             publication.setUpdatedAt(now);
             publication.setUpdatedBy(SYSTEM_ACTOR_ID);
         }
@@ -214,28 +210,18 @@ public class PublicationAdminService {
         };
     }
 
-    private Sort resolveSort(PublicationStatus status) {
-        return switch (status) {
-            case PUBLISHED -> Sort.by(
-                    Sort.Order.desc(PINNED_FIELD),
-                    Sort.Order.asc(PINNED_UNTIL_FIELD),
-                    Sort.Order.desc(PINNED_AT_FIELD),
-                    Sort.Order.desc(PUBLISHED_AT_FIELD),
-                    Sort.Order.desc(CREATED_AT_FIELD)
-            );
-            case DRAFT, ARCHIVED -> Sort.by(
-                    Sort.Order.desc(UPDATED_AT_FIELD),
-                    Sort.Order.desc(CREATED_AT_FIELD)
-            );
-            case SCHEDULED -> Sort.by(
-                    Sort.Order.asc(PUBLISHED_AT_FIELD),
-                    Sort.Order.desc(CREATED_AT_FIELD)
-            );
-        };
+    private Page<Publication> loadAdminFeed(PublicationStatus status,
+                                            String normalizedSearch,
+                                            PublicationType type, int page, int size) {
+        AdminPublicationFeedLoader loader = adminPublicationFeedLoaders.stream()
+                .filter(candidate -> candidate.supports(status))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No admin publication feed loader for status " + status));
+
+        return loader.load(status, normalizedSearch, type, page, size);
     }
 
     private int normalizePageSize(Integer size, int defaultSize, int maxSize) {
         return Math.min(Math.max(size != null ? size : defaultSize, 1), maxSize);
     }
 }
-

@@ -24,11 +24,12 @@ public class AdminPublicationsController {
     @GetMapping
     public PublicationAdminFeedResponse getFeedByStatus(
             @RequestParam(defaultValue = "PUBLISHED") PublicationStatus status,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) PublicationType type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer size
     ) {
-        return publicationAdminService.getFeedByStatus(status, type, page, size);
+        return publicationAdminService.getFeedByStatus(status, search, type, page, size);
     }
 
     @GetMapping("/home")

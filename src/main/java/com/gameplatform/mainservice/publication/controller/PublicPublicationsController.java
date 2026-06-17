@@ -27,9 +27,10 @@ public class PublicPublicationsController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(required = false) @Min(1) @Max(100) Integer size,
             @RequestParam(defaultValue = "RU") PublicationLanguage language,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) PublicationType type
     ) {
-        return ResponseEntity.ok(publicationPublicService.getLatestPublicFeed(page, size, language, type));
+        return ResponseEntity.ok(publicationPublicService.getLatestPublicFeed(page, size, language, search, type));
     }
 
     @GetMapping("/alliances")
