@@ -1,11 +1,13 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.config.CacheNames;
+import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.*;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
+import com.gameplatform.mainservice.hero.dto.request.BugReportCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
@@ -24,9 +26,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -313,6 +318,27 @@ public class HeroPublicService {
         return self().getDetailsCached(slug, language, canIncludeDrafts(includeDrafts));
     }
 
+    @Transactional
+    public void createBugReport(String slug, BugReportCreateRequest request) {
+        Hero hero = heroRepository.findBySlug(slug)
+                .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
+
+        if (bugReportRepository.existsByHeroIdAndIsOpenTrue(hero.getId())) {
+            throw new BusinessValidationException("An open bug report already exists for this hero");
+        }
+
+        BugReport bugReport = BugReport.builder()
+                .heroId(hero.getId())
+                .authorId(resolveCurrentUserIdOrNull())
+                .authorName(request.authorName().trim())
+                .description(request.description().trim())
+                .isOpen(true)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        bugReportRepository.save(bugReport);
+    }
+
     @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_DETAILS)
     public HeroDetailsResponse getDetailsCached(String slug, HeroLanguage language, boolean includeDraftsAuthorized) {
         HeroDetailsProjection currentHero = findCurrentHero(slug, language, includeDraftsAuthorized);
@@ -494,6 +520,19 @@ public class HeroPublicService {
 
         return authentication.getAuthorities().stream()
                 .anyMatch(authority -> "ROLE_superadmin".equals(authority.getAuthority()));
+    }
+
+    private UUID resolveCurrentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            return null;
+        }
+
+        try {
+            return UUID.fromString(authentication.getName());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     private <T> List<HeroCatalogFilterOptionResponse> buildFilterOptions(
