@@ -14,6 +14,8 @@ import com.gameplatform.mainservice.hero.domain.entity.HeroTagLink;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.HeroBugReportResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroBugReportsAdminResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminVariantsResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroNextCostumeIndexResponse;
@@ -180,6 +182,26 @@ public class HeroAdminService {
         );
     }
 
+    public HeroBugReportsAdminResponse getBugReports(Long heroId) {
+        if (!heroRepository.existsById(heroId)) {
+            throw new NotFoundException("Hero not found: " + heroId);
+        }
+
+        List<BugReport> bugReports = bugReportRepository.findAllByHeroIdOrderByCreatedAtDesc(heroId);
+        HeroBugReportResponse activeReport = bugReports.stream()
+                .filter(BugReport::isOpen)
+                .findFirst()
+                .map(this::toBugReportResponse)
+                .orElse(null);
+
+        List<HeroBugReportResponse> history = bugReports.stream()
+                .filter(report -> !report.isOpen())
+                .map(this::toBugReportResponse)
+                .toList();
+
+        return new HeroBugReportsAdminResponse(activeReport, history);
+    }
+
     public HeroSlugAvailabilityResponse getSlugAvailability(String slug, Long excludeId) {
         String normalizedSlug = normalizeSlug(slug);
         if (!StringUtils.hasText(normalizedSlug)) {
@@ -328,6 +350,20 @@ public class HeroAdminService {
         bugReportRepository.save(openBugReport);
     }
 
+    private HeroBugReportResponse toBugReportResponse(BugReport bugReport) {
+        return new HeroBugReportResponse(
+                bugReport.getId(),
+                bugReport.getHeroId(),
+                bugReport.getAuthorId(),
+                bugReport.getAuthorName(),
+                bugReport.getDescription(),
+                bugReport.isOpen(),
+                bugReport.getCreatedAt(),
+                bugReport.getClosedAt(),
+                bugReport.getClosedBy()
+        );
+    }
+
     private void syncPassiveSkills(Long heroId, List<Long> passiveSkillIds) {
         heroPassiveSkillRepository.deleteAllByIdHeroId(heroId);
 
@@ -380,4 +416,3 @@ public class HeroAdminService {
         return null;
     }
 }
-

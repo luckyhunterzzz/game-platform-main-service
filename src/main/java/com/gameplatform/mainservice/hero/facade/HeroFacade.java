@@ -5,6 +5,7 @@ import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminVariantsResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroBugReportsAdminResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroNextCostumeIndexResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroStatCalculationResponse;
@@ -38,6 +39,10 @@ public class HeroFacade {
 
     public HeroAdminVariantsResponse getVariants(Long id, HeroLanguage language) {
         return heroService.getVariants(id, language);
+    }
+
+    public HeroBugReportsAdminResponse getBugReports(Long id) {
+        return heroService.getBugReports(id);
     }
 
     public HeroSlugAvailabilityResponse getSlugAvailability(String slug, Long excludeId) {
