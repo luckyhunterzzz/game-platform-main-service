@@ -264,6 +264,7 @@ public class HeroAdminService {
         applyUpsert(hero, request, normalizedSlug);
 
         Hero savedHero = heroRepository.save(hero);
+        syncBugReportState(savedHero.getId(), request, savedHero.getUpdatedBy());
 
         syncPassiveSkills(savedHero.getId(), request.passiveSkillIds());
         syncTags(savedHero.getId(), request.tagIds());
