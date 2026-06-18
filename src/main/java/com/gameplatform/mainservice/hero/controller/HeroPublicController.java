@@ -1,12 +1,14 @@
 package com.gameplatform.mainservice.hero.controller;
 
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
+import com.gameplatform.mainservice.hero.dto.request.BugReportCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import jakarta.validation.Valid;
 import com.gameplatform.mainservice.hero.service.HeroPublicService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,6 +59,15 @@ public class HeroPublicController {
             @RequestParam(defaultValue = "RU") HeroLanguage language,
             @RequestParam(defaultValue = "false") boolean includeDrafts ) {
         return ResponseEntity.ok(heroPublicService.getDetails(slug, language, includeDrafts));
+    }
+
+    @PostMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}/report")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createBugReport(
+            @PathVariable String slug,
+            @RequestBody @Valid BugReportCreateRequest request
+    ) {
+        heroPublicService.createBugReport(slug, request);
     }
 
     @PostMapping("/{slug:^(?!filters$|search$|names$)[a-z0-9-]+$}/stats/calculate")

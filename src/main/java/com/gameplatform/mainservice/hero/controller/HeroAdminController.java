@@ -4,6 +4,7 @@ import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminVariantsResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroBugReportsAdminResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroNextCostumeIndexResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroStatCalculationResponse;
@@ -53,6 +54,11 @@ public class HeroAdminController {
             @RequestParam(defaultValue = "RU") HeroLanguage language
     ) {
         return ResponseEntity.ok(heroFacade.getVariants(id, language));
+    }
+
+    @GetMapping("/{id}/bug-reports")
+    public ResponseEntity<HeroBugReportsAdminResponse> getBugReports(@PathVariable Long id) {
+        return ResponseEntity.ok(heroFacade.getBugReports(id));
     }
 
     @GetMapping("/slug-availability")

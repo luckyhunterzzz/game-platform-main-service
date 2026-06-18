@@ -208,12 +208,13 @@ public class HeroImportHeroProcessor {
                 resolution.costumeIndex(),
                 resolution.costumeBonusJson(),
                 resolveReleaseDate(hero.releaseDate()),
-                HeroStatus.DRAFT,
-                request.updatedBy().trim(),
-                trimToNull(request.updatedByEmail()),
-                List.of(),
-                List.of()
-        );
+                 HeroStatus.DRAFT,
+                 request.updatedBy().trim(),
+                 trimToNull(request.updatedByEmail()),
+                 null,
+                 List.of(),
+                 List.of()
+         );
     }
 
     private HeroCatalogImportPlannedHeroResponse buildPlannedHeroResponse(

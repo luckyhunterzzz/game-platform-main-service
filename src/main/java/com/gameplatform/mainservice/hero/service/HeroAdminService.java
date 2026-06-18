@@ -1,6 +1,11 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.config.PublicCacheEvictionService;
+import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
+import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
+import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
+import com.gameplatform.mainservice.hero.converter.HeroResponseConverter;
+import com.gameplatform.mainservice.hero.domain.entity.BugReport;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkill;
 import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkillId;
@@ -9,17 +14,16 @@ import com.gameplatform.mainservice.hero.domain.entity.HeroTagLink;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
+import com.gameplatform.mainservice.hero.dto.response.HeroBugReportResponse;
+import com.gameplatform.mainservice.hero.dto.response.HeroBugReportsAdminResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminVariantsResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminPageResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroNextCostumeIndexResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroSlugAvailabilityResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroVariantSummaryResponse;
-import com.gameplatform.mainservice.hero.converter.HeroResponseConverter;
-import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.repository.*;
 import com.gameplatform.mainservice.hero.validation.HeroValidator;
-import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,6 +49,7 @@ public class HeroAdminService {
     private final HeroExpertOpinionRepository heroExpertOpinionRepository;
     private final HeroPassiveSkillRepository heroPassiveSkillRepository;
     private final HeroTagLinkRepository heroTagLinkRepository;
+    private final BugReportRepository bugReportRepository;
 
     private final HeroResponseConverter heroResponseConverter;
     private final HeroPublicResponseConverter heroPublicResponseConverter;
@@ -63,7 +68,12 @@ public class HeroAdminService {
 
         List<HeroPassiveSkill> allLinks = heroPassiveSkillRepository.findAllByIdHeroIdIn(heroIds);
         List<HeroTagLink> allTagLinks = heroTagLinkRepository.findAllByIdHeroIdIn(heroIds);
-        return heroResponseConverter.toResponseList(heroes, allLinks, allTagLinks);
+        return heroResponseConverter.toResponseList(
+                heroes,
+                allLinks,
+                allTagLinks,
+                bugReportRepository::existsByHeroIdAndIsOpenTrue
+        );
     }
 
     public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<HeroStatus> statuses) {
@@ -117,7 +127,8 @@ public class HeroAdminService {
                 .map(hero -> heroResponseConverter.toResponse(
                         hero,
                         linksByHeroId.getOrDefault(hero.getId(), List.of()),
-                        tagLinksByHeroId.getOrDefault(hero.getId(), List.of())
+                        tagLinksByHeroId.getOrDefault(hero.getId(), List.of()),
+                        bugReportRepository.existsByHeroIdAndIsOpenTrue(hero.getId())
                 ))
                 .toList();
 
@@ -171,6 +182,26 @@ public class HeroAdminService {
         );
     }
 
+    public HeroBugReportsAdminResponse getBugReports(Long heroId) {
+        if (!heroRepository.existsById(heroId)) {
+            throw new NotFoundException("Hero not found: " + heroId);
+        }
+
+        List<BugReport> bugReports = bugReportRepository.findAllByHeroIdOrderByCreatedAtDesc(heroId);
+        HeroBugReportResponse activeReport = bugReports.stream()
+                .filter(BugReport::isOpen)
+                .findFirst()
+                .map(this::toBugReportResponse)
+                .orElse(null);
+
+        List<HeroBugReportResponse> history = bugReports.stream()
+                .filter(report -> !report.isOpen())
+                .map(this::toBugReportResponse)
+                .toList();
+
+        return new HeroBugReportsAdminResponse(activeReport, history);
+    }
+
     public HeroSlugAvailabilityResponse getSlugAvailability(String slug, Long excludeId) {
         String normalizedSlug = normalizeSlug(slug);
         if (!StringUtils.hasText(normalizedSlug)) {
@@ -213,6 +244,7 @@ public class HeroAdminService {
         applyUpsert(hero, request, normalizedSlug);
 
         Hero savedHero = heroRepository.save(hero);
+        syncBugReportState(savedHero.getId(), request, savedHero.getUpdatedBy());
 
         syncPassiveSkills(savedHero.getId(), request.passiveSkillIds());
         syncTags(savedHero.getId(), request.tagIds());
@@ -232,6 +264,7 @@ public class HeroAdminService {
         applyUpsert(hero, request, normalizedSlug);
 
         Hero savedHero = heroRepository.save(hero);
+        syncBugReportState(savedHero.getId(), request, savedHero.getUpdatedBy());
 
         syncPassiveSkills(savedHero.getId(), request.passiveSkillIds());
         syncTags(savedHero.getId(), request.tagIds());
@@ -256,7 +289,12 @@ public class HeroAdminService {
     public HeroResponse buildResponse(Hero hero) {
         List<HeroPassiveSkill> passiveLinks = heroPassiveSkillRepository.findAllByIdHeroId(hero.getId());
         List<HeroTagLink> tagLinks = heroTagLinkRepository.findAllByIdHeroId(hero.getId());
-        return heroResponseConverter.toResponse(hero, passiveLinks, tagLinks);
+        return heroResponseConverter.toResponse(
+                hero,
+                passiveLinks,
+                tagLinks,
+                bugReportRepository.existsByHeroIdAndIsOpenTrue(hero.getId())
+        );
     }
 
     private void applyUpsert(Hero hero, HeroUpsertRequest request, String normalizedSlug) {
@@ -286,6 +324,45 @@ public class HeroAdminService {
         hero.setStatus(request.status());
         hero.setUpdatedBy(request.updatedBy());
         hero.setUpdatedByEmail(resolveUpdatedByEmail(request));
+    }
+
+    private void syncBugReportState(Long heroId, HeroUpsertRequest request, String closedBy) {
+        if (request.hasOpenBugReport() == null) {
+            return;
+        }
+
+        boolean currentHasOpenBugReport = bugReportRepository.existsByHeroIdAndIsOpenTrue(heroId);
+        boolean requestedHasOpenBugReport = request.hasOpenBugReport();
+
+        if (currentHasOpenBugReport == requestedHasOpenBugReport) {
+            return;
+        }
+
+        if (!currentHasOpenBugReport && requestedHasOpenBugReport) {
+            throw new BusinessValidationException("Open bug report cannot be created from hero admin update");
+        }
+
+        BugReport openBugReport = bugReportRepository.findByHeroIdAndIsOpenTrue(heroId)
+                .orElseThrow(() -> new NotFoundException("Open bug report not found for hero: " + heroId));
+
+        openBugReport.setOpen(false);
+        openBugReport.setClosedAt(OffsetDateTime.now(clock));
+        openBugReport.setClosedBy(closedBy);
+        bugReportRepository.save(openBugReport);
+    }
+
+    private HeroBugReportResponse toBugReportResponse(BugReport bugReport) {
+        return new HeroBugReportResponse(
+                bugReport.getId(),
+                bugReport.getHeroId(),
+                bugReport.getAuthorId(),
+                bugReport.getAuthorName(),
+                bugReport.getDescription(),
+                bugReport.isOpen(),
+                bugReport.getCreatedAt(),
+                bugReport.getClosedAt(),
+                bugReport.getClosedBy()
+        );
     }
 
     private void syncPassiveSkills(Long heroId, List<Long> passiveSkillIds) {
@@ -340,4 +417,3 @@ public class HeroAdminService {
         return null;
     }
 }
-

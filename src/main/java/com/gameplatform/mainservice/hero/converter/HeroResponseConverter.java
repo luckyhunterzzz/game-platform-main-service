@@ -17,7 +17,12 @@ public class HeroResponseConverter {
 
     private final MediaUrlResolver mediaUrlResolver;
 
-    public HeroResponse toResponse(Hero entity, List<HeroPassiveSkill> passiveSkills, List<HeroTagLink> tagLinks) {
+    public HeroResponse toResponse(
+            Hero entity,
+            List<HeroPassiveSkill> passiveSkills,
+            List<HeroTagLink> tagLinks,
+            boolean hasOpenBugReport
+    ) {
         List<Long> passiveSkillIds = passiveSkills.stream()
                 .map(link -> link.getId().getPassiveSkillId())
                 .toList();
@@ -57,12 +62,18 @@ public class HeroResponseConverter {
                 entity.getUpdatedAt(),
                 entity.getUpdatedBy(),
                 entity.getUpdatedByEmail(),
+                hasOpenBugReport,
                 passiveSkillIds,
                 tagIds
         );
     }
 
-    public List<HeroResponse> toResponseList(List<Hero> heroes, List<HeroPassiveSkill> allPassiveLinks, List<HeroTagLink> allTagLinks) {
+    public List<HeroResponse> toResponseList(
+            List<Hero> heroes,
+            List<HeroPassiveSkill> allPassiveLinks,
+            List<HeroTagLink> allTagLinks,
+            java.util.function.Function<Long, Boolean> hasOpenBugReportResolver
+    ) {
         return heroes.stream()
                 .map(hero -> {
                     List<HeroPassiveSkill> heroLinks = allPassiveLinks.stream()
@@ -72,7 +83,12 @@ public class HeroResponseConverter {
                             .filter(link -> link.getId().getHeroId().equals(hero.getId()))
                             .toList();
 
-                    return toResponse(hero, heroLinks, heroTagLinks);
+                    return toResponse(
+                            hero,
+                            heroLinks,
+                            heroTagLinks,
+                            hasOpenBugReportResolver.apply(hero.getId())
+                    );
                 })
                 .toList();
     }

@@ -117,6 +117,7 @@ public class HeroPublicResponseConverter {
             List<DescribedReferenceResponse> tags,
             List<PassiveSkill> passiveSkills,
             List<Hero> costumes,
+            boolean hasOpenBugReport,
             String locale
     ) {
         return new HeroDetailsResponse(
@@ -198,6 +199,7 @@ public class HeroPublicResponseConverter {
                 currentHero.getBaseHp(),
                 currentHero.getBasePower(),
                 currentHero.getCostumeBonusJson(),
+                hasOpenBugReport,
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
                 mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
                 hero.getReleaseDate(),

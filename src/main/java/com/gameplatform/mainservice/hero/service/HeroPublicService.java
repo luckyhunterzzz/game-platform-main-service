@@ -1,11 +1,13 @@
 package com.gameplatform.mainservice.hero.service;
 
 import com.gameplatform.mainservice.config.CacheNames;
+import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.*;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
+import com.gameplatform.mainservice.hero.dto.request.BugReportCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
@@ -13,6 +15,8 @@ import com.gameplatform.mainservice.hero.repository.*;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
+import com.gameplatform.mainservice.kafka.event.HeroBugReportCreatedEvent;
+import com.gameplatform.mainservice.outbox.service.OutboxEventService;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
@@ -24,9 +28,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -45,6 +52,8 @@ public class HeroPublicService {
     private final HeroTagGroupRepository heroTagGroupRepository;
     private final HeroTagRepository heroTagRepository;
     private final HeroTagLinkRepository heroTagLinkRepository;
+    private final BugReportRepository bugReportRepository;
+    private final OutboxEventService outboxEventService;
     private final HeroStatCalculationService heroStatCalculationService;
     private final HeroPublicVisibilityService heroPublicVisibilityService;
     private final ObjectProvider<HeroPublicService> selfProvider;
@@ -312,6 +321,46 @@ public class HeroPublicService {
         return self().getDetailsCached(slug, language, canIncludeDrafts(includeDrafts));
     }
 
+    @Transactional
+    public void createBugReport(String slug, BugReportCreateRequest request) {
+        Hero hero = heroRepository.findBySlug(slug)
+                .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
+
+        if (bugReportRepository.existsByHeroIdAndIsOpenTrue(hero.getId())) {
+            throw new BusinessValidationException("An open bug report already exists for this hero");
+        }
+
+        OffsetDateTime createdAt = OffsetDateTime.now();
+        UUID authorId = resolveCurrentUserIdOrNull();
+        String authorName = request.authorName().trim();
+        String description = request.description().trim();
+
+        BugReport bugReport = BugReport.builder()
+                .heroId(hero.getId())
+                .authorId(authorId)
+                .authorName(authorName)
+                .description(description)
+                .isOpen(true)
+                .createdAt(createdAt)
+                .build();
+
+        BugReport savedBugReport = bugReportRepository.save(bugReport);
+
+        HeroBugReportCreatedEvent event = new HeroBugReportCreatedEvent(
+                UUID.randomUUID(),
+                savedBugReport.getId(),
+                hero.getId(),
+                hero.getSlug(),
+                resolveHeroDisplayName(hero),
+                authorId,
+                authorName,
+                description,
+                createdAt
+        );
+
+        outboxEventService.enqueueHeroBugReportCreated(savedBugReport.getId(), event);
+    }
+
     @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_DETAILS)
     public HeroDetailsResponse getDetailsCached(String slug, HeroLanguage language, boolean includeDraftsAuthorized) {
         HeroDetailsProjection currentHero = findCurrentHero(slug, language, includeDraftsAuthorized);
@@ -383,6 +432,7 @@ public class HeroPublicService {
                 : heroTagGroupRepository.findAllById(roleGroupIds);
         List<PassiveSkill> passiveSkills = findPassiveSkills(hero.getId());
         List<Hero> costumes = findCostumes(hero, includeDraftsAuthorized);
+        boolean hasOpenBugReport = bugReportRepository.existsByHeroIdAndIsOpenTrue(hero.getId());
 
         return converter.toDetailsResponse(
                 hero,
@@ -412,6 +462,7 @@ public class HeroPublicService {
                         .toList(),
                 passiveSkills,
                 costumes,
+                hasOpenBugReport,
                 locale
         );
     }
@@ -493,6 +544,40 @@ public class HeroPublicService {
                 .anyMatch(authority -> "ROLE_superadmin".equals(authority.getAuthority()));
     }
 
+    private UUID resolveCurrentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            return null;
+        }
+
+        try {
+            return UUID.fromString(authentication.getName());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private String resolveHeroDisplayName(Hero hero) {
+        if (hero == null) {
+            return null;
+        }
+
+        LocalizedTextJson nameJson = hero.getNameJson();
+        if (nameJson == null) {
+            return hero.getSlug();
+        }
+
+        if (nameJson.en() != null && !nameJson.en().isBlank()) {
+            return nameJson.en().trim();
+        }
+
+        if (nameJson.ru() != null && !nameJson.ru().isBlank()) {
+            return nameJson.ru().trim();
+        }
+
+        return hero.getSlug();
+    }
+
     private <T> List<HeroCatalogFilterOptionResponse> buildFilterOptions(
             List<T> items,
             String locale,
@@ -556,4 +641,3 @@ public class HeroPublicService {
         return selfProvider.getObject();
     }
 }
-
