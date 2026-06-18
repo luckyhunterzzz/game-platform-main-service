@@ -45,6 +45,7 @@ public class HeroPublicService {
     private final HeroTagGroupRepository heroTagGroupRepository;
     private final HeroTagRepository heroTagRepository;
     private final HeroTagLinkRepository heroTagLinkRepository;
+    private final BugReportRepository bugReportRepository;
     private final HeroStatCalculationService heroStatCalculationService;
     private final HeroPublicVisibilityService heroPublicVisibilityService;
     private final ObjectProvider<HeroPublicService> selfProvider;
@@ -383,6 +384,7 @@ public class HeroPublicService {
                 : heroTagGroupRepository.findAllById(roleGroupIds);
         List<PassiveSkill> passiveSkills = findPassiveSkills(hero.getId());
         List<Hero> costumes = findCostumes(hero, includeDraftsAuthorized);
+        boolean hasOpenBugReport = bugReportRepository.existsByHeroIdAndIsOpenTrue(hero.getId());
 
         return converter.toDetailsResponse(
                 hero,
@@ -412,6 +414,7 @@ public class HeroPublicService {
                         .toList(),
                 passiveSkills,
                 costumes,
+                hasOpenBugReport,
                 locale
         );
     }
@@ -556,4 +559,3 @@ public class HeroPublicService {
         return selfProvider.getObject();
     }
 }
-
