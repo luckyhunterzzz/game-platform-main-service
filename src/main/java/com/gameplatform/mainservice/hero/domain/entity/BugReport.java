@@ -32,6 +32,6 @@ public class BugReport {
     private OffsetDateTime createdAt;
     @Column(name = "closed_at")
     private OffsetDateTime closedAt;
-    @Column(name = "closed_by")
-    private UUID closedBy;
+    @Column(name = "closed_by", length = 100)
+    private String closedBy;
 }

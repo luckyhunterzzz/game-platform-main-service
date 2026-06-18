@@ -8,7 +8,7 @@ CREATE TABLE bug_reports
     is_open     BOOLEAN                  NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
     closed_at   TIMESTAMP WITH TIME ZONE NULL,
-    closed_by   UUID NULL
+    closed_by   VARCHAR(100) NULL
 );
 
 CREATE UNIQUE INDEX idx_open_bug_report_on_hero
