@@ -30,6 +30,8 @@ public record HeroDetailsResponse(
         Integer basePower,
         CostumeBonusJson costumeBonusJson,
 
+        boolean hasOpenBugReport,
+
         String imageUrl,
         String previewUrl,
         LocalDate releaseDate,

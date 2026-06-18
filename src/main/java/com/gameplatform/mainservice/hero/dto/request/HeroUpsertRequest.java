@@ -97,6 +97,8 @@ public record HeroUpsertRequest(
         @Size(max = 255)
         String updatedByEmail,
 
+        Boolean hasOpenBugReport,
+
         List<Long> passiveSkillIds,
 
         List<Long> tagIds

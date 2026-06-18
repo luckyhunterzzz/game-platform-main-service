@@ -40,6 +40,7 @@ public record HeroResponse(
         OffsetDateTime updatedAt,
         String updatedBy,
         String updatedByEmail,
+        boolean hasOpenBugReport,
         List<Long> passiveSkillIds,
         List<Long> tagIds
 ) {
