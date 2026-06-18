@@ -38,6 +38,9 @@ publication:
     publish-cron: "0 0,15,30,45 * * * *"
 
 app:
+  outbox:
+    batch-size: 100
+    dispatch-cron: "0 */1 * * * *"
   kafka:
     topics:
       hero-bug-report-created: hero-bug-report-created

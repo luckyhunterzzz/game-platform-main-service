@@ -34,6 +34,9 @@ springdoc:
     enabled: false
 
 app:
+  outbox:
+    batch-size: ${APP_OUTBOX_BATCH_SIZE:100}
+    dispatch-cron: ${APP_OUTBOX_DISPATCH_CRON:0 */1 * * * *}
   kafka:
     topics:
       hero-bug-report-created: ${APP_KAFKA_TOPIC_HERO_BUG_REPORT_CREATED:hero-bug-report-created}

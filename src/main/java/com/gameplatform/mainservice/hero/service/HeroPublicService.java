@@ -16,7 +16,7 @@ import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjec
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
 import com.gameplatform.mainservice.kafka.event.HeroBugReportCreatedEvent;
-import com.gameplatform.mainservice.kafka.producer.HeroBugReportEventProducer;
+import com.gameplatform.mainservice.outbox.service.OutboxEventService;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
@@ -53,7 +53,7 @@ public class HeroPublicService {
     private final HeroTagRepository heroTagRepository;
     private final HeroTagLinkRepository heroTagLinkRepository;
     private final BugReportRepository bugReportRepository;
-    private final HeroBugReportEventProducer heroBugReportEventProducer;
+    private final OutboxEventService outboxEventService;
     private final HeroStatCalculationService heroStatCalculationService;
     private final HeroPublicVisibilityService heroPublicVisibilityService;
     private final ObjectProvider<HeroPublicService> selfProvider;
@@ -358,7 +358,7 @@ public class HeroPublicService {
                 createdAt
         );
 
-        heroBugReportEventProducer.sendHeroBugReportCreated(event);
+        outboxEventService.enqueueHeroBugReportCreated(savedBugReport.getId(), event);
     }
 
     @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_DETAILS)
