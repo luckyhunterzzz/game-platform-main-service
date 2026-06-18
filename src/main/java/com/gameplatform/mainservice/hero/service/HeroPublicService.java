@@ -15,6 +15,8 @@ import com.gameplatform.mainservice.hero.repository.*;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
+import com.gameplatform.mainservice.kafka.event.HeroBugReportCreatedEvent;
+import com.gameplatform.mainservice.kafka.producer.HeroBugReportEventProducer;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import com.gameplatform.mainservice.settings.service.HeroPublicVisibilityService;
@@ -51,6 +53,7 @@ public class HeroPublicService {
     private final HeroTagRepository heroTagRepository;
     private final HeroTagLinkRepository heroTagLinkRepository;
     private final BugReportRepository bugReportRepository;
+    private final HeroBugReportEventProducer heroBugReportEventProducer;
     private final HeroStatCalculationService heroStatCalculationService;
     private final HeroPublicVisibilityService heroPublicVisibilityService;
     private final ObjectProvider<HeroPublicService> selfProvider;
@@ -327,16 +330,35 @@ public class HeroPublicService {
             throw new BusinessValidationException("An open bug report already exists for this hero");
         }
 
+        OffsetDateTime createdAt = OffsetDateTime.now();
+        UUID authorId = resolveCurrentUserIdOrNull();
+        String authorName = request.authorName().trim();
+        String description = request.description().trim();
+
         BugReport bugReport = BugReport.builder()
                 .heroId(hero.getId())
-                .authorId(resolveCurrentUserIdOrNull())
-                .authorName(request.authorName().trim())
-                .description(request.description().trim())
+                .authorId(authorId)
+                .authorName(authorName)
+                .description(description)
                 .isOpen(true)
-                .createdAt(OffsetDateTime.now())
+                .createdAt(createdAt)
                 .build();
 
-        bugReportRepository.save(bugReport);
+        BugReport savedBugReport = bugReportRepository.save(bugReport);
+
+        HeroBugReportCreatedEvent event = new HeroBugReportCreatedEvent(
+                UUID.randomUUID(),
+                savedBugReport.getId(),
+                hero.getId(),
+                hero.getSlug(),
+                resolveHeroDisplayName(hero),
+                authorId,
+                authorName,
+                description,
+                createdAt
+        );
+
+        heroBugReportEventProducer.sendHeroBugReportCreated(event);
     }
 
     @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_DETAILS)
@@ -533,6 +555,27 @@ public class HeroPublicService {
         } catch (IllegalArgumentException ex) {
             return null;
         }
+    }
+
+    private String resolveHeroDisplayName(Hero hero) {
+        if (hero == null) {
+            return null;
+        }
+
+        LocalizedTextJson nameJson = hero.getNameJson();
+        if (nameJson == null) {
+            return hero.getSlug();
+        }
+
+        if (nameJson.en() != null && !nameJson.en().isBlank()) {
+            return nameJson.en().trim();
+        }
+
+        if (nameJson.ru() != null && !nameJson.ru().isBlank()) {
+            return nameJson.ru().trim();
+        }
+
+        return hero.getSlug();
     }
 
     private <T> List<HeroCatalogFilterOptionResponse> buildFilterOptions(
