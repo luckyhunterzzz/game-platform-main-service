@@ -19,6 +19,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findAllByStatusOrderByUpdatedAtDesc(EventStatus status);
 
+    Page<Event> findAllByStatusOrderByUpdatedAtDesc(EventStatus status, Pageable pageable);
+
     boolean existsBySlug(String slug);
 
     boolean existsBySlugAndIdNot(String slug, Long id);
@@ -53,5 +55,18 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("status") String status,
             @Param("search") String search,
             Pageable pageable
+    );
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM Event e
+            LEFT JOIN FETCH e.blocks b
+            WHERE e.slug = :slug
+              AND e.status = :status
+            ORDER BY b.position ASC
+            """)
+    Optional<Event> findBySlugAndStatusWithBlocks(
+            @Param("slug") String slug,
+            @Param("status") EventStatus status
     );
 }
