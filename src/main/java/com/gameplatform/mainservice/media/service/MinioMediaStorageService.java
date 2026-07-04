@@ -42,6 +42,11 @@ public class MinioMediaStorageService implements MediaStorageService {
         return uploadImage(bytes, contentType, "heroes");
     }
 
+    @Override
+    public StoredImage uploadEventImage(MultipartFile file) {
+        return uploadImage(file, "events");
+    }
+
     private StoredImage uploadImage(MultipartFile file, String folder) {
 
         imageUploadValidator.validate(file);
