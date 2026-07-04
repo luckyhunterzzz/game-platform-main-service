@@ -9,7 +9,9 @@ import com.gameplatform.mainservice.event.dto.request.EventUpsertRequest;
 import com.gameplatform.mainservice.event.dto.response.EventAdminDetailsResponse;
 import com.gameplatform.mainservice.event.dto.response.EventAdminSummaryResponse;
 import com.gameplatform.mainservice.event.mapper.EventResponseConverter;
+import com.gameplatform.mainservice.event.repository.EventBlockRepository;
 import com.gameplatform.mainservice.event.repository.EventRepository;
+import com.gameplatform.mainservice.event.repository.projection.EventBlockCountProjection;
 import com.gameplatform.mainservice.event.validation.EventValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
@@ -17,6 +19,7 @@ import com.gameplatform.mainservice.security.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,7 @@ public class EventAdminService {
     private static final int TEMP_POSITION_BASE = 10_000;
 
     private final EventRepository eventRepository;
+    private final EventBlockRepository eventBlockRepository;
     private final EventResponseConverter eventResponseConverter;
     private final EventValidator eventValidator;
     private final CurrentUserProvider currentUserProvider;
@@ -62,15 +66,22 @@ public class EventAdminService {
         String normalizedSearch = normalizeSearch(search);
         String statusValue = status == null ? null : status.name();
 
-        Page<EventAdminSummaryResponse> responsePage = eventRepository
-                .findEventsForAdminCatalog(statusValue, normalizedSearch, pageable)
-                .map(eventResponseConverter::toAdminSummaryResponse);
+        Page<Event> eventPage = eventRepository.findEventsForAdminCatalog(statusValue, normalizedSearch, pageable);
+        Map<Long, Long> blockCountsByEventId = loadBlockCounts(eventPage.getContent());
 
-        return CatalogPageResponse.from(responsePage);
+        List<EventAdminSummaryResponse> items = eventPage.getContent().stream()
+                .map(event -> eventResponseConverter.toAdminSummaryResponse(
+                        event,
+                        blockCountsByEventId.getOrDefault(event.getId(), 0L)
+                ))
+                .toList();
+
+        return CatalogPageResponse.from(new PageImpl<>(items, pageable, eventPage.getTotalElements()));
     }
 
     public EventAdminDetailsResponse getBySlug(String slug) {
-        return eventResponseConverter.toAdminDetailsResponse(getEvent(slug));
+        Event event = getEvent(slug);
+        return toAdminDetailsResponse(event);
     }
 
     @Transactional
@@ -90,7 +101,7 @@ public class EventAdminService {
         applyEventUpsert(event, request, actorId, now);
 
         Event savedEvent = eventRepository.save(event);
-        return eventResponseConverter.toAdminDetailsResponse(savedEvent);
+        return toAdminDetailsResponse(savedEvent);
     }
 
     @Transactional
@@ -104,12 +115,13 @@ public class EventAdminService {
         applyEventUpsert(event, request, actorId, now);
 
         Event savedEvent = eventRepository.save(event);
-        return eventResponseConverter.toAdminDetailsResponse(savedEvent);
+        return toAdminDetailsResponse(savedEvent);
     }
 
     @Transactional
     public void delete(String slug) {
         Event event = getEvent(slug);
+        eventBlockRepository.deleteAllByEventId(event.getId());
         eventRepository.delete(event);
     }
 
@@ -121,10 +133,11 @@ public class EventAdminService {
         UUID actorId = currentUserProvider.getUserId();
 
         Event event = getEvent(slug);
+        List<EventBlock> blocks = getBlocks(event.getId());
 
         EventBlock block = EventBlock.builder()
-                .event(event)
-                .position(nextPosition(event))
+                .eventId(event.getId())
+                .position(nextPosition(blocks))
                 .createdBy(actorId)
                 .updatedBy(actorId)
                 .createdAt(now)
@@ -132,11 +145,10 @@ public class EventAdminService {
                 .build();
 
         applyBlockUpsert(block, request, actorId, now);
-        event.getBlocks().add(block);
+        eventBlockRepository.save(block);
         touchEvent(event, actorId, now);
-
         Event savedEvent = eventRepository.save(event);
-        return eventResponseConverter.toAdminDetailsResponse(savedEvent);
+        return toAdminDetailsResponse(savedEvent);
     }
 
     @Transactional
@@ -147,13 +159,13 @@ public class EventAdminService {
         UUID actorId = currentUserProvider.getUserId();
 
         Event event = getEvent(slug);
-        EventBlock block = getBlock(event, blockId);
+        EventBlock block = getBlock(event.getId(), blockId);
 
         applyBlockUpsert(block, request, actorId, now);
+        eventBlockRepository.save(block);
         touchEvent(event, actorId, now);
-
         Event savedEvent = eventRepository.save(event);
-        return eventResponseConverter.toAdminDetailsResponse(savedEvent);
+        return toAdminDetailsResponse(savedEvent);
     }
 
     @Transactional
@@ -162,14 +174,13 @@ public class EventAdminService {
         UUID actorId = currentUserProvider.getUserId();
 
         Event event = getEvent(slug);
-        EventBlock block = getBlock(event, blockId);
+        EventBlock block = getBlock(event.getId(), blockId);
 
-        event.getBlocks().remove(block);
+        eventBlockRepository.delete(block);
+        List<EventBlock> remainingBlocks = getBlocks(event.getId());
+        reindexBlocks(remainingBlocks, actorId, now);
+        eventBlockRepository.saveAll(remainingBlocks);
         touchEvent(event, actorId, now);
-
-        eventRepository.saveAndFlush(event);
-
-        reindexBlocks(event.getBlocks(), actorId, now);
         eventRepository.save(event);
     }
 
@@ -179,25 +190,50 @@ public class EventAdminService {
         UUID actorId = currentUserProvider.getUserId();
 
         Event event = getEvent(slug);
-        eventValidator.validateBlockReorder(event, request);
+        List<EventBlock> blocks = getBlocks(event.getId());
+        eventValidator.validateBlockReorder(blocks, request);
 
-        assignTemporaryPositions(event.getBlocks());
-        touchEvent(event, actorId, now);
-        eventRepository.saveAndFlush(event);
+        assignTemporaryPositions(blocks);
+        eventBlockRepository.saveAllAndFlush(blocks);
 
-        Map<Long, EventBlock> blocksById = event.getBlocks().stream()
+        Map<Long, EventBlock> blocksById = blocks.stream()
                 .collect(Collectors.toMap(EventBlock::getId, Function.identity()));
 
-        int position = 1;
-        for (Long blockId : request.blockIds()) {
-            EventBlock block = blocksById.get(blockId);
-            block.setPosition(position++);
+        for (EventBlockReorderRequest.Item item : request.items()) {
+            EventBlock block = blocksById.get(item.blockId());
+            block.setPosition(item.position());
             block.setUpdatedBy(actorId);
             block.setUpdatedAt(now);
         }
 
+        eventBlockRepository.saveAllAndFlush(blocks);
+        touchEvent(event, actorId, now);
         Event savedEvent = eventRepository.save(event);
-        return eventResponseConverter.toAdminDetailsResponse(savedEvent);
+        return toAdminDetailsResponse(savedEvent);
+    }
+
+    private EventAdminDetailsResponse toAdminDetailsResponse(Event event) {
+        return eventResponseConverter.toAdminDetailsResponse(event, getBlocks(event.getId()));
+    }
+
+    private List<EventBlock> getBlocks(Long eventId) {
+        return eventBlockRepository.findAllByEventIdOrderByPositionAsc(eventId);
+    }
+
+    private Map<Long, Long> loadBlockCounts(List<Event> events) {
+        List<Long> eventIds = events.stream()
+                .map(Event::getId)
+                .toList();
+
+        if (eventIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return eventBlockRepository.countByEventIds(eventIds).stream()
+                .collect(Collectors.toMap(
+                        EventBlockCountProjection::getEventId,
+                        EventBlockCountProjection::getBlockCount
+                ));
     }
 
     private Event getEvent(String slug) {
@@ -205,10 +241,9 @@ public class EventAdminService {
                 .orElseThrow(() -> new NotFoundException("Event not found: " + slug));
     }
 
-    private EventBlock getBlock(Event event, Long blockId) {
-        return event.getBlocks().stream()
-                .filter(block -> block.getId().equals(blockId))
-                .findFirst()
+    private EventBlock getBlock(Long eventId, Long blockId) {
+        return eventBlockRepository.findById(blockId)
+                .filter(block -> block.getEventId().equals(eventId))
                 .orElseThrow(() -> new NotFoundException("Event block not found: " + blockId));
     }
 
@@ -237,32 +272,32 @@ public class EventAdminService {
         event.setUpdatedAt(now);
     }
 
-    private int nextPosition(Event event) {
-        return event.getBlocks().stream()
+    private int nextPosition(List<EventBlock> blocks) {
+        return blocks.stream()
                 .map(EventBlock::getPosition)
                 .max(Comparator.naturalOrder())
                 .orElse(0) + 1;
     }
 
+    private void assignTemporaryPositions(List<EventBlock> blocks) {
+        int tempPosition = TEMP_POSITION_BASE;
+        for (EventBlock block : blocks) {
+            block.setPosition(tempPosition++);
+        }
+    }
+
     private void reindexBlocks(List<EventBlock> blocks, UUID actorId, OffsetDateTime now) {
         int position = 1;
-        for (EventBlock block : blocks.stream().sorted(Comparator.comparing(EventBlock::getPosition)).toList()) {
+        for (EventBlock block : blocks) {
             block.setPosition(position++);
             block.setUpdatedBy(actorId);
             block.setUpdatedAt(now);
         }
     }
 
-    private void assignTemporaryPositions(List<EventBlock> blocks) {
-        int position = TEMP_POSITION_BASE;
-        for (EventBlock block : blocks) {
-            block.setPosition(position++);
-        }
-    }
-
     private int normalizePageSize(Integer size) {
-        int resolvedSize = size != null ? size : defaultPageSize;
-        return Math.min(Math.max(resolvedSize, 1), maxPageSize);
+        int requestedSize = size != null ? size : defaultPageSize;
+        return Math.min(Math.max(requestedSize, 1), maxPageSize);
     }
 
     private String normalizeSearch(String search) {
@@ -270,7 +305,7 @@ public class EventAdminService {
             return null;
         }
 
-        return search.trim();
+        return search.trim().toLowerCase(Locale.ROOT);
     }
 
     private String normalizeSlug(String slug) {
@@ -278,10 +313,11 @@ public class EventAdminService {
     }
 
     private String trimToNull(String value) {
-        if (value == null || value.isBlank()) {
+        if (value == null) {
             return null;
         }
 
-        return value.trim();
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

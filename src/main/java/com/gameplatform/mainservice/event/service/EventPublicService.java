@@ -1,12 +1,14 @@
 package com.gameplatform.mainservice.event.service;
 
 import com.gameplatform.mainservice.event.domain.entity.Event;
+import com.gameplatform.mainservice.event.domain.entity.EventBlock;
 import com.gameplatform.mainservice.event.domain.enums.EventLanguage;
 import com.gameplatform.mainservice.event.domain.enums.EventStatus;
 import com.gameplatform.mainservice.event.dto.response.EventFeedResponse;
 import com.gameplatform.mainservice.event.dto.response.EventResponse;
 import com.gameplatform.mainservice.event.dto.response.EventSummaryResponse;
 import com.gameplatform.mainservice.event.mapper.EventResponseConverter;
+import com.gameplatform.mainservice.event.repository.EventBlockRepository;
 import com.gameplatform.mainservice.event.repository.EventRepository;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import java.util.Locale;
 public class EventPublicService {
 
     private final EventRepository eventRepository;
+    private final EventBlockRepository eventBlockRepository;
     private final EventResponseConverter eventResponseConverter;
 
     @Value("${app.events.page-size-default:10}")
@@ -55,10 +58,10 @@ public class EventPublicService {
     }
 
     public EventResponse getBySlug(String slug, EventLanguage language) {
-        Event event = eventRepository.findBySlugAndStatusWithBlocks(normalizeSlug(slug), EventStatus.READY)
+        Event event = eventRepository.findBySlugAndStatus(normalizeSlug(slug), EventStatus.READY)
                 .orElseThrow(() -> new NotFoundException("Event not found: " + slug));
-
-        return eventResponseConverter.toPublicResponse(event, language);
+        List<EventBlock> blocks = eventBlockRepository.findAllByEventIdOrderByPositionAsc(event.getId());
+        return eventResponseConverter.toPublicResponse(event, language, blocks);
     }
 
     private int normalizePageSize(Integer size) {

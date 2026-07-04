@@ -56,17 +56,4 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("search") String search,
             Pageable pageable
     );
-
-    @Query("""
-            SELECT DISTINCT e
-            FROM Event e
-            LEFT JOIN FETCH e.blocks b
-            WHERE e.slug = :slug
-              AND e.status = :status
-            ORDER BY b.position ASC
-            """)
-    Optional<Event> findBySlugAndStatusWithBlocks(
-            @Param("slug") String slug,
-            @Param("status") EventStatus status
-    );
 }

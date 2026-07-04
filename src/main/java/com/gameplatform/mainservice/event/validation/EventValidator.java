@@ -1,6 +1,6 @@
 package com.gameplatform.mainservice.event.validation;
 
-import com.gameplatform.mainservice.event.domain.entity.Event;
+import com.gameplatform.mainservice.event.domain.entity.EventBlock;
 import com.gameplatform.mainservice.event.dto.request.EventBlockReorderRequest;
 import com.gameplatform.mainservice.event.dto.request.EventBlockUpsertRequest;
 import com.gameplatform.mainservice.event.dto.request.EventUpsertRequest;
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -37,26 +38,44 @@ public class EventValidator {
         validateLocalizedText(request.nameJson(), "nameJson");
     }
 
-    public void validateBlockReorder(Event event, EventBlockReorderRequest request) {
-        List<Long> requestedIds = request.blockIds();
-        if (requestedIds == null || requestedIds.isEmpty()) {
-            throw new BusinessValidationException("blockIds must not be empty");
+    public void validateBlockReorder(List<EventBlock> actualBlocks, EventBlockReorderRequest request) {
+        List<EventBlockReorderRequest.Item> items = request.items();
+        if (items == null || items.isEmpty()) {
+            throw new BusinessValidationException("items must not be empty");
         }
 
-        if (requestedIds.stream().anyMatch(id -> id == null)) {
-            throw new BusinessValidationException("blockIds must not contain null values");
+        if (items.stream().anyMatch(item -> item == null || item.blockId() == null || item.position() == null)) {
+            throw new BusinessValidationException("each reorder item must contain blockId and position");
         }
 
-        if (requestedIds.size() != new HashSet<>(requestedIds).size()) {
+        if (items.size() != new HashSet<>(items.stream().map(EventBlockReorderRequest.Item::blockId).toList()).size()) {
             throw new BusinessValidationException("blockIds must not contain duplicates");
         }
 
-        Set<Long> actualIds = event.getBlocks().stream()
-                .map(block -> block.getId())
-                .collect(java.util.stream.Collectors.toSet());
+        if (items.size() != new HashSet<>(items.stream().map(EventBlockReorderRequest.Item::position).toList()).size()) {
+            throw new BusinessValidationException("positions must not contain duplicates");
+        }
 
-        if (actualIds.size() != requestedIds.size() || !actualIds.containsAll(requestedIds)) {
-            throw new BusinessValidationException("blockIds must contain every block of the event exactly once");
+        int expectedSize = actualBlocks.size();
+        Set<Integer> requestedPositions = items.stream()
+                .map(EventBlockReorderRequest.Item::position)
+                .collect(Collectors.toSet());
+
+        for (int position = 1; position <= expectedSize; position++) {
+            if (!requestedPositions.contains(position)) {
+                throw new BusinessValidationException("positions must contain every value from 1 to " + expectedSize);
+            }
+        }
+
+        Set<Long> actualIds = actualBlocks.stream()
+                .map(EventBlock::getId)
+                .collect(Collectors.toSet());
+        Set<Long> requestedIds = items.stream()
+                .map(EventBlockReorderRequest.Item::blockId)
+                .collect(Collectors.toSet());
+
+        if (actualIds.size() != requestedIds.size() || !actualIds.equals(requestedIds)) {
+            throw new BusinessValidationException("request must contain every block of the event exactly once");
         }
     }
 

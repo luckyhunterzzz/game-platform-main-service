@@ -23,7 +23,7 @@ public class EventResponseConverter {
 
     private final MediaUrlResolver mediaUrlResolver;
 
-    public EventAdminSummaryResponse toAdminSummaryResponse(Event event) {
+    public EventAdminSummaryResponse toAdminSummaryResponse(Event event, long blockCount) {
         return new EventAdminSummaryResponse(
                 event.getId(),
                 event.getSlug(),
@@ -31,12 +31,12 @@ public class EventResponseConverter {
                 event.getNameJson(),
                 event.getDescriptionJson(),
                 mediaUrlResolver.resolveUrl(event.getImageBucket(), event.getImageObjectKey()),
-                event.getBlocks() == null ? 0 : event.getBlocks().size(),
+                Math.toIntExact(blockCount),
                 event.getUpdatedAt()
         );
     }
 
-    public EventAdminDetailsResponse toAdminDetailsResponse(Event event) {
+    public EventAdminDetailsResponse toAdminDetailsResponse(Event event, List<EventBlock> blocks) {
         return new EventAdminDetailsResponse(
                 event.getId(),
                 event.getSlug(),
@@ -50,7 +50,7 @@ public class EventResponseConverter {
                 event.getUpdatedBy(),
                 event.getCreatedAt(),
                 event.getUpdatedAt(),
-                toBlockAdminResponseList(event.getBlocks())
+                toBlockAdminResponseList(blocks)
         );
     }
 
@@ -64,14 +64,14 @@ public class EventResponseConverter {
         );
     }
 
-    public EventResponse toPublicResponse(Event event, EventLanguage language) {
+    public EventResponse toPublicResponse(Event event, EventLanguage language, List<EventBlock> blocks) {
         return new EventResponse(
                 event.getId(),
                 event.getSlug(),
                 getLocalized(event.getNameJson(), language),
                 getLocalized(event.getDescriptionJson(), language),
                 mediaUrlResolver.resolveUrl(event.getImageBucket(), event.getImageObjectKey()),
-                toPublicBlockResponseList(event.getBlocks(), language)
+                toPublicBlockResponseList(blocks, language)
         );
     }
 
