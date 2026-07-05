@@ -14,6 +14,7 @@ import com.gameplatform.mainservice.event.repository.EventRepository;
 import com.gameplatform.mainservice.event.repository.projection.EventBlockCountProjection;
 import com.gameplatform.mainservice.event.validation.EventValidator;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
+import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.security.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
@@ -249,8 +250,8 @@ public class EventAdminService {
 
     private void applyEventUpsert(Event event, EventUpsertRequest request, UUID actorId, OffsetDateTime now) {
         event.setSlug(normalizeSlug(request.slug()));
-        event.setNameJson(request.nameJson());
-        event.setDescriptionJson(request.descriptionJson());
+        event.setNameJson(normalizeLocalizedText(request.nameJson()));
+        event.setDescriptionJson(normalizeOptionalLocalizedText(request.descriptionJson()));
         event.setStatus(request.status());
         event.setImageBucket(trimToNull(request.imageBucket()));
         event.setImageObjectKey(trimToNull(request.imageObjectKey()));
@@ -258,10 +259,10 @@ public class EventAdminService {
     }
 
     private void applyBlockUpsert(EventBlock block, EventBlockUpsertRequest request, UUID actorId, OffsetDateTime now) {
-        block.setNameJson(request.nameJson());
-        block.setDescriptionJson(request.descriptionJson());
-        block.setImageBucket(trimToNull(request.imageBucket()));
-        block.setImageObjectKey(trimToNull(request.imageObjectKey()));
+        block.setNameJson(normalizeLocalizedText(request.nameJson()));
+        block.setDescriptionJson(normalizeOptionalLocalizedText(request.descriptionJson()));
+        block.setImageBucketJson(normalizeOptionalLocalizedText(request.imageBucketJson()));
+        block.setImageObjectKeyJson(normalizeOptionalLocalizedText(request.imageObjectKeyJson()));
         block.setVisible(request.visible());
         block.setUpdatedBy(actorId);
         block.setUpdatedAt(now);
@@ -310,6 +311,27 @@ public class EventAdminService {
 
     private String normalizeSlug(String slug) {
         return slug.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private LocalizedTextJson normalizeLocalizedText(LocalizedTextJson value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new LocalizedTextJson(trimToNull(value.ru()), trimToNull(value.en()));
+    }
+
+    private LocalizedTextJson normalizeOptionalLocalizedText(LocalizedTextJson value) {
+        LocalizedTextJson normalized = normalizeLocalizedText(value);
+        if (normalized == null) {
+            return null;
+        }
+
+        if (normalized.ru() == null && normalized.en() == null) {
+            return null;
+        }
+
+        return normalized;
     }
 
     private String trimToNull(String value) {

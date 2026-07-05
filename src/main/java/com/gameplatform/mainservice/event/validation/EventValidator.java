@@ -34,8 +34,8 @@ public class EventValidator {
     }
 
     public void validateBlockUpsert(EventBlockUpsertRequest request) {
-        imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
         validateLocalizedText(request.nameJson(), "nameJson");
+        validateLocalizedImageReference(request.imageBucketJson(), request.imageObjectKeyJson());
     }
 
     public void validateBlockReorder(List<EventBlock> actualBlocks, EventBlockReorderRequest request) {
@@ -77,6 +77,17 @@ public class EventValidator {
         if (actualIds.size() != requestedIds.size() || !actualIds.equals(requestedIds)) {
             throw new BusinessValidationException("request must contain every block of the event exactly once");
         }
+    }
+
+    private void validateLocalizedImageReference(LocalizedTextJson imageBucketJson, LocalizedTextJson imageObjectKeyJson) {
+        imageReferenceValidator.validate(
+                imageBucketJson != null ? imageBucketJson.ru() : null,
+                imageObjectKeyJson != null ? imageObjectKeyJson.ru() : null
+        );
+        imageReferenceValidator.validate(
+                imageBucketJson != null ? imageBucketJson.en() : null,
+                imageObjectKeyJson != null ? imageObjectKeyJson.en() : null
+        );
     }
 
     private void validateSlug(String slug, Long eventId) {

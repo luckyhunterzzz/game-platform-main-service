@@ -10,8 +10,10 @@ public record EventBlockUpsertRequest(
         LocalizedTextJson nameJson,
         @Valid
         LocalizedTextJson descriptionJson,
-        String imageBucket,
-        String imageObjectKey,
+        @Valid
+        LocalizedTextJson imageBucketJson,
+        @Valid
+        LocalizedTextJson imageObjectKeyJson,
         boolean visible
 ) {
 }
