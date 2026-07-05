@@ -92,9 +92,9 @@ public class EventResponseConverter {
                 block.getPosition(),
                 block.getNameJson(),
                 block.getDescriptionJson(),
-                block.getImageBucket(),
-                block.getImageObjectKey(),
-                mediaUrlResolver.resolveUrl(block.getImageBucket(), block.getImageObjectKey()),
+                block.getImageBucketJson(),
+                block.getImageObjectKeyJson(),
+                resolveLocalizedImageUrls(block.getImageBucketJson(), block.getImageObjectKeyJson()),
                 block.isVisible(),
                 block.getCreatedBy(),
                 block.getUpdatedBy(),
@@ -121,8 +121,28 @@ public class EventResponseConverter {
                 block.getPosition(),
                 getLocalized(block.getNameJson(), language),
                 getLocalized(block.getDescriptionJson(), language),
-                mediaUrlResolver.resolveUrl(block.getImageBucket(), block.getImageObjectKey())
+                getLocalizedImageUrl(block.getImageBucketJson(), block.getImageObjectKeyJson(), language)
         );
+    }
+
+    private LocalizedTextJson resolveLocalizedImageUrls(LocalizedTextJson imageBucketJson, LocalizedTextJson imageObjectKeyJson) {
+        if (imageBucketJson == null || imageObjectKeyJson == null) {
+            return null;
+        }
+
+        String ru = mediaUrlResolver.resolveUrl(imageBucketJson.ru(), imageObjectKeyJson.ru());
+        String en = mediaUrlResolver.resolveUrl(imageBucketJson.en(), imageObjectKeyJson.en());
+
+        if ((ru == null || ru.isBlank()) && (en == null || en.isBlank())) {
+            return null;
+        }
+
+        return new LocalizedTextJson(ru, en);
+    }
+
+    private String getLocalizedImageUrl(LocalizedTextJson imageBucketJson, LocalizedTextJson imageObjectKeyJson, EventLanguage language) {
+        LocalizedTextJson urls = resolveLocalizedImageUrls(imageBucketJson, imageObjectKeyJson);
+        return getLocalized(urls, language);
     }
 
     private String getLocalized(LocalizedTextJson json, EventLanguage language) {
