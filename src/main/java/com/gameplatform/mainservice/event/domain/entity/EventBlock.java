@@ -45,11 +45,13 @@ public class EventBlock {
     @Column(name = "description_json", columnDefinition = "jsonb")
     private LocalizedTextJson descriptionJson;
 
-    @Column(name = "image_bucket")
-    private String imageBucket;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "image_bucket_json", columnDefinition = "jsonb")
+    private LocalizedTextJson imageBucketJson;
 
-    @Column(name = "image_object_key", length = 1024)
-    private String imageObjectKey;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "image_object_key_json", columnDefinition = "jsonb")
+    private LocalizedTextJson imageObjectKeyJson;
 
     @Column(name = "is_visible", nullable = false)
     private boolean visible;
