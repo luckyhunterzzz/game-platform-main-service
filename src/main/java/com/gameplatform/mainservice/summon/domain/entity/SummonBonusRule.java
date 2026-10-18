@@ -1,8 +1,7 @@
 package com.gameplatform.mainservice.summon.domain.entity;
 
-import com.gameplatform.mainservice.summon.domain.enums.BonusHeroSelectionMode;
-import com.gameplatform.mainservice.summon.domain.enums.BonusRepeatMode;
 import com.gameplatform.mainservice.summon.domain.enums.BonusResultConditionType;
+import com.gameplatform.mainservice.summon.domain.enums.SummonBonusKind;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,8 +31,15 @@ public class SummonBonusRule {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "probability_id", nullable = false)
-    private UUID probabilityId;
+    @Column(name = "variant_id", nullable = false)
+    private UUID variantId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kind", nullable = false, length = 40)
+    private SummonBonusKind kind;
+
+    @Column(name = "user_selectable", nullable = false)
+    private boolean userSelectable;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trigger_condition_type", length = 40)
@@ -46,17 +52,6 @@ public class SummonBonusRule {
     private UUID triggerProbabilityId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "hero_selection_mode", nullable = false, length = 40)
-    private BonusHeroSelectionMode heroSelectionMode;
-
-    @Column(name = "reward_probability_id")
-    private UUID rewardProbabilityId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "repeat_mode", nullable = false, length = 40)
-    private BonusRepeatMode repeatMode;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "continuation_condition_type", length = 40)
     private BonusResultConditionType continuationConditionType;
 
@@ -66,6 +61,4 @@ public class SummonBonusRule {
     @Column(name = "continuation_probability_id")
     private UUID continuationProbabilityId;
 
-    @Column(name = "max_attempts", nullable = false)
-    private Integer maxAttempts;
 }

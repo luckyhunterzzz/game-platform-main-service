@@ -1,6 +1,5 @@
 package com.gameplatform.mainservice.summon.domain.entity;
 
-import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.summon.domain.enums.SummonProbabilityKind;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,9 +14,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -37,13 +33,8 @@ public class SummonProbability {
     @Column(name = "variant_id", nullable = false)
     private UUID variantId;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "name_json", nullable = false, columnDefinition = "jsonb")
-    private LocalizedTextJson nameJson;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "description_json", columnDefinition = "jsonb")
-    private LocalizedTextJson descriptionJson;
+    @Column(name = "definition_id", nullable = false)
+    private UUID definitionId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "kind", nullable = false, length = 40)

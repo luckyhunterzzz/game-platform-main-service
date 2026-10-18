@@ -1,7 +1,6 @@
 package com.gameplatform.mainservice.summon.domain.enums;
 
-public enum BonusHeroSelectionMode {
-    OWN_HEROES,
+public enum BonusRewardMode {
     MAIN_ROLL,
     SPECIFIC_PROBABILITY
 }
