@@ -1,6 +1,6 @@
 package com.gameplatform.mainservice.hero.dto.request;
 
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.dto.json.CostumeBonusJson;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import jakarta.validation.Valid;
@@ -88,7 +88,7 @@ public record HeroUpsertRequest(
         LocalDate releaseDate,
 
         @NotNull
-        HeroStatus status,
+        ContentStatus status,
 
         @NotBlank
         @Size(max = 100)

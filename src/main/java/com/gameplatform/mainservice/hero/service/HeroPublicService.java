@@ -5,7 +5,7 @@ import com.gameplatform.mainservice.exception.exceptions.BusinessValidationExcep
 import com.gameplatform.mainservice.hero.converter.HeroPublicResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.*;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.request.BugReportCreateRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
@@ -508,11 +508,11 @@ public class HeroPublicService {
         if (includeDraftsAuthorized) {
             return heroRepository.findAllByBaseHeroIdAndStatusIn(
                     variantsRootId,
-                    List.of(HeroStatus.READY, HeroStatus.DRAFT)
+                    List.of(ContentStatus.READY, ContentStatus.DRAFT)
             );
         }
 
-        return heroRepository.findAllByBaseHeroIdAndStatus(variantsRootId, HeroStatus.READY);
+        return heroRepository.findAllByBaseHeroIdAndStatus(variantsRootId, ContentStatus.READY);
     }
 
     private List<HeroVariantSummaryResponse> buildVariantCostumes(Long baseHeroId, HeroLanguage language, boolean includeDraftsAuthorized) {
