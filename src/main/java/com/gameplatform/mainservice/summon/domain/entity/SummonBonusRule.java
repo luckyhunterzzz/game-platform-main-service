@@ -34,6 +34,9 @@ public class SummonBonusRule {
     @Column(name = "variant_id", nullable = false)
     private UUID variantId;
 
+    @Column(name = "definition_id", nullable = false)
+    private UUID definitionId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "kind", nullable = false, length = 40)
     private SummonBonusKind kind;

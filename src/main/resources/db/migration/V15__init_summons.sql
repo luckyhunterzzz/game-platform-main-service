@@ -64,6 +64,7 @@ CREATE TABLE summon_bonus_rules
 (
     id                              UUID PRIMARY KEY,
     variant_id                      UUID        NOT NULL REFERENCES summon_variants (id) ON DELETE CASCADE,
+    definition_id                   UUID        NOT NULL REFERENCES summon_probability_definitions (id),
     kind                            VARCHAR(40) NOT NULL,
     user_selectable                 BOOLEAN     NOT NULL DEFAULT FALSE,
     trigger_condition_type          VARCHAR(40),
