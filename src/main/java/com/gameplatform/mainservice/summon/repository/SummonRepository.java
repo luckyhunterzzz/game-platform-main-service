@@ -10,5 +10,7 @@ public interface SummonRepository extends JpaRepository<Summon, UUID> {
 
     boolean existsBySlug(String slug);
 
+    boolean existsBySlugAndIdNot(String slug, UUID id);
+
     List<Summon> findAllByOrderByUpdatedAtDesc();
 }

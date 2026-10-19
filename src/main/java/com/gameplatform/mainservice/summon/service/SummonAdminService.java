@@ -147,6 +147,91 @@ public class SummonAdminService {
     }
 
     @Transactional
+    public SummonAdminDetailsResponse update(UUID summonId, SummonCreateRequest request) {
+        Summon summon = summonRepository.findById(summonId)
+                .orElseThrow(() -> new NotFoundException("Summon not found: " + summonId));
+        summonValidator.validateUpdate(summonId, request);
+
+        SummonVariant defaultVariant = summonVariantRepository.findAllBySummonId(summonId).stream()
+                .filter(variant -> variant.getVariantType() == SummonVariantType.DEFAULT)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Default summon variant not found: " + summonId
+                ));
+
+        UUID actorId = currentUserProvider.getUserId();
+        OffsetDateTime now = OffsetDateTime.now(clock);
+
+        summon.setSlug(normalizeSlug(request.slug()));
+        summon.setNameJson(normalizeRequiredText(request.nameJson()));
+        summon.setDescriptionJson(normalizeOptionalText(request.descriptionJson()));
+        summon.setImageBucket(trimToNull(request.imageBucket()));
+        summon.setImageObjectKey(trimToNull(request.imageObjectKey()));
+        summon.setBackgroundImageBucket(trimToNull(request.backgroundImageBucket()));
+        summon.setBackgroundImageObjectKey(trimToNull(request.backgroundImageObjectKey()));
+        summon.setStatus(request.status());
+        summon.setUpdatedBy(actorId);
+        summon.setUpdatedAt(now);
+
+        defaultVariant.setStatus(request.status());
+        defaultVariant.setUpdatedBy(actorId);
+        defaultVariant.setUpdatedAt(now);
+
+        replaceVariantConfiguration(defaultVariant.getId(), request);
+        summonRepository.save(summon);
+        summonVariantRepository.save(defaultVariant);
+
+        List<SummonVariant> scheduledVariants = summonVariantRepository.findAllBySummonId(summonId).stream()
+                .filter(variant -> variant.getVariantType() == SummonVariantType.SCHEDULED)
+                .sorted(Comparator.comparing(
+                        SummonVariant::getStartsAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .toList();
+        return toAdminDetailsResponse(summon, defaultVariant, scheduledVariants);
+    }
+
+    private void replaceVariantConfiguration(UUID variantId, SummonCreateRequest request) {
+        List<SummonProbability> probabilities = probabilityRepository
+                .findAllByVariantIdOrderByPositionAsc(variantId);
+        List<SummonBonusRule> rules = bonusRuleRepository.findAllByVariantId(variantId);
+
+        if (!rules.isEmpty()) {
+            List<UUID> ruleIds = rules.stream().map(SummonBonusRule::getId).toList();
+            List<SummonBonusStep> steps = bonusStepRepository
+                    .findAllByBonusRuleIdInOrderByPositionAsc(ruleIds);
+            if (!steps.isEmpty()) {
+                bonusStepRepository.deleteAllInBatch(steps);
+                bonusStepRepository.flush();
+            }
+            bonusRuleRepository.deleteAllInBatch(rules);
+            bonusRuleRepository.flush();
+        }
+
+        if (!probabilities.isEmpty()) {
+            List<SummonHero> heroLinks = summonHeroRepository.findAllByIdProbabilityIdIn(
+                    probabilities.stream().map(SummonProbability::getId).toList()
+            );
+            if (!heroLinks.isEmpty()) {
+                summonHeroRepository.deleteAllInBatch(heroLinks);
+                summonHeroRepository.flush();
+            }
+            probabilityRepository.deleteAllInBatch(probabilities);
+            probabilityRepository.flush();
+        }
+
+        Map<UUID, SummonProbability> probabilitiesByDefinition = createProbabilities(
+                variantId,
+                safeList(request.probabilities())
+        );
+        createBonusRules(
+                variantId,
+                safeList(request.bonusRules()),
+                probabilitiesByDefinition
+        );
+    }
+
+    @Transactional
     public SummonVariantResponse cloneVariant(
             UUID summonId,
             SummonVariantCloneRequest request

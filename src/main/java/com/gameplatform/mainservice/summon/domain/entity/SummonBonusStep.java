@@ -37,7 +37,7 @@ public class SummonBonusStep {
     @Column(name = "position", nullable = false)
     private Integer position;
 
-    @Column(name = "activation_chance_percent", nullable = false, precision = 7, scale = 4)
+    @Column(name = "activation_chance_percent", nullable = false, precision = 5, scale = 2)
     private BigDecimal activationChancePercent;
 
     @Enumerated(EnumType.STRING)

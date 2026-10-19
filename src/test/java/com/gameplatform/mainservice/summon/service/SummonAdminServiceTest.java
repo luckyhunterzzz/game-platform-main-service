@@ -17,6 +17,7 @@ import com.gameplatform.mainservice.summon.domain.enums.SummonBonusKind;
 import com.gameplatform.mainservice.summon.domain.enums.SummonProbabilityKind;
 import com.gameplatform.mainservice.summon.domain.enums.SummonVariantType;
 import com.gameplatform.mainservice.summon.dto.request.SummonVariantCloneRequest;
+import com.gameplatform.mainservice.summon.dto.request.SummonCreateRequest;
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminDetailsResponse;
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminSummaryResponse;
 import com.gameplatform.mainservice.summon.repository.SummonBonusRuleRepository;
@@ -279,5 +280,61 @@ class SummonAdminServiceTest {
         SummonBonusStep clonedStep = stepsCaptor.getValue().iterator().next();
         assertThat(clonedStep.getBonusRuleId()).isEqualTo(targetRuleId);
         assertThat(clonedStep.getRewardProbabilityId()).isEqualTo(targetProbabilityId);
+    }
+
+    @Test
+    void shouldUpdateSummonAndKeepScheduledVariants() {
+        UUID summonId = UUID.randomUUID();
+        UUID actorId = UUID.randomUUID();
+        Summon summon = Summon.builder()
+                .id(summonId)
+                .slug("old-summon")
+                .nameJson(new LocalizedTextJson("Старый", "Old"))
+                .status(ContentStatus.DRAFT)
+                .build();
+        SummonVariant defaultVariant = SummonVariant.builder()
+                .id(UUID.randomUUID())
+                .summonId(summonId)
+                .variantType(SummonVariantType.DEFAULT)
+                .status(ContentStatus.DRAFT)
+                .build();
+        SummonVariant scheduledVariant = SummonVariant.builder()
+                .id(UUID.randomUUID())
+                .summonId(summonId)
+                .variantType(SummonVariantType.SCHEDULED)
+                .startsAt(OffsetDateTime.parse("2026-10-20T00:00:00Z"))
+                .endsAt(OffsetDateTime.parse("2026-10-21T00:00:00Z"))
+                .status(ContentStatus.DRAFT)
+                .build();
+        SummonCreateRequest request = new SummonCreateRequest(
+                "updated-summon",
+                new LocalizedTextJson("Обновлённый", "Updated"),
+                null,
+                ContentStatus.DRAFT,
+                null,
+                null,
+                null,
+                null,
+                List.of(),
+                List.of()
+        );
+
+        when(summonRepository.findById(summonId)).thenReturn(Optional.of(summon));
+        when(summonVariantRepository.findAllBySummonId(summonId))
+                .thenReturn(List.of(scheduledVariant, defaultVariant));
+        when(currentUserProvider.getUserId()).thenReturn(actorId);
+        when(probabilityRepository.findAllByVariantIdOrderByPositionAsc(any())).thenReturn(List.of());
+        when(bonusRuleRepository.findAllByVariantId(any())).thenReturn(List.of());
+
+        SummonAdminDetailsResponse result = service.update(summonId, request);
+
+        verify(summonValidator).validateUpdate(summonId, request);
+        assertThat(summon.getSlug()).isEqualTo("updated-summon");
+        assertThat(summon.getUpdatedBy()).isEqualTo(actorId);
+        assertThat(defaultVariant.getUpdatedBy()).isEqualTo(actorId);
+        assertThat(result.defaultVariant().id()).isEqualTo(defaultVariant.getId());
+        assertThat(result.scheduledVariants())
+                .extracting(variant -> variant.id())
+                .containsExactly(scheduledVariant.getId());
     }
 }

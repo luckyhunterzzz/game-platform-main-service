@@ -40,7 +40,7 @@ public class SummonProbability {
     @Column(name = "kind", nullable = false, length = 40)
     private SummonProbabilityKind kind;
 
-    @Column(name = "value_percent", nullable = false, precision = 7, scale = 4)
+    @Column(name = "value_percent", nullable = false, precision = 5, scale = 2)
     private BigDecimal valuePercent;
 
     @Column(name = "position", nullable = false)

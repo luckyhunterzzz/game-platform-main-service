@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -41,6 +42,12 @@ public class AdminSummonsController {
     @ResponseStatus(HttpStatus.CREATED)
     public SummonAdminDetailsResponse create(@RequestBody @Valid SummonCreateRequest request) {
         return summonAdminService.create(request);
+    }
+
+    @PutMapping("/{summonId}")
+    public SummonAdminDetailsResponse update(@PathVariable UUID summonId,
+                                             @RequestBody @Valid SummonCreateRequest request) {
+        return summonAdminService.update(summonId, request);
     }
 
     @PostMapping("/{summonId}/variants/clone")

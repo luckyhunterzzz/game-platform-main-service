@@ -45,7 +45,15 @@ public class SummonValidator {
     private final ImageReferenceValidator imageReferenceValidator;
 
     public void validateCreate(SummonCreateRequest request) {
-        validateSlug(request.slug());
+        validateUpsert(request, null);
+    }
+
+    public void validateUpdate(UUID summonId, SummonCreateRequest request) {
+        validateUpsert(request, summonId);
+    }
+
+    private void validateUpsert(SummonCreateRequest request, UUID summonId) {
+        validateSlug(request.slug(), summonId);
         validateLocalizedText(request.nameJson(), "nameJson");
         imageReferenceValidator.validate(request.imageBucket(), request.imageObjectKey());
         imageReferenceValidator.validate(request.backgroundImageBucket(), request.backgroundImageObjectKey());
@@ -77,13 +85,16 @@ public class SummonValidator {
         }
     }
 
-    private void validateSlug(String slug) {
+    private void validateSlug(String slug, UUID summonId) {
         String normalizedSlug = slug.trim().toLowerCase(Locale.ROOT);
 
         if (!SLUG_PATTERN.matcher(normalizedSlug).matches()) {
             throw new BusinessValidationException("slug must contain only lowercase letters, numbers, and hyphens");
         }
-        if (summonRepository.existsBySlug(normalizedSlug)) {
+        boolean slugExists = summonId == null
+                ? summonRepository.existsBySlug(normalizedSlug)
+                : summonRepository.existsBySlugAndIdNot(normalizedSlug, summonId);
+        if (slugExists) {
             throw new BusinessValidationException("Summon slug already exists: " + normalizedSlug);
         }
     }
