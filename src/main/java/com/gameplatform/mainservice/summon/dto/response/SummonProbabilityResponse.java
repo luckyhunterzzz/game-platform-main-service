@@ -12,6 +12,8 @@ public record SummonProbabilityResponse(
         SummonProbabilityKind kind,
         BigDecimal valuePercent,
         Integer position,
-        List<Long> heroIds
+        List<Long> heroIds,
+        boolean userSelectionEnabled,
+        Integer defaultSelectedHeroCount
 ) {
 }

@@ -2,6 +2,8 @@ package com.gameplatform.mainservice.summon.validation;
 
 import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
+import com.gameplatform.mainservice.hero.domain.entity.Hero;
+import com.gameplatform.mainservice.hero.domain.entity.Rarity;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
@@ -17,19 +19,24 @@ import com.gameplatform.mainservice.summon.dto.request.SummonBonusStepCreateRequ
 import com.gameplatform.mainservice.summon.dto.request.SummonCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonProbabilityCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonVariantCloneRequest;
+import com.gameplatform.mainservice.summon.dto.request.SummonVariantUpdateRequest;
 import com.gameplatform.mainservice.summon.repository.SummonProbabilityDefinitionRepository;
 import com.gameplatform.mainservice.summon.repository.SummonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.function.Function;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -66,9 +73,14 @@ public class SummonValidator {
     }
 
     public void validateVariantClone(SummonVariantCloneRequest request) {
-        if (!request.endsAt().isAfter(request.startsAt())) {
-            throw new BusinessValidationException("endsAt must be after startsAt");
-        }
+        validateVariantPeriod(request.startsAt(), request.endsAt());
+    }
+
+    public void validateVariantUpdate(SummonVariantUpdateRequest request) {
+        validateVariantPeriod(request.startsAt(), request.endsAt());
+        List<SummonProbabilityCreateRequest> probabilities = safeList(request.probabilities());
+        validateProbabilities(probabilities, request.status());
+        validateBonusRules(safeList(request.bonusRules()), probabilities);
     }
 
     public void validateVariantStatus(ContentStatus status, List<SummonProbability> probabilities) {
@@ -106,6 +118,7 @@ public class SummonValidator {
         Set<UUID> definitionIds = new HashSet<>();
         Set<Integer> positions = new HashSet<>();
         Set<Long> heroIds = new HashSet<>();
+        int userSelectablePools = 0;
 
         for (SummonProbabilityCreateRequest probability : probabilities) {
             if (!definitionIds.add(probability.definitionId())) {
@@ -115,6 +128,29 @@ public class SummonValidator {
                 throw new BusinessValidationException("probability positions must not contain duplicates");
             }
             heroIds.addAll(safeList(probability.heroIds()));
+
+            if (probability.userSelectionEnabled()) {
+                userSelectablePools++;
+                if (probability.kind() != SummonProbabilityKind.MAIN) {
+                    throw new BusinessValidationException("user-selectable hero pool must be a MAIN probability");
+                }
+                if (probability.defaultSelectedHeroCount() == null) {
+                    throw new BusinessValidationException(
+                            "user-selectable hero pool requires defaultSelectedHeroCount"
+                    );
+                }
+                if (safeList(probability.heroIds()).size() > 10) {
+                    throw new BusinessValidationException("recommended hero pool must contain at most 10 heroes");
+                }
+            } else if (probability.defaultSelectedHeroCount() != null) {
+                throw new BusinessValidationException(
+                        "defaultSelectedHeroCount is allowed only for a user-selectable hero pool"
+                );
+            }
+        }
+
+        if (userSelectablePools > 1) {
+            throw new BusinessValidationException("summon variant may contain only one user-selectable hero pool");
         }
 
         long existingDefinitionCount = probabilityDefinitionRepository.findAllById(definitionIds).size();
@@ -122,10 +158,12 @@ public class SummonValidator {
             throw new BusinessValidationException("one or more probability definitions do not exist");
         }
 
-        long existingHeroCount = heroRepository.findAllById(heroIds).size();
-        if (existingHeroCount != heroIds.size()) {
+        List<Hero> heroes = heroRepository.findAllById(heroIds);
+        if (heroes.size() != heroIds.size()) {
             throw new BusinessValidationException("one or more heroes do not exist");
         }
+
+        validateRecommendedHeroes(probabilities, heroes);
 
         if (status == ContentStatus.READY) {
             BigDecimal mainTotal = probabilities.stream()
@@ -136,6 +174,45 @@ public class SummonValidator {
             if (mainTotal.compareTo(ONE_HUNDRED) != 0) {
                 throw new BusinessValidationException("MAIN probabilities must total 100% for a READY summon");
             }
+        }
+    }
+
+    private void validateRecommendedHeroes(
+            List<SummonProbabilityCreateRequest> probabilities,
+            List<Hero> heroes
+    ) {
+        Set<Long> recommendedHeroIds = probabilities.stream()
+                .filter(SummonProbabilityCreateRequest::userSelectionEnabled)
+                .flatMap(probability -> safeList(probability.heroIds()).stream())
+                .collect(Collectors.toSet());
+        if (recommendedHeroIds.isEmpty()) {
+            return;
+        }
+
+        Map<Long, Hero> heroesById = heroes.stream()
+                .collect(Collectors.toMap(Hero::getId, Function.identity()));
+        Set<Long> rarityIds = recommendedHeroIds.stream()
+                .map(heroesById::get)
+                .filter(Objects::nonNull)
+                .map(Hero::getRarityId)
+                .collect(Collectors.toSet());
+        Map<Long, Rarity> raritiesById = rarityRepository.findAllById(rarityIds).stream()
+                .collect(Collectors.toMap(Rarity::getId, Function.identity()));
+
+        boolean containsNonFiveStarHero = recommendedHeroIds.stream()
+                .map(heroesById::get)
+                .filter(Objects::nonNull)
+                .map(Hero::getRarityId)
+                .map(raritiesById::get)
+                .anyMatch(rarity -> rarity == null || !Objects.equals(rarity.getStars(), 5));
+        if (containsNonFiveStarHero) {
+            throw new BusinessValidationException("recommended hero pool may contain only 5-star heroes");
+        }
+    }
+
+    private void validateVariantPeriod(OffsetDateTime startsAt, OffsetDateTime endsAt) {
+        if (!endsAt.isAfter(startsAt)) {
+            throw new BusinessValidationException("endsAt must be after startsAt");
         }
     }
 

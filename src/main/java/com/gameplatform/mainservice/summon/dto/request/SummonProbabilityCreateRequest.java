@@ -6,6 +6,8 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,6 +30,12 @@ public record SummonProbabilityCreateRequest(
         @Positive
         Integer position,
 
-        List<@NotNull @Positive Long> heroIds
+        List<@NotNull @Positive Long> heroIds,
+
+        boolean userSelectionEnabled,
+
+        @Min(1)
+        @Max(10)
+        Integer defaultSelectedHeroCount
 ) {
 }

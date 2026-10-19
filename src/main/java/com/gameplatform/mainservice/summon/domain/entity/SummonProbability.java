@@ -45,4 +45,10 @@ public class SummonProbability {
 
     @Column(name = "position", nullable = false)
     private Integer position;
+
+    @Column(name = "user_selection_enabled", nullable = false)
+    private boolean userSelectionEnabled;
+
+    @Column(name = "default_selected_hero_count")
+    private Integer defaultSelectedHeroCount;
 }

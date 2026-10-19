@@ -1,7 +1,9 @@
 package com.gameplatform.mainservice.summon.controller;
 
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.summon.dto.request.SummonCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonVariantCloneRequest;
+import com.gameplatform.mainservice.summon.dto.request.SummonVariantUpdateRequest;
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminDetailsResponse;
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminSummaryResponse;
 import com.gameplatform.mainservice.summon.dto.response.SummonVariantResponse;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -55,5 +58,20 @@ public class AdminSummonsController {
     public SummonVariantResponse cloneVariant(@PathVariable UUID summonId,
                                               @RequestBody @Valid SummonVariantCloneRequest request) {
         return summonAdminService.cloneVariant(summonId, request);
+    }
+
+    @PutMapping("/{summonId}/variants/{variantId}")
+    public SummonVariantResponse updateVariant(@PathVariable UUID summonId,
+                                               @PathVariable UUID variantId,
+                                               @RequestBody @Valid SummonVariantUpdateRequest request) {
+        return summonAdminService.updateVariant(summonId, variantId, request);
+    }
+
+    @GetMapping("/{summonId}/variants/history")
+    public CatalogPageResponse<SummonVariantResponse> getVariantHistory(
+            @PathVariable UUID summonId,
+            @RequestParam(defaultValue = "0") int page
+    ) {
+        return summonAdminService.getVariantHistory(summonId, page);
     }
 }

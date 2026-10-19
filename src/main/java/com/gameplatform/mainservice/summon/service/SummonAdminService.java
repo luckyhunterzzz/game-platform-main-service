@@ -3,6 +3,7 @@ package com.gameplatform.mainservice.summon.service;
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
+import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import com.gameplatform.mainservice.security.CurrentUserProvider;
 import com.gameplatform.mainservice.summon.domain.entity.Summon;
@@ -21,6 +22,7 @@ import com.gameplatform.mainservice.summon.dto.request.SummonBonusStepCreateRequ
 import com.gameplatform.mainservice.summon.dto.request.SummonCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonProbabilityCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonVariantCloneRequest;
+import com.gameplatform.mainservice.summon.dto.request.SummonVariantUpdateRequest;
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminDetailsResponse;
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminSummaryResponse;
 import com.gameplatform.mainservice.summon.dto.response.SummonBonusConditionResponse;
@@ -38,6 +40,8 @@ import com.gameplatform.mainservice.summon.repository.SummonRepository;
 import com.gameplatform.mainservice.summon.repository.SummonVariantRepository;
 import com.gameplatform.mainservice.summon.validation.SummonValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +61,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SummonAdminService {
+
+    private static final int VARIANT_HISTORY_PAGE_SIZE = 10;
 
     private final SummonRepository summonRepository;
     private final SummonVariantRepository summonVariantRepository;
@@ -81,23 +87,31 @@ public class SummonAdminService {
     public SummonAdminDetailsResponse getById(UUID summonId) {
         Summon summon = summonRepository.findById(summonId)
                 .orElseThrow(() -> new NotFoundException("Summon not found: " + summonId));
-        List<SummonVariant> variants = summonVariantRepository.findAllBySummonId(summonId);
-
-        SummonVariant defaultVariant = variants.stream()
-                .filter(variant -> variant.getVariantType() == SummonVariantType.DEFAULT)
-                .findFirst()
+        SummonVariant defaultVariant = summonVariantRepository
+                .findFirstBySummonIdAndVariantType(summonId, SummonVariantType.DEFAULT)
                 .orElseThrow(() -> new IllegalStateException(
                         "Default summon variant not found: " + summonId
                 ));
-        List<SummonVariant> scheduledVariants = variants.stream()
-                .filter(variant -> variant.getVariantType() == SummonVariantType.SCHEDULED)
-                .sorted(Comparator.comparing(
-                        SummonVariant::getStartsAt,
-                        Comparator.nullsLast(Comparator.naturalOrder())
-                ))
-                .toList();
+        List<SummonVariant> scheduledVariants = findCurrentAndFutureVariants(summonId);
 
         return toAdminDetailsResponse(summon, defaultVariant, scheduledVariants);
+    }
+
+    @Transactional(readOnly = true)
+    public CatalogPageResponse<SummonVariantResponse> getVariantHistory(UUID summonId, int page) {
+        if (!summonRepository.existsById(summonId)) {
+            throw new NotFoundException("Summon not found: " + summonId);
+        }
+
+        Page<SummonVariantResponse> history = summonVariantRepository
+                .findAllBySummonIdAndVariantTypeAndEndsAtLessThanEqualOrderByEndsAtDesc(
+                        summonId,
+                        SummonVariantType.SCHEDULED,
+                        OffsetDateTime.now(clock),
+                        PageRequest.of(Math.max(page, 0), VARIANT_HISTORY_PAGE_SIZE)
+                )
+                .map(this::toVariantResponse);
+        return CatalogPageResponse.from(history);
     }
 
     @Transactional
@@ -152,9 +166,8 @@ public class SummonAdminService {
                 .orElseThrow(() -> new NotFoundException("Summon not found: " + summonId));
         summonValidator.validateUpdate(summonId, request);
 
-        SummonVariant defaultVariant = summonVariantRepository.findAllBySummonId(summonId).stream()
-                .filter(variant -> variant.getVariantType() == SummonVariantType.DEFAULT)
-                .findFirst()
+        SummonVariant defaultVariant = summonVariantRepository
+                .findFirstBySummonIdAndVariantType(summonId, SummonVariantType.DEFAULT)
                 .orElseThrow(() -> new IllegalStateException(
                         "Default summon variant not found: " + summonId
                 ));
@@ -177,21 +190,32 @@ public class SummonAdminService {
         defaultVariant.setUpdatedBy(actorId);
         defaultVariant.setUpdatedAt(now);
 
-        replaceVariantConfiguration(defaultVariant.getId(), request);
+        replaceVariantConfiguration(
+                defaultVariant.getId(),
+                safeList(request.probabilities()),
+                safeList(request.bonusRules())
+        );
         summonRepository.save(summon);
         summonVariantRepository.save(defaultVariant);
 
-        List<SummonVariant> scheduledVariants = summonVariantRepository.findAllBySummonId(summonId).stream()
-                .filter(variant -> variant.getVariantType() == SummonVariantType.SCHEDULED)
-                .sorted(Comparator.comparing(
-                        SummonVariant::getStartsAt,
-                        Comparator.nullsLast(Comparator.naturalOrder())
-                ))
-                .toList();
+        List<SummonVariant> scheduledVariants = findCurrentAndFutureVariants(summonId);
         return toAdminDetailsResponse(summon, defaultVariant, scheduledVariants);
     }
 
-    private void replaceVariantConfiguration(UUID variantId, SummonCreateRequest request) {
+    private List<SummonVariant> findCurrentAndFutureVariants(UUID summonId) {
+        return summonVariantRepository
+                .findAllBySummonIdAndVariantTypeAndEndsAtAfterOrderByStartsAtAsc(
+                        summonId,
+                        SummonVariantType.SCHEDULED,
+                        OffsetDateTime.now(clock)
+                );
+    }
+
+    private void replaceVariantConfiguration(
+            UUID variantId,
+            List<SummonProbabilityCreateRequest> probabilityRequests,
+            List<SummonBonusRuleCreateRequest> bonusRuleRequests
+    ) {
         List<SummonProbability> probabilities = probabilityRepository
                 .findAllByVariantIdOrderByPositionAsc(variantId);
         List<SummonBonusRule> rules = bonusRuleRepository.findAllByVariantId(variantId);
@@ -222,11 +246,11 @@ public class SummonAdminService {
 
         Map<UUID, SummonProbability> probabilitiesByDefinition = createProbabilities(
                 variantId,
-                safeList(request.probabilities())
+                probabilityRequests
         );
         createBonusRules(
                 variantId,
-                safeList(request.bonusRules()),
+                bonusRuleRequests,
                 probabilitiesByDefinition
         );
     }
@@ -269,6 +293,37 @@ public class SummonAdminService {
         return toVariantResponse(target);
     }
 
+    @Transactional
+    public SummonVariantResponse updateVariant(
+            UUID summonId,
+            UUID variantId,
+            SummonVariantUpdateRequest request
+    ) {
+        SummonVariant variant = summonVariantRepository.findByIdAndSummonId(variantId, summonId)
+                .orElseThrow(() -> new NotFoundException("Summon variant not found: " + variantId));
+        if (variant.getVariantType() != SummonVariantType.SCHEDULED) {
+            throw new BusinessValidationException("Only scheduled summon variants can be updated here");
+        }
+
+        summonValidator.validateVariantUpdate(request);
+        UUID actorId = currentUserProvider.getUserId();
+        OffsetDateTime now = OffsetDateTime.now(clock);
+
+        variant.setStartsAt(request.startsAt());
+        variant.setEndsAt(request.endsAt());
+        variant.setStatus(request.status());
+        variant.setUpdatedBy(actorId);
+        variant.setUpdatedAt(now);
+
+        replaceVariantConfiguration(
+                variantId,
+                safeList(request.probabilities()),
+                safeList(request.bonusRules())
+        );
+        summonVariantRepository.save(variant);
+        return toVariantResponse(variant);
+    }
+
     private Map<UUID, SummonProbability> createProbabilities(
             UUID variantId,
             List<SummonProbabilityCreateRequest> requests
@@ -282,6 +337,8 @@ public class SummonAdminService {
                     .kind(request.kind())
                     .valuePercent(request.valuePercent())
                     .position(request.position())
+                    .userSelectionEnabled(request.userSelectionEnabled())
+                    .defaultSelectedHeroCount(request.defaultSelectedHeroCount())
                     .build());
 
             result.put(request.definitionId(), probability);
@@ -399,6 +456,8 @@ public class SummonAdminService {
                     .kind(source.getKind())
                     .valuePercent(source.getValuePercent())
                     .position(source.getPosition())
+                    .userSelectionEnabled(source.isUserSelectionEnabled())
+                    .defaultSelectedHeroCount(source.getDefaultSelectedHeroCount())
                     .build());
             probabilityIdMap.put(source.getId(), target.getId());
         }
@@ -633,7 +692,9 @@ public class SummonAdminService {
                 probability.getKind(),
                 probability.getValuePercent(),
                 probability.getPosition(),
-                sortedHeroIds
+                sortedHeroIds,
+                probability.isUserSelectionEnabled(),
+                probability.getDefaultSelectedHeroCount()
         );
     }
 

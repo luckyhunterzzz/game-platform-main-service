@@ -2,6 +2,8 @@ package com.gameplatform.mainservice.summon.validation;
 
 import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
+import com.gameplatform.mainservice.hero.domain.entity.Hero;
+import com.gameplatform.mainservice.hero.domain.entity.Rarity;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.hero.repository.RarityRepository;
@@ -160,6 +162,36 @@ class SummonValidatorTest {
                 .hasMessage("bonus with multiple steps requires continuationCondition");
     }
 
+    @Test
+    void shouldRejectNonFiveStarHeroInRecommendedPool() {
+        UUID definitionId = UUID.randomUUID();
+        SummonProbabilityCreateRequest probability = new SummonProbabilityCreateRequest(
+                definitionId,
+                SummonProbabilityKind.MAIN,
+                new BigDecimal("100"),
+                1,
+                List.of(42L),
+                true,
+                2
+        );
+        when(heroRepository.findAllById(any())).thenReturn(List.of(Hero.builder()
+                .id(42L)
+                .rarityId(7L)
+                .build()));
+        when(rarityRepository.findAllById(any())).thenReturn(List.of(Rarity.builder()
+                .id(7L)
+                .stars(4)
+                .build()));
+
+        assertThatThrownBy(() -> validator.validateCreate(request(
+                ContentStatus.READY,
+                List.of(probability),
+                List.of()
+        )))
+                .isInstanceOf(BusinessValidationException.class)
+                .hasMessage("recommended hero pool may contain only 5-star heroes");
+    }
+
     private SummonCreateRequest request(
             ContentStatus status,
             List<SummonProbabilityCreateRequest> probabilities,
@@ -185,7 +217,9 @@ class SummonValidatorTest {
                 SummonProbabilityKind.MAIN,
                 new BigDecimal(value),
                 position,
-                List.of()
+                List.of(),
+                false,
+                null
         );
     }
 }

@@ -34,6 +34,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -165,8 +167,15 @@ class SummonAdminServiceTest {
                 .build();
 
         when(summonRepository.findById(summonId)).thenReturn(Optional.of(summon));
-        when(summonVariantRepository.findAllBySummonId(summonId))
-                .thenReturn(List.of(laterVariant, defaultVariant, earlierVariant));
+        when(summonVariantRepository.findFirstBySummonIdAndVariantType(
+                summonId,
+                SummonVariantType.DEFAULT
+        )).thenReturn(Optional.of(defaultVariant));
+        when(summonVariantRepository.findAllBySummonIdAndVariantTypeAndEndsAtAfterOrderByStartsAtAsc(
+                summonId,
+                SummonVariantType.SCHEDULED,
+                OffsetDateTime.parse("2026-10-18T10:00:00Z")
+        )).thenReturn(List.of(earlierVariant, laterVariant));
         when(probabilityRepository.findAllByVariantIdOrderByPositionAsc(any()))
                 .thenReturn(List.of());
         when(bonusRuleRepository.findAllByVariantId(any())).thenReturn(List.of());
@@ -177,6 +186,52 @@ class SummonAdminServiceTest {
         assertThat(result.scheduledVariants())
                 .extracting(variant -> variant.id())
                 .containsExactly(earlierVariantId, laterVariantId);
+    }
+
+    @Test
+    void shouldReturnPastVariantsFromNewestToOldestInPagesOfTen() {
+        UUID summonId = UUID.randomUUID();
+        UUID newerVariantId = UUID.randomUUID();
+        UUID olderVariantId = UUID.randomUUID();
+        OffsetDateTime now = OffsetDateTime.parse("2026-10-18T10:00:00Z");
+        SummonVariant newerVariant = SummonVariant.builder()
+                .id(newerVariantId)
+                .summonId(summonId)
+                .variantType(SummonVariantType.SCHEDULED)
+                .startsAt(OffsetDateTime.parse("2026-10-17T00:00:00Z"))
+                .endsAt(OffsetDateTime.parse("2026-10-18T09:00:00Z"))
+                .status(ContentStatus.READY)
+                .build();
+        SummonVariant olderVariant = SummonVariant.builder()
+                .id(olderVariantId)
+                .summonId(summonId)
+                .variantType(SummonVariantType.SCHEDULED)
+                .startsAt(OffsetDateTime.parse("2026-10-10T00:00:00Z"))
+                .endsAt(OffsetDateTime.parse("2026-10-11T00:00:00Z"))
+                .status(ContentStatus.READY)
+                .build();
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        when(summonRepository.existsById(summonId)).thenReturn(true);
+        when(summonVariantRepository
+                .findAllBySummonIdAndVariantTypeAndEndsAtLessThanEqualOrderByEndsAtDesc(
+                        summonId,
+                        SummonVariantType.SCHEDULED,
+                        now,
+                        pageable
+                )).thenReturn(new PageImpl<>(List.of(newerVariant, olderVariant), pageable, 12));
+        when(probabilityRepository.findAllByVariantIdOrderByPositionAsc(any()))
+                .thenReturn(List.of());
+        when(bonusRuleRepository.findAllByVariantId(any())).thenReturn(List.of());
+
+        var result = service.getVariantHistory(summonId, 0);
+
+        assertThat(result.size()).isEqualTo(10);
+        assertThat(result.totalElements()).isEqualTo(12);
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.items())
+                .extracting(variant -> variant.id())
+                .containsExactly(newerVariantId, olderVariantId);
     }
 
     @Test
@@ -320,8 +375,15 @@ class SummonAdminServiceTest {
         );
 
         when(summonRepository.findById(summonId)).thenReturn(Optional.of(summon));
-        when(summonVariantRepository.findAllBySummonId(summonId))
-                .thenReturn(List.of(scheduledVariant, defaultVariant));
+        when(summonVariantRepository.findFirstBySummonIdAndVariantType(
+                summonId,
+                SummonVariantType.DEFAULT
+        )).thenReturn(Optional.of(defaultVariant));
+        when(summonVariantRepository.findAllBySummonIdAndVariantTypeAndEndsAtAfterOrderByStartsAtAsc(
+                summonId,
+                SummonVariantType.SCHEDULED,
+                OffsetDateTime.parse("2026-10-18T10:00:00Z")
+        )).thenReturn(List.of(scheduledVariant));
         when(currentUserProvider.getUserId()).thenReturn(actorId);
         when(probabilityRepository.findAllByVariantIdOrderByPositionAsc(any())).thenReturn(List.of());
         when(bonusRuleRepository.findAllByVariantId(any())).thenReturn(List.of());
