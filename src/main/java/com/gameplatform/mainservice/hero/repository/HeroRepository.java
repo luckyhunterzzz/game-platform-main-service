@@ -1,7 +1,7 @@
 package com.gameplatform.mainservice.hero.repository;
 
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.repository.projection.HeroCardProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroCoachHeroProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
@@ -22,9 +22,9 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     Optional<Hero> findBySlug(String slug);
 
-    Optional<Hero> findBySlugAndStatus(String slug, HeroStatus status);
+    Optional<Hero> findBySlugAndStatus(String slug, ContentStatus status);
 
-    Optional<Hero> findBySlugAndStatusIn(String slug, List<HeroStatus> statuses);
+    Optional<Hero> findBySlugAndStatusIn(String slug, List<ContentStatus> statuses);
 
     boolean existsBySlug(String slug);
 
@@ -679,11 +679,11 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
 
     List<Hero> findAllByBaseHeroIdAndStatus(
             Long baseHeroId,
-            HeroStatus status
+            ContentStatus status
     );
 
     List<Hero> findAllByBaseHeroIdAndStatusIn(
             Long baseHeroId,
-            List<HeroStatus> statuses
+            List<ContentStatus> statuses
     );
 }

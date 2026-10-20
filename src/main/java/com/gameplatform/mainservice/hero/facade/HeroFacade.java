@@ -2,7 +2,7 @@ package com.gameplatform.mainservice.hero.facade;
 
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.response.HeroAdminVariantsResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroBugReportsAdminResponse;
@@ -29,7 +29,7 @@ public class HeroFacade {
         return heroService.getAll();
     }
 
-    public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<HeroStatus> statuses) {
+    public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<ContentStatus> statuses) {
         return heroService.getCatalog(page, size, search, rarityIds, statuses);
     }
 

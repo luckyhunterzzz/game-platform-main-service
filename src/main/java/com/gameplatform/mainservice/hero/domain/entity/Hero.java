@@ -1,6 +1,6 @@
 package com.gameplatform.mainservice.hero.domain.entity;
 
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.dto.json.CostumeBonusJson;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import jakarta.persistence.*;
@@ -100,7 +100,7 @@ public class Hero {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private HeroStatus status;
+    private ContentStatus status;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;

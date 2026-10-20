@@ -4,7 +4,7 @@ import com.gameplatform.mainservice.config.CacheNames;
 import com.gameplatform.mainservice.hero.converter.HeroExpertOpinionResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.dto.response.HeroExpertOpinionPublicResponse;
 import com.gameplatform.mainservice.hero.repository.HeroExpertOpinionRepository;
 import com.gameplatform.mainservice.hero.repository.HeroRepository;
@@ -28,9 +28,9 @@ public class HeroExpertOpinionPublicService {
     @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_EXPERT_OPINIONS)
     public List<HeroExpertOpinionPublicResponse> getAllByHeroSlug(String slug, HeroLanguage language) {
         Hero hero = heroPublicVisibilityService.isDraftVisibleInPublicCatalog()
-                ? heroRepository.findBySlugAndStatusIn(slug, List.of(HeroStatus.READY, HeroStatus.DRAFT))
+                ? heroRepository.findBySlugAndStatusIn(slug, List.of(ContentStatus.READY, ContentStatus.DRAFT))
                 .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug))
-                : heroRepository.findBySlugAndStatus(slug, HeroStatus.READY)
+                : heroRepository.findBySlugAndStatus(slug, ContentStatus.READY)
                 .orElseThrow(() -> new NotFoundException("Hero not found with slug: " + slug));
 
         return heroExpertOpinionRepository.findPublishedByHeroIdOrdered(hero.getId()).stream()

@@ -62,4 +62,19 @@ public class AdminMediaController {
                 storedImage.url()
         );
     }
+
+    @PostMapping(
+            value = "/images/summons",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ImageUploadResponse uploadSummonImage(@RequestPart("file") MultipartFile file) {
+
+        StoredImage storedImage = mediaStorageService.uploadSummonImage(file);
+
+        return new ImageUploadResponse(
+                storedImage.bucket(),
+                storedImage.objectKey(),
+                storedImage.url()
+        );
+    }
 }

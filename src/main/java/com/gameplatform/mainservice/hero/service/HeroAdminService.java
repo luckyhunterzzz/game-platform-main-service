@@ -12,7 +12,7 @@ import com.gameplatform.mainservice.hero.domain.entity.HeroPassiveSkillId;
 import com.gameplatform.mainservice.hero.domain.entity.HeroTagId;
 import com.gameplatform.mainservice.hero.domain.entity.HeroTagLink;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
 import com.gameplatform.mainservice.hero.dto.response.HeroBugReportResponse;
 import com.gameplatform.mainservice.hero.dto.response.HeroBugReportsAdminResponse;
@@ -76,7 +76,7 @@ public class HeroAdminService {
         );
     }
 
-    public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<HeroStatus> statuses) {
+    public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<ContentStatus> statuses) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size, 1), 50);
         List<Long> normalizedRarityIds = rarityIds == null ? List.of() : rarityIds.stream().filter(java.util.Objects::nonNull).distinct().toList();
