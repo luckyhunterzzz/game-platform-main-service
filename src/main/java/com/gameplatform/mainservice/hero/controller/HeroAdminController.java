@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.controller;
 
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.domain.enums.HeroLanguage;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroUpsertRequest;
@@ -38,7 +39,7 @@ public class HeroAdminController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) List<Long> rarityIds,
-            @RequestParam(required = false) List<com.gameplatform.mainservice.hero.domain.enums.HeroStatus> statuses
+            @RequestParam(required = false) List<ContentStatus> statuses
     ) {
         return ResponseEntity.ok(heroFacade.getCatalog(page, size, search, rarityIds, statuses));
     }

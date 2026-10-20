@@ -1,7 +1,7 @@
 package com.gameplatform.mainservice.hero.service.importer;
 
 import com.gameplatform.mainservice.hero.domain.entity.Hero;
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.dto.external.ExternalHeroRecord;
 import com.gameplatform.mainservice.hero.dto.external.ExternalLocalizedHeroRecord;
 import com.gameplatform.mainservice.hero.dto.json.CostumeBonusJson;
@@ -208,7 +208,7 @@ public class HeroImportHeroProcessor {
                 resolution.costumeIndex(),
                 resolution.costumeBonusJson(),
                 resolveReleaseDate(hero.releaseDate()),
-                 HeroStatus.DRAFT,
+                 ContentStatus.DRAFT,
                  request.updatedBy().trim(),
                  trimToNull(request.updatedByEmail()),
                  null,
@@ -221,7 +221,7 @@ public class HeroImportHeroProcessor {
             ExternalHeroRecord hero,
             String slug,
             Resolution resolution,
-            HeroStatus status,
+            ContentStatus status,
             String fullImageEnSourceUrl,
             String fullImageRuSourceUrl,
             String previewImageSourceUrl

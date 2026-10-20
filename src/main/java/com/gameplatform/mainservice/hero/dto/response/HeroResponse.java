@@ -1,6 +1,6 @@
 package com.gameplatform.mainservice.hero.dto.response;
 
-import com.gameplatform.mainservice.hero.domain.enums.HeroStatus;
+import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.dto.json.CostumeBonusJson;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 
@@ -35,7 +35,7 @@ public record HeroResponse(
         Integer costumeIndex,
         CostumeBonusJson costumeBonusJson,
         LocalDate releaseDate,
-        HeroStatus status,
+        ContentStatus status,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         String updatedBy,
