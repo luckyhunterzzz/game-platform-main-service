@@ -44,4 +44,7 @@ public class SummonBonusStep {
     @Column(name = "reward_mode", nullable = false, length = 40)
     private BonusRewardMode rewardMode;
 
+    @Column(name = "user_hero_selection_enabled", nullable = false)
+    private boolean userHeroSelectionEnabled;
+
 }

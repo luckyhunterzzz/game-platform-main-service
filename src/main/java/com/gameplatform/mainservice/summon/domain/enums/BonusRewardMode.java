@@ -2,5 +2,6 @@ package com.gameplatform.mainservice.summon.domain.enums;
 
 public enum BonusRewardMode {
     MAIN_ROLL,
-    CUSTOM_DISTRIBUTION
+    CUSTOM_DISTRIBUTION,
+    SPECIFIC_HERO_POOL
 }

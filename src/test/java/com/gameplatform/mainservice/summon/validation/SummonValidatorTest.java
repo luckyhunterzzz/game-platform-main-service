@@ -112,7 +112,9 @@ class SummonValidatorTest {
                                                 new BigDecimal("70"),
                                                 2
                                         )
-                                )
+                                ),
+                                false,
+                                List.of()
                         ))
                 ))
         );
@@ -157,12 +159,16 @@ class SummonValidatorTest {
                                         1,
                                         new BigDecimal("30"),
                                         BonusRewardMode.MAIN_ROLL,
+                                        List.of(),
+                                        false,
                                         List.of()
                                 ),
                                 new SummonBonusStepCreateRequest(
                                         2,
                                         new BigDecimal("20"),
                                         BonusRewardMode.MAIN_ROLL,
+                                        List.of(),
+                                        false,
                                         List.of()
                                 )
                         )
@@ -211,7 +217,9 @@ class SummonValidatorTest {
                                                 new BigDecimal("35"),
                                                 2
                                         )
-                                )
+                                ),
+                                false,
+                                List.of()
                         ))
                 ))
         );
@@ -219,6 +227,72 @@ class SummonValidatorTest {
         assertThatThrownBy(() -> validator.validateCreate(request))
                 .isInstanceOf(BusinessValidationException.class)
                 .hasMessage("bonus step reward probabilities must total 100%");
+    }
+
+    @Test
+    void shouldAcceptIndependentBonusWithUserSelectedHero() {
+        UUID probabilityDefinitionId = UUID.randomUUID();
+        UUID bonusDefinitionId = UUID.randomUUID();
+
+        SummonCreateRequest request = request(
+                ContentStatus.READY,
+                List.of(probability(probabilityDefinitionId, "100", 1)),
+                List.of(new SummonBonusRuleCreateRequest(
+                        bonusDefinitionId,
+                        SummonBonusKind.INDEPENDENT,
+                        true,
+                        null,
+                        null,
+                        List.of(new SummonBonusStepCreateRequest(
+                                1,
+                                new BigDecimal("1.30"),
+                                BonusRewardMode.SPECIFIC_HERO_POOL,
+                                List.of(),
+                                true,
+                                List.of()
+                        ))
+                ))
+        );
+
+        assertThatCode(() -> validator.validateCreate(request)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldAcceptIndependentBonusWithFixedFiveStarHero() {
+        UUID probabilityDefinitionId = UUID.randomUUID();
+        UUID bonusDefinitionId = UUID.randomUUID();
+        when(heroRepository.findAllById(any())).thenAnswer(invocation -> {
+            Iterable<Long> ids = invocation.getArgument(0);
+            return ids.iterator().hasNext()
+                    ? List.of(Hero.builder().id(42L).rarityId(7L).build())
+                    : List.of();
+        });
+        when(rarityRepository.findAllById(any())).thenReturn(List.of(Rarity.builder()
+                .id(7L)
+                .stars(5)
+                .build()));
+
+        SummonCreateRequest request = request(
+                ContentStatus.READY,
+                List.of(probability(probabilityDefinitionId, "100", 1)),
+                List.of(new SummonBonusRuleCreateRequest(
+                        bonusDefinitionId,
+                        SummonBonusKind.INDEPENDENT,
+                        true,
+                        null,
+                        null,
+                        List.of(new SummonBonusStepCreateRequest(
+                                1,
+                                new BigDecimal("1.30"),
+                                BonusRewardMode.SPECIFIC_HERO_POOL,
+                                List.of(),
+                                false,
+                                List.of(42L)
+                        ))
+                ))
+        );
+
+        assertThatCode(() -> validator.validateCreate(request)).doesNotThrowAnyException();
     }
 
     @Test

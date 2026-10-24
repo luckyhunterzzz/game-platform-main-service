@@ -24,6 +24,7 @@ import com.gameplatform.mainservice.summon.dto.response.SummonAdminDetailsRespon
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminSummaryResponse;
 import com.gameplatform.mainservice.summon.repository.SummonBonusRuleRepository;
 import com.gameplatform.mainservice.summon.repository.SummonBonusStepRepository;
+import com.gameplatform.mainservice.summon.repository.SummonBonusStepHeroRepository;
 import com.gameplatform.mainservice.summon.repository.SummonBonusStepProbabilityRepository;
 import com.gameplatform.mainservice.summon.repository.SummonHeroRepository;
 import com.gameplatform.mainservice.summon.repository.SummonProbabilityDefinitionRepository;
@@ -72,6 +73,8 @@ class SummonAdminServiceTest {
     @Mock
     private SummonBonusStepRepository bonusStepRepository;
     @Mock
+    private SummonBonusStepHeroRepository bonusStepHeroRepository;
+    @Mock
     private SummonBonusStepProbabilityRepository bonusStepProbabilityRepository;
     @Mock
     private SummonValidator summonValidator;
@@ -93,6 +96,7 @@ class SummonAdminServiceTest {
                 summonHeroRepository,
                 bonusRuleRepository,
                 bonusStepRepository,
+                bonusStepHeroRepository,
                 bonusStepProbabilityRepository,
                 summonValidator,
                 currentUserProvider,

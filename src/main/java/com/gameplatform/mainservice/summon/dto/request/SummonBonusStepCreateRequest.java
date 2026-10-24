@@ -26,6 +26,11 @@ public record SummonBonusStepCreateRequest(
         BonusRewardMode rewardMode,
 
         @NotNull
-        List<@NotNull @Valid SummonBonusStepProbabilityCreateRequest> rewardProbabilities
+        List<@NotNull @Valid SummonBonusStepProbabilityCreateRequest> rewardProbabilities,
+
+        boolean userHeroSelectionEnabled,
+
+        @NotNull
+        List<@NotNull Long> rewardHeroIds
 ) {
 }
