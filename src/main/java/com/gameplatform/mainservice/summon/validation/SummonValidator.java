@@ -16,6 +16,7 @@ import com.gameplatform.mainservice.summon.domain.entity.SummonProbability;
 import com.gameplatform.mainservice.summon.dto.request.SummonBonusConditionRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonBonusRuleCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonBonusStepCreateRequest;
+import com.gameplatform.mainservice.summon.dto.request.SummonBonusStepProbabilityCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonProbabilityCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonVariantCloneRequest;
@@ -259,23 +260,46 @@ public class SummonValidator {
                 throw new BusinessValidationException("bonus step positions must not contain duplicates");
             }
 
-            if (step.rewardMode() == BonusRewardMode.MAIN_ROLL
-                    && step.rewardProbabilityDefinitionId() != null) {
+            List<SummonBonusStepProbabilityCreateRequest> rewardProbabilities = safeList(
+                    step.rewardProbabilities()
+            );
+            if (step.rewardMode() == BonusRewardMode.MAIN_ROLL && !rewardProbabilities.isEmpty()) {
                 throw new BusinessValidationException(
-                        "MAIN_ROLL bonus step must not contain rewardProbabilityDefinitionId"
+                        "MAIN_ROLL bonus step must not contain rewardProbabilities"
                 );
             }
 
-            if (step.rewardMode() == BonusRewardMode.SPECIFIC_PROBABILITY) {
-                UUID definitionId = step.rewardProbabilityDefinitionId();
-                if (definitionId == null) {
+            if (step.rewardMode() == BonusRewardMode.CUSTOM_DISTRIBUTION) {
+                if (rewardProbabilities.isEmpty()) {
                     throw new BusinessValidationException(
-                            "SPECIFIC_PROBABILITY bonus step requires rewardProbabilityDefinitionId"
+                            "CUSTOM_DISTRIBUTION bonus step requires rewardProbabilities"
                     );
                 }
-                if (!configuredDefinitionIds.contains(definitionId)) {
+
+                Set<UUID> rewardDefinitionIds = new HashSet<>();
+                Set<Integer> rewardPositions = new HashSet<>();
+                BigDecimal rewardTotal = BigDecimal.ZERO;
+                for (SummonBonusStepProbabilityCreateRequest rewardProbability : rewardProbabilities) {
+                    if (!rewardDefinitionIds.add(rewardProbability.probabilityDefinitionId())) {
+                        throw new BusinessValidationException(
+                                "bonus step reward probabilities must not contain duplicates"
+                        );
+                    }
+                    if (!rewardPositions.add(rewardProbability.position())) {
+                        throw new BusinessValidationException(
+                                "bonus step reward probability positions must not contain duplicates"
+                        );
+                    }
+                    if (!configuredDefinitionIds.contains(rewardProbability.probabilityDefinitionId())) {
+                        throw new BusinessValidationException(
+                                "reward probability must be configured in the same summon variant"
+                        );
+                    }
+                    rewardTotal = rewardTotal.add(rewardProbability.valuePercent());
+                }
+                if (rewardTotal.compareTo(ONE_HUNDRED) != 0) {
                     throw new BusinessValidationException(
-                            "reward probability must be configured in the same summon variant"
+                            "bonus step reward probabilities must total 100%"
                     );
                 }
             }
