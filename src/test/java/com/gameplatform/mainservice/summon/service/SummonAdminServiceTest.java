@@ -7,6 +7,8 @@ import com.gameplatform.mainservice.security.CurrentUserProvider;
 import com.gameplatform.mainservice.summon.domain.entity.Summon;
 import com.gameplatform.mainservice.summon.domain.entity.SummonBonusRule;
 import com.gameplatform.mainservice.summon.domain.entity.SummonBonusStep;
+import com.gameplatform.mainservice.summon.domain.entity.SummonBonusStepProbability;
+import com.gameplatform.mainservice.summon.domain.entity.SummonBonusStepProbabilityId;
 import com.gameplatform.mainservice.summon.domain.entity.SummonHero;
 import com.gameplatform.mainservice.summon.domain.entity.SummonHeroId;
 import com.gameplatform.mainservice.summon.domain.entity.SummonProbability;
@@ -22,6 +24,7 @@ import com.gameplatform.mainservice.summon.dto.response.SummonAdminDetailsRespon
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminSummaryResponse;
 import com.gameplatform.mainservice.summon.repository.SummonBonusRuleRepository;
 import com.gameplatform.mainservice.summon.repository.SummonBonusStepRepository;
+import com.gameplatform.mainservice.summon.repository.SummonBonusStepProbabilityRepository;
 import com.gameplatform.mainservice.summon.repository.SummonHeroRepository;
 import com.gameplatform.mainservice.summon.repository.SummonProbabilityDefinitionRepository;
 import com.gameplatform.mainservice.summon.repository.SummonProbabilityRepository;
@@ -69,6 +72,8 @@ class SummonAdminServiceTest {
     @Mock
     private SummonBonusStepRepository bonusStepRepository;
     @Mock
+    private SummonBonusStepProbabilityRepository bonusStepProbabilityRepository;
+    @Mock
     private SummonValidator summonValidator;
     @Mock
     private CurrentUserProvider currentUserProvider;
@@ -88,6 +93,7 @@ class SummonAdminServiceTest {
                 summonHeroRepository,
                 bonusRuleRepository,
                 bonusStepRepository,
+                bonusStepProbabilityRepository,
                 summonValidator,
                 currentUserProvider,
                 mediaUrlResolver,
@@ -244,6 +250,8 @@ class SummonAdminServiceTest {
         UUID definitionId = UUID.randomUUID();
         UUID sourceRuleId = UUID.randomUUID();
         UUID targetRuleId = UUID.randomUUID();
+        UUID sourceStepId = UUID.randomUUID();
+        UUID targetStepId = UUID.randomUUID();
         UUID actorId = UUID.randomUUID();
 
         SummonVariant sourceVariant = SummonVariant.builder()
@@ -271,12 +279,16 @@ class SummonAdminServiceTest {
                 .continuationConditionType(BonusResultConditionType.ANY_RESULT)
                 .build();
         SummonBonusStep sourceStep = SummonBonusStep.builder()
-                .id(UUID.randomUUID())
+                .id(sourceStepId)
                 .bonusRuleId(sourceRuleId)
                 .position(1)
                 .activationChancePercent(new BigDecimal("30"))
-                .rewardMode(BonusRewardMode.SPECIFIC_PROBABILITY)
-                .rewardProbabilityId(sourceProbabilityId)
+                .rewardMode(BonusRewardMode.CUSTOM_DISTRIBUTION)
+                .build();
+        SummonBonusStepProbability sourceStepProbability = SummonBonusStepProbability.builder()
+                .id(new SummonBonusStepProbabilityId(sourceStepId, sourceProbabilityId))
+                .valuePercent(new BigDecimal("100"))
+                .position(1)
                 .build();
 
         when(summonRepository.existsById(summonId)).thenReturn(true);
@@ -308,6 +320,13 @@ class SummonAdminServiceTest {
         });
         when(bonusStepRepository.findAllByBonusRuleIdInOrderByPositionAsc(List.of(sourceRuleId)))
                 .thenReturn(List.of(sourceStep));
+        when(bonusStepRepository.save(any())).thenAnswer(invocation -> {
+            SummonBonusStep step = invocation.getArgument(0);
+            step.setId(targetStepId);
+            return step;
+        });
+        when(bonusStepProbabilityRepository.findAllByIdBonusStepIdIn(List.of(sourceStepId)))
+                .thenReturn(List.of(sourceStepProbability));
 
         service.cloneVariant(
                 summonId,
@@ -330,11 +349,21 @@ class SummonAdminServiceTest {
         assertThat(ruleCaptor.getValue().getVariantId()).isEqualTo(targetVariantId);
         assertThat(ruleCaptor.getValue().getTriggerProbabilityId()).isEqualTo(targetProbabilityId);
 
-        ArgumentCaptor<Iterable<SummonBonusStep>> stepsCaptor = ArgumentCaptor.forClass(Iterable.class);
-        verify(bonusStepRepository).saveAll(stepsCaptor.capture());
-        SummonBonusStep clonedStep = stepsCaptor.getValue().iterator().next();
+        ArgumentCaptor<SummonBonusStep> stepCaptor = ArgumentCaptor.forClass(SummonBonusStep.class);
+        verify(bonusStepRepository).save(stepCaptor.capture());
+        SummonBonusStep clonedStep = stepCaptor.getValue();
         assertThat(clonedStep.getBonusRuleId()).isEqualTo(targetRuleId);
-        assertThat(clonedStep.getRewardProbabilityId()).isEqualTo(targetProbabilityId);
+
+        ArgumentCaptor<Iterable<SummonBonusStepProbability>> stepProbabilitiesCaptor =
+                ArgumentCaptor.forClass(Iterable.class);
+        verify(bonusStepProbabilityRepository).saveAll(stepProbabilitiesCaptor.capture());
+        SummonBonusStepProbability clonedStepProbability = stepProbabilitiesCaptor
+                .getValue()
+                .iterator()
+                .next();
+        assertThat(clonedStepProbability.getId())
+                .isEqualTo(new SummonBonusStepProbabilityId(targetStepId, targetProbabilityId));
+        assertThat(clonedStepProbability.getValuePercent()).isEqualByComparingTo("100");
     }
 
     @Test

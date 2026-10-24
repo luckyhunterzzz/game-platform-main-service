@@ -4,11 +4,12 @@ import com.gameplatform.mainservice.summon.domain.enums.BonusRewardMode;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
-import java.util.UUID;
+import java.util.List;
 
 public record SummonBonusStepCreateRequest(
         @NotNull
@@ -24,6 +25,7 @@ public record SummonBonusStepCreateRequest(
         @NotNull
         BonusRewardMode rewardMode,
 
-        UUID rewardProbabilityDefinitionId
+        @NotNull
+        List<@NotNull @Valid SummonBonusStepProbabilityCreateRequest> rewardProbabilities
 ) {
 }

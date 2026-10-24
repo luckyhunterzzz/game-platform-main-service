@@ -44,6 +44,4 @@ public class SummonBonusStep {
     @Column(name = "reward_mode", nullable = false, length = 40)
     private BonusRewardMode rewardMode;
 
-    @Column(name = "reward_probability_id")
-    private UUID rewardProbabilityId;
 }
