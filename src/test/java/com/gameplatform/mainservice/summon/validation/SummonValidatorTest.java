@@ -16,6 +16,7 @@ import com.gameplatform.mainservice.summon.domain.enums.SummonProbabilityKind;
 import com.gameplatform.mainservice.summon.dto.request.SummonBonusConditionRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonBonusRuleCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonBonusStepCreateRequest;
+import com.gameplatform.mainservice.summon.dto.request.SummonBonusStepProbabilityCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonCreateRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonProbabilityCreateRequest;
 import com.gameplatform.mainservice.summon.repository.SummonProbabilityDefinitionRepository;
@@ -99,8 +100,19 @@ class SummonValidatorTest {
                         List.of(new SummonBonusStepCreateRequest(
                                 1,
                                 new BigDecimal("30"),
-                                BonusRewardMode.SPECIFIC_PROBABILITY,
-                                legendaryDefinitionId
+                                BonusRewardMode.CUSTOM_DISTRIBUTION,
+                                List.of(
+                                        new SummonBonusStepProbabilityCreateRequest(
+                                                legendaryDefinitionId,
+                                                new BigDecimal("30"),
+                                                1
+                                        ),
+                                        new SummonBonusStepProbabilityCreateRequest(
+                                                rareDefinitionId,
+                                                new BigDecimal("70"),
+                                                2
+                                        )
+                                )
                         ))
                 ))
         );
@@ -145,13 +157,13 @@ class SummonValidatorTest {
                                         1,
                                         new BigDecimal("30"),
                                         BonusRewardMode.MAIN_ROLL,
-                                        null
+                                        List.of()
                                 ),
                                 new SummonBonusStepCreateRequest(
                                         2,
                                         new BigDecimal("20"),
                                         BonusRewardMode.MAIN_ROLL,
-                                        null
+                                        List.of()
                                 )
                         )
                 ))
@@ -160,6 +172,53 @@ class SummonValidatorTest {
         assertThatThrownBy(() -> validator.validateCreate(request))
                 .isInstanceOf(BusinessValidationException.class)
                 .hasMessage("bonus with multiple steps requires continuationCondition");
+    }
+
+    @Test
+    void shouldRejectIncompleteCustomBonusDistribution() {
+        UUID rareDefinitionId = UUID.randomUUID();
+        UUID legendaryDefinitionId = UUID.randomUUID();
+        UUID bonusDefinitionId = UUID.randomUUID();
+
+        SummonCreateRequest request = request(
+                ContentStatus.DRAFT,
+                List.of(
+                        probability(rareDefinitionId, "70", 1),
+                        probability(legendaryDefinitionId, "30", 2)
+                ),
+                List.of(new SummonBonusRuleCreateRequest(
+                        bonusDefinitionId,
+                        SummonBonusKind.CONDITIONAL,
+                        false,
+                        new SummonBonusConditionRequest(
+                                BonusResultConditionType.PROBABILITY,
+                                null,
+                                legendaryDefinitionId
+                        ),
+                        null,
+                        List.of(new SummonBonusStepCreateRequest(
+                                1,
+                                new BigDecimal("100"),
+                                BonusRewardMode.CUSTOM_DISTRIBUTION,
+                                List.of(
+                                        new SummonBonusStepProbabilityCreateRequest(
+                                                legendaryDefinitionId,
+                                                new BigDecimal("30"),
+                                                1
+                                        ),
+                                        new SummonBonusStepProbabilityCreateRequest(
+                                                rareDefinitionId,
+                                                new BigDecimal("35"),
+                                                2
+                                        )
+                                )
+                        ))
+                ))
+        );
+
+        assertThatThrownBy(() -> validator.validateCreate(request))
+                .isInstanceOf(BusinessValidationException.class)
+                .hasMessage("bonus step reward probabilities must total 100%");
     }
 
     @Test
