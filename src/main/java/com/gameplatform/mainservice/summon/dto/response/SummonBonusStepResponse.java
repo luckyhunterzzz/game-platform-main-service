@@ -11,6 +11,8 @@ public record SummonBonusStepResponse(
         Integer position,
         BigDecimal activationChancePercent,
         BonusRewardMode rewardMode,
-        List<SummonBonusStepProbabilityResponse> rewardProbabilities
+        List<SummonBonusStepProbabilityResponse> rewardProbabilities,
+        boolean userHeroSelectionEnabled,
+        List<Long> rewardHeroIds
 ) {
 }

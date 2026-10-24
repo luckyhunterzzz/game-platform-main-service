@@ -9,6 +9,8 @@ import com.gameplatform.mainservice.security.CurrentUserProvider;
 import com.gameplatform.mainservice.summon.domain.entity.Summon;
 import com.gameplatform.mainservice.summon.domain.entity.SummonBonusRule;
 import com.gameplatform.mainservice.summon.domain.entity.SummonBonusStep;
+import com.gameplatform.mainservice.summon.domain.entity.SummonBonusStepHero;
+import com.gameplatform.mainservice.summon.domain.entity.SummonBonusStepHeroId;
 import com.gameplatform.mainservice.summon.domain.entity.SummonBonusStepProbability;
 import com.gameplatform.mainservice.summon.domain.entity.SummonBonusStepProbabilityId;
 import com.gameplatform.mainservice.summon.domain.entity.SummonHero;
@@ -37,6 +39,7 @@ import com.gameplatform.mainservice.summon.dto.response.SummonProbabilityRespons
 import com.gameplatform.mainservice.summon.dto.response.SummonVariantResponse;
 import com.gameplatform.mainservice.summon.repository.SummonBonusRuleRepository;
 import com.gameplatform.mainservice.summon.repository.SummonBonusStepRepository;
+import com.gameplatform.mainservice.summon.repository.SummonBonusStepHeroRepository;
 import com.gameplatform.mainservice.summon.repository.SummonBonusStepProbabilityRepository;
 import com.gameplatform.mainservice.summon.repository.SummonHeroRepository;
 import com.gameplatform.mainservice.summon.repository.SummonProbabilityDefinitionRepository;
@@ -76,6 +79,7 @@ public class SummonAdminService {
     private final SummonHeroRepository summonHeroRepository;
     private final SummonBonusRuleRepository bonusRuleRepository;
     private final SummonBonusStepRepository bonusStepRepository;
+    private final SummonBonusStepHeroRepository bonusStepHeroRepository;
     private final SummonBonusStepProbabilityRepository bonusStepProbabilityRepository;
     private final SummonValidator summonValidator;
     private final CurrentUserProvider currentUserProvider;
@@ -231,8 +235,15 @@ public class SummonAdminService {
             List<SummonBonusStep> steps = bonusStepRepository
                     .findAllByBonusRuleIdInOrderByPositionAsc(ruleIds);
             if (!steps.isEmpty()) {
+                List<UUID> stepIds = steps.stream().map(SummonBonusStep::getId).toList();
+                List<SummonBonusStepHero> stepHeroes = bonusStepHeroRepository
+                        .findAllByIdBonusStepIdIn(stepIds);
+                if (!stepHeroes.isEmpty()) {
+                    bonusStepHeroRepository.deleteAllInBatch(stepHeroes);
+                    bonusStepHeroRepository.flush();
+                }
                 List<SummonBonusStepProbability> stepProbabilities = bonusStepProbabilityRepository
-                        .findAllByIdBonusStepIdIn(steps.stream().map(SummonBonusStep::getId).toList());
+                        .findAllByIdBonusStepIdIn(stepIds);
                 if (!stepProbabilities.isEmpty()) {
                     bonusStepProbabilityRepository.deleteAllInBatch(stepProbabilities);
                     bonusStepProbabilityRepository.flush();
@@ -396,6 +407,7 @@ public class SummonAdminService {
             for (SummonBonusStepCreateRequest stepRequest : request.steps()) {
                 SummonBonusStep step = bonusStepRepository.save(toBonusStep(rule.getId(), stepRequest));
                 createBonusStepProbabilities(step.getId(), stepRequest, probabilitiesByDefinition);
+                createBonusStepHeroes(step.getId(), stepRequest);
             }
         }
     }
@@ -409,7 +421,19 @@ public class SummonAdminService {
                 .position(request.position())
                 .activationChancePercent(request.activationChancePercent())
                 .rewardMode(request.rewardMode())
+                .userHeroSelectionEnabled(request.userHeroSelectionEnabled())
                 .build();
+    }
+
+    private void createBonusStepHeroes(UUID bonusStepId, SummonBonusStepCreateRequest request) {
+        List<SummonBonusStepHero> heroes = new LinkedHashSet<>(safeList(request.rewardHeroIds())).stream()
+                .map(heroId -> SummonBonusStepHero.builder()
+                        .id(new SummonBonusStepHeroId(bonusStepId, heroId))
+                        .build())
+                .toList();
+        if (!heroes.isEmpty()) {
+            bonusStepHeroRepository.saveAll(heroes);
+        }
     }
 
     private void createBonusStepProbabilities(
@@ -568,6 +592,7 @@ public class SummonAdminService {
                     .position(source.getPosition())
                     .activationChancePercent(source.getActivationChancePercent())
                     .rewardMode(source.getRewardMode())
+                    .userHeroSelectionEnabled(source.isUserHeroSelectionEnabled())
                     .build());
             stepIdMap.put(source.getId(), target.getId());
         }
@@ -589,6 +614,18 @@ public class SummonAdminService {
                         .build())
                 .toList();
         bonusStepProbabilityRepository.saveAll(targetStepProbabilities);
+
+        List<SummonBonusStepHero> targetStepHeroes = bonusStepHeroRepository
+                .findAllByIdBonusStepIdIn(sourceSteps.stream().map(SummonBonusStep::getId).toList())
+                .stream()
+                .map(source -> SummonBonusStepHero.builder()
+                        .id(new SummonBonusStepHeroId(
+                                stepIdMap.get(source.getId().getBonusStepId()),
+                                source.getId().getHeroId()
+                        ))
+                        .build())
+                .toList();
+        bonusStepHeroRepository.saveAll(targetStepHeroes);
     }
 
     private UUID remapNullableProbabilityId(UUID sourceId, Map<UUID, UUID> probabilityIdMap) {
@@ -669,6 +706,9 @@ public class SummonAdminService {
         Map<UUID, List<SummonBonusStepProbability>> rewardProbabilitiesByStep = loadRewardProbabilities(
                 stepsByRule.values().stream().flatMap(List::stream).toList()
         );
+        Map<UUID, List<Long>> rewardHeroIdsByStep = loadRewardHeroIds(
+                stepsByRule.values().stream().flatMap(List::stream).toList()
+        );
 
         List<SummonProbabilityResponse> probabilityResponses = probabilities.stream()
                 .map(probability -> toProbabilityResponse(
@@ -683,7 +723,8 @@ public class SummonAdminService {
                         rule,
                         definitionsById.get(rule.getDefinitionId()),
                         stepsByRule.getOrDefault(rule.getId(), List.of()),
-                        rewardProbabilitiesByStep
+                        rewardProbabilitiesByStep,
+                        rewardHeroIdsByStep
                 ))
                 .toList();
 
@@ -739,6 +780,20 @@ public class SummonAdminService {
                 .collect(Collectors.groupingBy(link -> link.getId().getBonusStepId()));
     }
 
+    private Map<UUID, List<Long>> loadRewardHeroIds(List<SummonBonusStep> steps) {
+        if (steps.isEmpty()) {
+            return Map.of();
+        }
+
+        return bonusStepHeroRepository
+                .findAllByIdBonusStepIdIn(steps.stream().map(SummonBonusStep::getId).toList())
+                .stream()
+                .collect(Collectors.groupingBy(
+                        link -> link.getId().getBonusStepId(),
+                        Collectors.mapping(link -> link.getId().getHeroId(), Collectors.toList())
+                ));
+    }
+
     private SummonProbabilityResponse toProbabilityResponse(
             SummonProbability probability,
             SummonProbabilityDefinition definition,
@@ -769,7 +824,8 @@ public class SummonAdminService {
             SummonBonusRule rule,
             SummonProbabilityDefinition definition,
             List<SummonBonusStep> steps,
-            Map<UUID, List<SummonBonusStepProbability>> rewardProbabilitiesByStep
+            Map<UUID, List<SummonBonusStepProbability>> rewardProbabilitiesByStep,
+            Map<UUID, List<Long>> rewardHeroIdsByStep
     ) {
         if (definition == null) {
             throw new IllegalStateException("Bonus definition not found: " + rule.getDefinitionId());
@@ -808,6 +864,10 @@ public class SummonAdminService {
                                                 reward.getValuePercent(),
                                                 reward.getPosition()
                                         ))
+                                        .toList(),
+                                step.isUserHeroSelectionEnabled(),
+                                rewardHeroIdsByStep.getOrDefault(step.getId(), List.of()).stream()
+                                        .sorted()
                                         .toList()
                         ))
                         .toList()

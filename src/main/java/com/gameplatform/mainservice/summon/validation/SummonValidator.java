@@ -263,6 +263,7 @@ public class SummonValidator {
             List<SummonBonusStepProbabilityCreateRequest> rewardProbabilities = safeList(
                     step.rewardProbabilities()
             );
+            List<Long> rewardHeroIds = safeList(step.rewardHeroIds());
             if (step.rewardMode() == BonusRewardMode.MAIN_ROLL && !rewardProbabilities.isEmpty()) {
                 throw new BusinessValidationException(
                         "MAIN_ROLL bonus step must not contain rewardProbabilities"
@@ -303,6 +304,64 @@ public class SummonValidator {
                     );
                 }
             }
+
+            if (step.rewardMode() != BonusRewardMode.SPECIFIC_HERO_POOL
+                    && (step.userHeroSelectionEnabled() || !rewardHeroIds.isEmpty())) {
+                throw new BusinessValidationException(
+                        "only SPECIFIC_HERO_POOL bonus step may configure reward heroes"
+                );
+            }
+
+            if (step.rewardMode() == BonusRewardMode.SPECIFIC_HERO_POOL) {
+                if (!rewardProbabilities.isEmpty()) {
+                    throw new BusinessValidationException(
+                            "SPECIFIC_HERO_POOL bonus step must not contain rewardProbabilities"
+                    );
+                }
+                if (step.userHeroSelectionEnabled() && !rewardHeroIds.isEmpty()) {
+                    throw new BusinessValidationException(
+                            "user-selected bonus hero step must not contain rewardHeroIds"
+                    );
+                }
+                if (!step.userHeroSelectionEnabled() && rewardHeroIds.size() != 1) {
+                    throw new BusinessValidationException(
+                            "fixed bonus hero step requires exactly one reward hero"
+                    );
+                }
+                if (rewardHeroIds.size() > 1) {
+                    throw new BusinessValidationException(
+                            "bonus hero pool must contain at most one hero"
+                    );
+                }
+                validateFiveStarBonusHeroes(rewardHeroIds);
+            }
+        }
+    }
+
+    private void validateFiveStarBonusHeroes(List<Long> rewardHeroIds) {
+        if (rewardHeroIds.isEmpty()) {
+            return;
+        }
+
+        Set<Long> uniqueHeroIds = new HashSet<>(rewardHeroIds);
+        if (uniqueHeroIds.size() != rewardHeroIds.size()) {
+            throw new BusinessValidationException("bonus hero pool must not contain duplicates");
+        }
+
+        List<Hero> heroes = heroRepository.findAllById(uniqueHeroIds);
+        if (heroes.size() != uniqueHeroIds.size()) {
+            throw new BusinessValidationException("one or more bonus reward heroes do not exist");
+        }
+
+        Set<Long> rarityIds = heroes.stream().map(Hero::getRarityId).collect(Collectors.toSet());
+        Map<Long, Rarity> raritiesById = rarityRepository.findAllById(rarityIds).stream()
+                .collect(Collectors.toMap(Rarity::getId, Function.identity()));
+        boolean containsNonFiveStarHero = heroes.stream()
+                .map(Hero::getRarityId)
+                .map(raritiesById::get)
+                .anyMatch(rarity -> rarity == null || !Objects.equals(rarity.getStars(), 5));
+        if (containsNonFiveStarHero) {
+            throw new BusinessValidationException("bonus hero pool may contain only 5-star heroes");
         }
     }
 
