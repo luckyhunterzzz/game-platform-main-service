@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.summon.dto.response;
 
 import com.gameplatform.mainservice.summon.domain.enums.SummonProbabilityKind;
+import com.gameplatform.mainservice.summon.domain.enums.SummonHeroVariantMode;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,6 +15,7 @@ public record SummonProbabilityResponse(
         Integer position,
         List<Long> heroIds,
         boolean userSelectionEnabled,
-        Integer defaultSelectedHeroCount
+        Integer defaultSelectedHeroCount,
+        SummonHeroVariantMode heroVariantMode
 ) {
 }

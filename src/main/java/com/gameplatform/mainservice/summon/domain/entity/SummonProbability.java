@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.summon.domain.entity;
 
 import com.gameplatform.mainservice.summon.domain.enums.SummonProbabilityKind;
+import com.gameplatform.mainservice.summon.domain.enums.SummonHeroVariantMode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,6 +46,11 @@ public class SummonProbability {
 
     @Column(name = "position", nullable = false)
     private Integer position;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "hero_variant_mode", nullable = false, length = 32)
+    private SummonHeroVariantMode heroVariantMode = SummonHeroVariantMode.EXACT;
 
     @Column(name = "user_selection_enabled", nullable = false)
     private boolean userSelectionEnabled;

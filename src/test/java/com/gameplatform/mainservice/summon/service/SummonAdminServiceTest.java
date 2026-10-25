@@ -2,6 +2,8 @@ package com.gameplatform.mainservice.summon.service;
 
 import com.gameplatform.mainservice.common.domain.enums.ContentStatus;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
+import com.gameplatform.mainservice.hero.domain.entity.Hero;
+import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import com.gameplatform.mainservice.security.CurrentUserProvider;
 import com.gameplatform.mainservice.summon.domain.entity.Summon;
@@ -17,9 +19,11 @@ import com.gameplatform.mainservice.summon.domain.enums.BonusResultConditionType
 import com.gameplatform.mainservice.summon.domain.enums.BonusRewardMode;
 import com.gameplatform.mainservice.summon.domain.enums.SummonBonusKind;
 import com.gameplatform.mainservice.summon.domain.enums.SummonProbabilityKind;
+import com.gameplatform.mainservice.summon.domain.enums.SummonHeroVariantMode;
 import com.gameplatform.mainservice.summon.domain.enums.SummonVariantType;
 import com.gameplatform.mainservice.summon.dto.request.SummonVariantCloneRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonCreateRequest;
+import com.gameplatform.mainservice.summon.dto.request.SummonProbabilityCreateRequest;
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminDetailsResponse;
 import com.gameplatform.mainservice.summon.dto.response.SummonAdminSummaryResponse;
 import com.gameplatform.mainservice.summon.repository.SummonBonusRuleRepository;
@@ -77,6 +81,8 @@ class SummonAdminServiceTest {
     @Mock
     private SummonBonusStepProbabilityRepository bonusStepProbabilityRepository;
     @Mock
+    private HeroRepository heroRepository;
+    @Mock
     private SummonValidator summonValidator;
     @Mock
     private CurrentUserProvider currentUserProvider;
@@ -98,6 +104,7 @@ class SummonAdminServiceTest {
                 bonusStepRepository,
                 bonusStepHeroRepository,
                 bonusStepProbabilityRepository,
+                heroRepository,
                 summonValidator,
                 currentUserProvider,
                 mediaUrlResolver,
@@ -271,6 +278,7 @@ class SummonAdminServiceTest {
                 .kind(SummonProbabilityKind.MAIN)
                 .valuePercent(new BigDecimal("100"))
                 .position(1)
+                .heroVariantMode(SummonHeroVariantMode.LATEST_COSTUME)
                 .build();
         SummonBonusRule sourceRule = SummonBonusRule.builder()
                 .id(sourceRuleId)
@@ -348,6 +356,11 @@ class SummonAdminServiceTest {
         assertThat(clonedHero.getId())
                 .isEqualTo(new SummonHeroId(targetProbabilityId, 42L));
 
+        ArgumentCaptor<SummonProbability> probabilityCaptor = ArgumentCaptor.forClass(SummonProbability.class);
+        verify(probabilityRepository).save(probabilityCaptor.capture());
+        assertThat(probabilityCaptor.getValue().getHeroVariantMode())
+                .isEqualTo(SummonHeroVariantMode.LATEST_COSTUME);
+
         ArgumentCaptor<SummonBonusRule> ruleCaptor = ArgumentCaptor.forClass(SummonBonusRule.class);
         verify(bonusRuleRepository).save(ruleCaptor.capture());
         assertThat(ruleCaptor.getValue().getVariantId()).isEqualTo(targetVariantId);
@@ -367,6 +380,68 @@ class SummonAdminServiceTest {
                 .next();
         assertThat(clonedStepProbability.getId())
                 .isEqualTo(new SummonBonusStepProbabilityId(targetStepId, targetProbabilityId));
+    }
+
+    @Test
+    void shouldResolveOnlyLatestCostumeForEachBaseHero() {
+        Hero originalOne = Hero.builder().id(1L).isCostume(false).build();
+        Hero originalTwo = Hero.builder().id(2L).isCostume(false).build();
+        Hero firstCostume = Hero.builder()
+                .id(11L)
+                .isCostume(true)
+                .baseHeroId(1L)
+                .costumeIndex(1)
+                .build();
+        Hero latestCostume = Hero.builder()
+                .id(12L)
+                .isCostume(true)
+                .baseHeroId(1L)
+                .costumeIndex(2)
+                .build();
+        when(heroRepository.findAllById(any()))
+                .thenReturn(List.of(originalOne, latestCostume, originalTwo), List.of(originalOne, originalTwo));
+        when(heroRepository.findAllByBaseHeroIdIn(List.of(1L, 2L)))
+                .thenReturn(List.of(firstCostume, latestCostume));
+
+        SummonProbabilityCreateRequest request = new SummonProbabilityCreateRequest(
+                UUID.randomUUID(),
+                SummonProbabilityKind.MAIN,
+                new BigDecimal("100"),
+                1,
+                List.of(1L, 12L, 2L),
+                false,
+                null,
+                SummonHeroVariantMode.LATEST_COSTUME
+        );
+
+        assertThat(service.resolveHeroIds(request)).containsExactly(12L, 2L);
+    }
+
+    @Test
+    void shouldResolveOriginalHeroAndDeduplicateCostumes() {
+        Hero originalOne = Hero.builder().id(1L).isCostume(false).build();
+        Hero originalTwo = Hero.builder().id(2L).isCostume(false).build();
+        Hero costume = Hero.builder()
+                .id(12L)
+                .isCostume(true)
+                .baseHeroId(1L)
+                .costumeIndex(2)
+                .build();
+        when(heroRepository.findAllById(any()))
+                .thenReturn(List.of(costume, originalTwo), List.of(originalOne, originalTwo));
+
+        SummonProbabilityCreateRequest request = new SummonProbabilityCreateRequest(
+                UUID.randomUUID(),
+                SummonProbabilityKind.MAIN,
+                new BigDecimal("100"),
+                1,
+                List.of(12L, 2L),
+                false,
+                null,
+                SummonHeroVariantMode.ORIGINAL
+        );
+
+        assertThat(service.resolveHeroIds(request)).containsExactly(1L, 2L);
     }
 
     @Test
