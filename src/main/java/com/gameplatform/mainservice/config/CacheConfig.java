@@ -33,13 +33,13 @@ public class CacheConfig implements CachingConfigurer {
                 BasicPolymorphicTypeValidator.builder()
                         .allowIfSubType(Object.class)
                         .build(),
-                ObjectMapper.DefaultTyping.NON_FINAL,
+                ObjectMapper.DefaultTyping.EVERYTHING,
                 JsonTypeInfo.As.PROPERTY
         );
 
         return RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
-                .prefixCacheNameWith("main-service:v2::")
+                .prefixCacheNameWith("main-service:v3::")
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
                         new GenericJackson2JsonRedisSerializer(cacheObjectMapper)
                 ));
