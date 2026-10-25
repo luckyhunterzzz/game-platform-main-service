@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.summon.dto.request;
 
 import com.gameplatform.mainservice.summon.domain.enums.SummonProbabilityKind;
+import com.gameplatform.mainservice.summon.domain.enums.SummonHeroVariantMode;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -36,6 +37,28 @@ public record SummonProbabilityCreateRequest(
 
         @Min(1)
         @Max(10)
-        Integer defaultSelectedHeroCount
+        Integer defaultSelectedHeroCount,
+
+        SummonHeroVariantMode heroVariantMode
 ) {
+    public SummonProbabilityCreateRequest(
+            UUID definitionId,
+            SummonProbabilityKind kind,
+            BigDecimal valuePercent,
+            Integer position,
+            List<Long> heroIds,
+            boolean userSelectionEnabled,
+            Integer defaultSelectedHeroCount
+    ) {
+        this(
+                definitionId,
+                kind,
+                valuePercent,
+                position,
+                heroIds,
+                userSelectionEnabled,
+                defaultSelectedHeroCount,
+                SummonHeroVariantMode.EXACT
+        );
+    }
 }

@@ -686,4 +686,6 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             Long baseHeroId,
             List<ContentStatus> statuses
     );
+
+    List<Hero> findAllByBaseHeroIdIn(List<Long> baseHeroIds);
 }

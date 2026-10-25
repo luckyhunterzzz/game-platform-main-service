@@ -2,8 +2,10 @@ package com.gameplatform.mainservice.summon.service;
 
 import com.gameplatform.mainservice.exception.exceptions.BusinessValidationException;
 import com.gameplatform.mainservice.exception.exceptions.NotFoundException;
+import com.gameplatform.mainservice.hero.domain.entity.Hero;
 import com.gameplatform.mainservice.hero.dto.json.LocalizedTextJson;
 import com.gameplatform.mainservice.hero.dto.response.CatalogPageResponse;
+import com.gameplatform.mainservice.hero.repository.HeroRepository;
 import com.gameplatform.mainservice.publication.resolver.MediaUrlResolver;
 import com.gameplatform.mainservice.security.CurrentUserProvider;
 import com.gameplatform.mainservice.summon.domain.entity.Summon;
@@ -19,6 +21,7 @@ import com.gameplatform.mainservice.summon.domain.entity.SummonProbability;
 import com.gameplatform.mainservice.summon.domain.entity.SummonProbabilityDefinition;
 import com.gameplatform.mainservice.summon.domain.entity.SummonVariant;
 import com.gameplatform.mainservice.summon.domain.enums.BonusResultConditionType;
+import com.gameplatform.mainservice.summon.domain.enums.SummonHeroVariantMode;
 import com.gameplatform.mainservice.summon.domain.enums.SummonVariantType;
 import com.gameplatform.mainservice.summon.dto.request.SummonBonusConditionRequest;
 import com.gameplatform.mainservice.summon.dto.request.SummonBonusRuleCreateRequest;
@@ -81,6 +84,7 @@ public class SummonAdminService {
     private final SummonBonusStepRepository bonusStepRepository;
     private final SummonBonusStepHeroRepository bonusStepHeroRepository;
     private final SummonBonusStepProbabilityRepository bonusStepProbabilityRepository;
+    private final HeroRepository heroRepository;
     private final SummonValidator summonValidator;
     private final CurrentUserProvider currentUserProvider;
     private final MediaUrlResolver mediaUrlResolver;
@@ -360,13 +364,14 @@ public class SummonAdminService {
                     .kind(request.kind())
                     .valuePercent(request.valuePercent())
                     .position(request.position())
+                    .heroVariantMode(heroVariantMode(request))
                     .userSelectionEnabled(request.userSelectionEnabled())
                     .defaultSelectedHeroCount(request.defaultSelectedHeroCount())
                     .build());
 
             result.put(request.definitionId(), probability);
 
-            Set<Long> heroIds = new LinkedHashSet<>(safeList(request.heroIds()));
+            Set<Long> heroIds = resolveHeroIds(request);
             if (!heroIds.isEmpty()) {
                 summonHeroRepository.saveAll(heroIds.stream()
                         .map(heroId -> SummonHero.builder()
@@ -377,6 +382,71 @@ public class SummonAdminService {
         }
 
         return result;
+    }
+
+    private SummonHeroVariantMode heroVariantMode(SummonProbabilityCreateRequest request) {
+        return request.heroVariantMode() == null
+                ? SummonHeroVariantMode.EXACT
+                : request.heroVariantMode();
+    }
+
+    Set<Long> resolveHeroIds(SummonProbabilityCreateRequest request) {
+        Set<Long> requestedIds = new LinkedHashSet<>(safeList(request.heroIds()));
+        SummonHeroVariantMode mode = heroVariantMode(request);
+        if (requestedIds.isEmpty() || mode == SummonHeroVariantMode.EXACT) {
+            return requestedIds;
+        }
+
+        Map<Long, Hero> requestedHeroes = heroRepository.findAllById(requestedIds).stream()
+                .collect(Collectors.toMap(Hero::getId, Function.identity()));
+        if (requestedHeroes.size() != requestedIds.size()) {
+            throw new BusinessValidationException("One or more summon heroes do not exist");
+        }
+
+        LinkedHashSet<Long> baseHeroIds = new LinkedHashSet<>();
+        for (Long requestedId : requestedIds) {
+            Hero hero = requestedHeroes.get(requestedId);
+            if (hero.isCostume() && hero.getBaseHeroId() == null) {
+                throw new BusinessValidationException("Costume hero has no base hero: " + hero.getId());
+            }
+            baseHeroIds.add(hero.isCostume() ? hero.getBaseHeroId() : hero.getId());
+        }
+
+        List<Long> orderedBaseHeroIds = List.copyOf(baseHeroIds);
+        Set<Long> existingBaseHeroIds = heroRepository.findAllById(orderedBaseHeroIds).stream()
+                .filter(hero -> !hero.isCostume())
+                .map(Hero::getId)
+                .collect(Collectors.toSet());
+        if (existingBaseHeroIds.size() != orderedBaseHeroIds.size()) {
+            throw new BusinessValidationException("One or more base summon heroes do not exist");
+        }
+
+        if (mode == SummonHeroVariantMode.ORIGINAL) {
+            return baseHeroIds;
+        }
+
+        Comparator<Hero> latestCostumeComparator = Comparator
+                .comparing(
+                        Hero::getCostumeIndex,
+                        Comparator.nullsFirst(Comparator.naturalOrder())
+                )
+                .thenComparing(Hero::getId);
+        Map<Long, Hero> latestCostumeByBaseHeroId = heroRepository
+                .findAllByBaseHeroIdIn(orderedBaseHeroIds)
+                .stream()
+                .filter(Hero::isCostume)
+                .collect(Collectors.toMap(
+                        Hero::getBaseHeroId,
+                        Function.identity(),
+                        (left, right) -> latestCostumeComparator.compare(left, right) >= 0 ? left : right
+                ));
+
+        return orderedBaseHeroIds.stream()
+                .map(baseHeroId -> {
+                    Hero costume = latestCostumeByBaseHeroId.get(baseHeroId);
+                    return costume == null ? baseHeroId : costume.getId();
+                })
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private void createBonusRules(
@@ -511,6 +581,7 @@ public class SummonAdminService {
                     .kind(source.getKind())
                     .valuePercent(source.getValuePercent())
                     .position(source.getPosition())
+                    .heroVariantMode(source.getHeroVariantMode())
                     .userSelectionEnabled(source.isUserSelectionEnabled())
                     .defaultSelectedHeroCount(source.getDefaultSelectedHeroCount())
                     .build());
@@ -810,7 +881,8 @@ public class SummonAdminService {
                 probability.getPosition(),
                 sortedHeroIds,
                 probability.isUserSelectionEnabled(),
-                probability.getDefaultSelectedHeroCount()
+                probability.getDefaultSelectedHeroCount(),
+                probability.getHeroVariantMode()
         );
     }
 
