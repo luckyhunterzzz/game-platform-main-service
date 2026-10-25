@@ -10,17 +10,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record SummonBonusStepProbabilityCreateRequest(
-        @NotNull
-        UUID probabilityDefinitionId,
-
-        @NotNull
-        @DecimalMin("0.01")
-        @DecimalMax("100.00")
-        @Digits(integer = 3, fraction = 2)
+        @NotNull UUID probabilityDefinitionId,
+        @NotNull @DecimalMin("0.01") @DecimalMax("100.00") @Digits(integer = 3, fraction = 2)
         BigDecimal valuePercent,
-
-        @NotNull
-        @Positive
-        Integer position
+        @NotNull @Positive Integer position
 ) {
 }

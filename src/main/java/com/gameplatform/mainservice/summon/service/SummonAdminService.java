@@ -442,11 +442,7 @@ public class SummonAdminService {
             Map<UUID, SummonProbability> probabilitiesByDefinition
     ) {
         List<SummonBonusStepProbability> stepProbabilities = safeList(request.rewardProbabilities()).stream()
-                .map(reward -> toBonusStepProbability(
-                        bonusStepId,
-                        reward,
-                        probabilitiesByDefinition
-                ))
+                .map(reward -> toBonusStepProbability(bonusStepId, reward, probabilitiesByDefinition))
                 .toList();
         if (!stepProbabilities.isEmpty()) {
             bonusStepProbabilityRepository.saveAll(stepProbabilities);
@@ -773,7 +769,6 @@ public class SummonAdminService {
         if (steps.isEmpty()) {
             return Map.of();
         }
-
         return bonusStepProbabilityRepository
                 .findAllByIdBonusStepIdIn(steps.stream().map(SummonBonusStep::getId).toList())
                 .stream()
@@ -784,7 +779,6 @@ public class SummonAdminService {
         if (steps.isEmpty()) {
             return Map.of();
         }
-
         return bonusStepHeroRepository
                 .findAllByIdBonusStepIdIn(steps.stream().map(SummonBonusStep::getId).toList())
                 .stream()
