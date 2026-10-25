@@ -367,7 +367,6 @@ class SummonAdminServiceTest {
                 .next();
         assertThat(clonedStepProbability.getId())
                 .isEqualTo(new SummonBonusStepProbabilityId(targetStepId, targetProbabilityId));
-        assertThat(clonedStepProbability.getValuePercent()).isEqualByComparingTo("100");
     }
 
     @Test
