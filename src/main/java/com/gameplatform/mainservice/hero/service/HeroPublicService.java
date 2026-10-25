@@ -381,6 +381,10 @@ public class HeroPublicService {
         return self().getVariantsCached(slug, language, canIncludeDrafts(includeDrafts));
     }
 
+    public HeroVariantsResponse getSummonVariants(String slug, HeroLanguage language) {
+        return self().getVariantsCached(slug, language, true);
+    }
+
     @Cacheable(cacheNames = CacheNames.PUBLIC_HERO_VARIANTS)
     public HeroVariantsResponse getVariantsCached(String slug, HeroLanguage language, boolean includeDraftsAuthorized) {
         HeroDetailsProjection currentHero = findCurrentHero(slug, language, includeDraftsAuthorized);

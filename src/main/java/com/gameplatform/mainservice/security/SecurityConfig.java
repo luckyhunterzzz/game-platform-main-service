@@ -2,6 +2,7 @@ package com.gameplatform.mainservice.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -30,6 +31,15 @@ public class SecurityConfig {
                 .addFilterBefore(new MdcCorrelationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new GatewayHeadersAuthFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/public/summons/*/variants/*/simulation-config",
+                                "/api/v1/public/summons/heroes/*/variants"
+                        ).authenticated()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/public/summons/*/variants/*/simulate"
+                        ).authenticated()
                         .requestMatchers("/api/v1/public/**",
                                 "/actuator/health",
                                 "/actuator/prometheus",

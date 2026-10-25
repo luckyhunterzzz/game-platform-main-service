@@ -342,17 +342,14 @@ public class SummonValidator {
         if (rewardHeroIds.isEmpty()) {
             return;
         }
-
         Set<Long> uniqueHeroIds = new HashSet<>(rewardHeroIds);
         if (uniqueHeroIds.size() != rewardHeroIds.size()) {
             throw new BusinessValidationException("bonus hero pool must not contain duplicates");
         }
-
         List<Hero> heroes = heroRepository.findAllById(uniqueHeroIds);
         if (heroes.size() != uniqueHeroIds.size()) {
             throw new BusinessValidationException("one or more bonus reward heroes do not exist");
         }
-
         Set<Long> rarityIds = heroes.stream().map(Hero::getRarityId).collect(Collectors.toSet());
         Map<Long, Rarity> raritiesById = rarityRepository.findAllById(rarityIds).stream()
                 .collect(Collectors.toMap(Rarity::getId, Function.identity()));
