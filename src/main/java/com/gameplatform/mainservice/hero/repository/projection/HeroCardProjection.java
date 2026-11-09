@@ -14,9 +14,13 @@ public interface HeroCardProjection {
     String getPreviewBucket();
     String getPreviewObjectKey();
     String getElementName();
+    String getElementImageBucket();
+    String getElementImageObjectKey();
     String getRarityName();
     Integer getRarityStars();
     String getHeroClassName();
+    String getHeroClassImageBucket();
+    String getHeroClassImageObjectKey();
     String getManaSpeedName();
     String getFamilyName();
     String getAlphaTalentName();
