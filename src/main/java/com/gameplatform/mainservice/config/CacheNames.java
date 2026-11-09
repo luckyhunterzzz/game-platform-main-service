@@ -2,9 +2,9 @@ package com.gameplatform.mainservice.config;
 
 public final class CacheNames {
 
-    public static final String PUBLIC_HEROES_PAGE = "publicHeroesPage";
+    public static final String PUBLIC_HEROES_PAGE = "publicHeroesPageV2";
     public static final String PUBLIC_HERO_NAMES = "publicHeroNames";
-    public static final String PUBLIC_HERO_BATCH = "publicHeroBatch";
+    public static final String PUBLIC_HERO_BATCH = "publicHeroBatchV2";
     public static final String PUBLIC_HERO_SEARCH = "publicHeroSearch";
     public static final String PUBLIC_HERO_FILTERS = "publicHeroFilters";
     public static final String PUBLIC_HERO_DETAILS = "publicHeroDetails";
