@@ -76,7 +76,14 @@ public class HeroAdminService {
         );
     }
 
-    public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<ContentStatus> statuses) {
+    public HeroAdminPageResponse getCatalog(
+            int page,
+            int size,
+            String search,
+            List<Long> rarityIds,
+            List<ContentStatus> statuses,
+            boolean openBugReportsOnly
+    ) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.min(Math.max(size, 1), 50);
         List<Long> normalizedRarityIds = rarityIds == null ? List.of() : rarityIds.stream().filter(java.util.Objects::nonNull).distinct().toList();
@@ -89,6 +96,7 @@ public class HeroAdminService {
                 normalizedRarityIds.isEmpty(),
                 normalizedStatuses,
                 normalizedStatuses.isEmpty(),
+                openBugReportsOnly,
                 pageable
         );
 

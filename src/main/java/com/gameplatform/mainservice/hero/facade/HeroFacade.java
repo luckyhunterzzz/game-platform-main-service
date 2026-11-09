@@ -29,8 +29,15 @@ public class HeroFacade {
         return heroService.getAll();
     }
 
-    public HeroAdminPageResponse getCatalog(int page, int size, String search, List<Long> rarityIds, List<ContentStatus> statuses) {
-        return heroService.getCatalog(page, size, search, rarityIds, statuses);
+    public HeroAdminPageResponse getCatalog(
+            int page,
+            int size,
+            String search,
+            List<Long> rarityIds,
+            List<ContentStatus> statuses,
+            boolean openBugReportsOnly
+    ) {
+        return heroService.getCatalog(page, size, search, rarityIds, statuses, openBugReportsOnly);
     }
 
     public HeroResponse getById(Long id) {

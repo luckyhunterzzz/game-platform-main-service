@@ -42,6 +42,12 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                            OR LOWER(COALESCE(h.name_json ->> 'en', '')) LIKE LOWER(CONCAT('%', :search, '%')))
                       AND (:rarityIdsEmpty = true OR h.rarity_id IN (:rarityIds))
                       AND (:statusesEmpty = true OR h.status IN (:statuses))
+                      AND (:openBugReportsOnly = false OR EXISTS (
+                            SELECT 1
+                            FROM bug_reports br
+                            WHERE br.hero_id = h.id
+                              AND br.is_open = true
+                      ))
                     ORDER BY LOWER(COALESCE(h.name_json ->> 'ru', h.name_json ->> 'en', h.slug)) ASC, h.id ASC
                     """,
             countQuery = """
@@ -53,6 +59,12 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                            OR LOWER(COALESCE(h.name_json ->> 'en', '')) LIKE LOWER(CONCAT('%', :search, '%')))
                       AND (:rarityIdsEmpty = true OR h.rarity_id IN (:rarityIds))
                       AND (:statusesEmpty = true OR h.status IN (:statuses))
+                      AND (:openBugReportsOnly = false OR EXISTS (
+                            SELECT 1
+                            FROM bug_reports br
+                            WHERE br.hero_id = h.id
+                              AND br.is_open = true
+                      ))
                     """,
             nativeQuery = true
     )
@@ -62,6 +74,7 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
             @Param("rarityIdsEmpty") boolean rarityIdsEmpty,
             @Param("statuses") List<String> statuses,
             @Param("statusesEmpty") boolean statusesEmpty,
+            @Param("openBugReportsOnly") boolean openBugReportsOnly,
             Pageable pageable
     );
 

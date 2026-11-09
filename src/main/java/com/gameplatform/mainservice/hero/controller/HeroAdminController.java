@@ -39,9 +39,10 @@ public class HeroAdminController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) List<Long> rarityIds,
-            @RequestParam(required = false) List<ContentStatus> statuses
+            @RequestParam(required = false) List<ContentStatus> statuses,
+            @RequestParam(defaultValue = "false") boolean openBugReportsOnly
     ) {
-        return ResponseEntity.ok(heroFacade.getCatalog(page, size, search, rarityIds, statuses));
+        return ResponseEntity.ok(heroFacade.getCatalog(page, size, search, rarityIds, statuses, openBugReportsOnly));
     }
 
     @GetMapping("/{id}")
