@@ -12,6 +12,7 @@ import com.gameplatform.mainservice.hero.dto.request.HeroBatchLookupRequest;
 import com.gameplatform.mainservice.hero.dto.request.HeroStatCalculationRequest;
 import com.gameplatform.mainservice.hero.dto.response.*;
 import com.gameplatform.mainservice.hero.repository.*;
+import com.gameplatform.mainservice.hero.repository.projection.HeroCardProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroDetailsProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroSearchProjection;
 import com.gameplatform.mainservice.hero.repository.projection.HeroVariantSummaryProjection;
@@ -32,9 +33,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,6 +60,7 @@ public class HeroPublicService {
     private final BugReportRepository bugReportRepository;
     private final OutboxEventService outboxEventService;
     private final HeroStatCalculationService heroStatCalculationService;
+    private final RarityEvolutionMultiplierService rarityEvolutionMultiplierService;
     private final HeroPublicVisibilityService heroPublicVisibilityService;
     private final ObjectProvider<HeroPublicService> selfProvider;
 
@@ -183,13 +189,47 @@ public class HeroPublicService {
             boolean includeDraftsAuthorized,
             List<Long> normalizedHeroIds
     ) {
-        return heroRepository.findHeroCardsByIds(
-                        normalizedHeroIds,
-                        language.getJsonKey(),
-                        includeDraftsAuthorized
-                )
+        List<HeroCardProjection> heroes = heroRepository.findHeroCardsByIds(
+                normalizedHeroIds,
+                language.getJsonKey(),
+                includeDraftsAuthorized
+        );
+        if (heroes.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> baseHeroIds = heroes.stream()
+                .map(hero -> hero.getBaseHeroId() != null ? hero.getBaseHeroId() : hero.getId())
+                .distinct()
+                .toList();
+        Set<ContentStatus> allowedStatuses = includeDraftsAuthorized
+                ? Set.of(ContentStatus.READY, ContentStatus.DRAFT)
+                : Set.of(ContentStatus.READY);
+        Map<Long, List<HeroCostumeBonusSummaryResponse>> costumeBonusesByBaseHeroId = heroRepository
+                .findAllByBaseHeroIdIn(baseHeroIds)
                 .stream()
-                .map(converter::toCardResponse)
+                .filter(costume -> allowedStatuses.contains(costume.getStatus()))
+                .filter(costume -> costume.getCostumeIndex() != null && costume.getCostumeBonusJson() != null)
+                .sorted(Comparator.comparing(Hero::getCostumeIndex))
+                .collect(Collectors.groupingBy(
+                        Hero::getBaseHeroId,
+                        Collectors.mapping(
+                                costume -> new HeroCostumeBonusSummaryResponse(
+                                        costume.getCostumeIndex(),
+                                        costume.getCostumeBonusJson()
+                                ),
+                                Collectors.toList()
+                        )
+                ));
+
+        return heroes.stream()
+                .map(hero -> converter.toCardResponse(
+                        hero,
+                        costumeBonusesByBaseHeroId.getOrDefault(
+                                hero.getBaseHeroId() != null ? hero.getBaseHeroId() : hero.getId(),
+                                List.of()
+                        )
+                ))
                 .toList();
     }
 
@@ -247,7 +287,8 @@ public class HeroPublicService {
                         HeroTag::getNameJson,
                         ignored -> null,
                         ignored -> null
-                )
+                ),
+                rarityEvolutionMultiplierService.getAll()
         );
     }
 
