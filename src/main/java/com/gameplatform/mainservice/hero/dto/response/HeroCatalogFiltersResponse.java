@@ -10,6 +10,7 @@ public record HeroCatalogFiltersResponse(
         List<HeroCatalogFilterOptionResponse> manaSpeeds,
         List<HeroCatalogFilterOptionResponse> alphaTalents,
         List<HeroCatalogFilterOptionResponse> roleGroups,
-        List<HeroCatalogFilterOptionResponse> heroTags
+        List<HeroCatalogFilterOptionResponse> heroTags,
+        List<RarityEvolutionMultiplierResponse> evolutionMultipliers
 ) {
 }

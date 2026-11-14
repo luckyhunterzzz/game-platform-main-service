@@ -9,6 +9,7 @@ public interface HeroCardProjection {
     Long getBaseHeroId();
     Boolean getIsCostume();
     Integer getCostumeIndex();
+    Integer getAvailableCostumeCount();
     String getImageBucket();
     String getImageObjectKey();
     String getPreviewBucket();

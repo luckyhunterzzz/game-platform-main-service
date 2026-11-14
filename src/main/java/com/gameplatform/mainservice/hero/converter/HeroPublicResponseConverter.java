@@ -36,6 +36,13 @@ public class HeroPublicResponseConverter {
     }
 
     public HeroCardResponse toCardResponse(HeroCardProjection hero) {
+        return toCardResponse(hero, List.of());
+    }
+
+    public HeroCardResponse toCardResponse(
+            HeroCardProjection hero,
+            List<HeroCostumeBonusSummaryResponse> costumeBonuses
+    ) {
         return new HeroCardResponse(
                 hero.getId(),
                 hero.getSlug(),
@@ -43,6 +50,7 @@ public class HeroPublicResponseConverter {
                 hero.getBaseHeroId(),
                 hero.getIsCostume(),
                 hero.getCostumeIndex(),
+                hero.getAvailableCostumeCount(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
                 mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
                 hero.getElementName(),
@@ -57,7 +65,8 @@ public class HeroPublicResponseConverter {
                 hero.getBaseAttack(),
                 hero.getBaseArmor(),
                 hero.getBaseHp(),
-                hero.getReleaseDate()
+                hero.getReleaseDate(),
+                costumeBonuses
         );
     }
 
