@@ -9,6 +9,7 @@ public record HeroCardResponse(
         Long baseHeroId,
         Boolean isCostume,
         Integer costumeIndex,
+        Integer availableCostumeCount,
         String imageUrl,
         String previewUrl,
         String elementName,

@@ -43,6 +43,7 @@ public class HeroPublicResponseConverter {
                 hero.getBaseHeroId(),
                 hero.getIsCostume(),
                 hero.getCostumeIndex(),
+                hero.getAvailableCostumeCount(),
                 mediaUrlResolver.resolveUrl(hero.getImageBucket(), hero.getImageObjectKey()),
                 mediaUrlResolver.resolveUrl(hero.getPreviewBucket(), hero.getPreviewObjectKey()),
                 hero.getElementName(),

@@ -126,6 +126,12 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                         h.base_hero_id AS baseHeroId,
                         h.is_costume AS isCostume,
                         h.costume_index AS costumeIndex,
+                        CAST((
+                            SELECT COUNT(*)
+                            FROM heroes costume
+                            WHERE costume.base_hero_id = COALESCE(h.base_hero_id, h.id)
+                              AND (costume.status = 'READY' OR (:includeDrafts = true AND costume.status = 'DRAFT'))
+                        ) AS INTEGER) AS availableCostumeCount,
                         COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                         COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
                         h.preview_bucket AS previewBucket,
@@ -237,6 +243,12 @@ public interface HeroRepository extends JpaRepository<Hero, Long> {
                 h.base_hero_id AS baseHeroId,
                 h.is_costume AS isCostume,
                 h.costume_index AS costumeIndex,
+                CAST((
+                    SELECT COUNT(*)
+                    FROM heroes costume
+                    WHERE costume.base_hero_id = COALESCE(h.base_hero_id, h.id)
+                      AND (costume.status = 'READY' OR (:includeDrafts = true AND costume.status = 'DRAFT'))
+                ) AS INTEGER) AS availableCostumeCount,
                 COALESCE(NULLIF(h.image_bucket_json ->> :locale, ''), NULLIF(h.image_bucket_json ->> 'ru', ''), NULLIF(h.image_bucket_json ->> 'en', '')) AS imageBucket,
                 COALESCE(NULLIF(h.image_object_key_json ->> :locale, ''), NULLIF(h.image_object_key_json ->> 'ru', ''), NULLIF(h.image_object_key_json ->> 'en', '')) AS imageObjectKey,
                 h.preview_bucket AS previewBucket,
