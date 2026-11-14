@@ -1,6 +1,7 @@
 package com.gameplatform.mainservice.hero.dto.response;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record HeroCardResponse(
         Long id,
@@ -24,6 +25,7 @@ public record HeroCardResponse(
         Integer baseAttack,
         Integer baseArmor,
         Integer baseHp,
-        LocalDate releaseDate
+        LocalDate releaseDate,
+        List<HeroCostumeBonusSummaryResponse> costumeBonuses
 ) {
 }

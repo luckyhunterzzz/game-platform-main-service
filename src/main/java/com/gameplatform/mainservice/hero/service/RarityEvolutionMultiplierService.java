@@ -1,5 +1,6 @@
 package com.gameplatform.mainservice.hero.service;
 
+import com.gameplatform.mainservice.config.PublicCacheEvictionService;
 import com.gameplatform.mainservice.hero.converter.RarityEvolutionMultiplierResponseConverter;
 import com.gameplatform.mainservice.hero.domain.entity.Rarity;
 import com.gameplatform.mainservice.hero.domain.entity.RarityEvolutionMultiplier;
@@ -26,6 +27,7 @@ public class RarityEvolutionMultiplierService {
     private final RarityRepository rarityRepository;
     private final DictionaryCatalogSupport catalogSupport;
     private final RarityEvolutionMultiplierResponseConverter converter;
+    private final PublicCacheEvictionService publicCacheEvictionService;
 
     public List<RarityEvolutionMultiplierResponse> getAll() {
         return converter.toResponseList(sortMultipliers(repository.findAll()));
@@ -52,7 +54,9 @@ public class RarityEvolutionMultiplierService {
                 .hpMultiplier(request.hpMultiplier())
                 .build();
 
-        return converter.toResponse(repository.save(entity));
+        RarityEvolutionMultiplierResponse response = converter.toResponse(repository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public RarityEvolutionMultiplierResponse update(Long id, RarityEvolutionMultiplierUpsertRequest request) {
@@ -64,7 +68,9 @@ public class RarityEvolutionMultiplierService {
         entity.setArmorMultiplier(request.armorMultiplier());
         entity.setHpMultiplier(request.hpMultiplier());
 
-        return converter.toResponse(repository.save(entity));
+        RarityEvolutionMultiplierResponse response = converter.toResponse(repository.save(entity));
+        publicCacheEvictionService.evictHeroCaches();
+        return response;
     }
 
     public void delete(Long id) {
@@ -72,6 +78,7 @@ public class RarityEvolutionMultiplierService {
             throw new NotFoundException("RarityEvolutionMultiplier not found: " + id);
         }
         repository.deleteById(id);
+        publicCacheEvictionService.evictHeroCaches();
     }
 
     private RarityEvolutionMultiplier getEntityById(Long id) {
